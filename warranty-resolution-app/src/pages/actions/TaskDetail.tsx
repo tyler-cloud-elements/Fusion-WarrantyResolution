@@ -27,12 +27,27 @@ import { PriorityBadge, SlaBadge } from "@/components/warranty/badges";
 import { appOrigin } from "@/lib/app-base";
 import { useFlags } from "@/lib/flags";
 import { cn } from "@/lib/utils";
-import { initialsOf, money, shortCaseId, timeOnly } from "@/lib/warranty/format";
-import { formatElapsed, formatSlaBudget, slaStatusFor } from "@/lib/warranty/sla";
+import {
+  initialsOf,
+  money,
+  shortCaseId,
+  timeOnly,
+} from "@/lib/warranty/format";
+import {
+  formatElapsed,
+  formatSlaBudget,
+  slaStatusFor,
+} from "@/lib/warranty/sla";
 import { reopenDecision, useActionsForCase } from "@/lib/warranty/useCases";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 
-function MetaItem({ label, children }: { label: string; children: React.ReactNode }) {
+function MetaItem({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -64,8 +79,8 @@ function CaseContextHint({
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-dashed border-border px-3 py-2.5 text-xs text-muted-foreground">
       <PanelRight className="size-3.5 shrink-0" />
       <span>
-        Documents, the asset record, the claim breakdown and the case history are in the case
-        panel.
+        Documents, the asset record, the claim breakdown and the case history
+        are in the case panel.
       </span>
       <button
         type="button"
@@ -77,7 +92,11 @@ function CaseContextHint({
       {!railOpen && (
         <>
           <span aria-hidden>·</span>
-          <button type="button" onClick={onOpenRail} className="font-medium text-primary hover:underline">
+          <button
+            type="button"
+            onClick={onOpenRail}
+            className="font-medium text-primary hover:underline"
+          >
             Show the case panel
           </button>
         </>
@@ -118,12 +137,14 @@ export function TaskDetail({
    * the one you see. Opening the panel from here still stacks the pane, which is
    * the fallback the flag's hint promises.
    */
-  const [rightPanel, setRightPanel] = useState<"case" | "assessment" | null>(() => {
-    const stored = localStorage.getItem("actions.rightPanel");
-    if (stored === "none") return null;
-    if (stored === "case" || stored === "assessment") return stored;
-    return actionSideBySide ? null : "case";
-  });
+  const [rightPanel, setRightPanel] = useState<"case" | "assessment" | null>(
+    () => {
+      const stored = localStorage.getItem("actions.rightPanel");
+      if (stored === "none") return null;
+      if (stored === "case" || stored === "assessment") return stored;
+      return actionSideBySide ? null : "case";
+    },
+  );
   useEffect(() => {
     localStorage.setItem("actions.rightPanel", rightPanel ?? "none");
   }, [rightPanel]);
@@ -162,7 +183,8 @@ export function TaskDetail({
   const setPosition = setChosen;
 
   const policyTest = action.folds?.find((f) => f.id === "policy-test");
-  const agreementName = policyTest?.label.replace(/^Policy test\s*—\s*/, "") ?? "";
+  const agreementName =
+    policyTest?.label.replace(/^Policy test\s*—\s*/, "") ?? "";
 
   return (
     <div className="flex h-full flex-1 overflow-x-auto">
@@ -179,7 +201,9 @@ export function TaskDetail({
           <header className="flex flex-wrap items-start gap-x-10 gap-y-4 border-b border-border px-6 py-4">
             <div className="mr-auto flex min-w-0 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight">{action.title}</h1>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  {action.title}
+                </h1>
                 {action.blocking && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
                     <CircleAlert className="size-3" />
@@ -188,7 +212,9 @@ export function TaskDetail({
                 )}
                 <PriorityBadge priority={action.priority} />
               </div>
-              <span className="text-sm text-muted-foreground">{action.stage}</span>
+              <span className="text-sm text-muted-foreground">
+                {action.stage}
+              </span>
             </div>
 
             <MetaItem label="Case ID">
@@ -217,7 +243,8 @@ export function TaskDetail({
                 <SlaBadge status={slaStatus} />
                 <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground tabular-nums">
                   <Clock className="size-3" />
-                  {formatSlaBudget(action.slaMinutes)} · {formatElapsed(action.elapsedMinutes)}
+                  {formatSlaBudget(action.slaMinutes)} ·{" "}
+                  {formatElapsed(action.elapsedMinutes)}
                 </span>
               </span>
             </MetaItem>
@@ -235,7 +262,10 @@ export function TaskDetail({
                 </Link>
               </Button>
               {!chatOpen && (
-                <Button variant="ai" onClick={() => setRightPanel("assessment")}>
+                <Button
+                  variant="ai"
+                  onClick={() => setRightPanel("assessment")}
+                >
                   <AiMark className="size-4" />
                   {rich ? "Assessment" : "Ask AI"}
                 </Button>
@@ -251,114 +281,149 @@ export function TaskDetail({
               column does not carry a second copy of it. The finding stays,
               because it is not context: it is the judgement being made.
             */}
-            <div
-              className={cn(
-                "min-w-[340px] flex-1 overflow-y-auto p-5",
-                // A container, so the split below reacts to this pane's own
-                // width rather than the window's. `xl:` measured the viewport,
-                // which says nothing about the space left after the queue and
-                // whichever rail is open — at 1280px it was putting a 420px
-                // decision card next to a 115px finding.
-                "@container",
-              )}
-            >
-              {warrantyCase && rich ? (
-                <div
-                  className={cn(
-                    "grid items-start gap-4 [&>*]:min-w-0",
-                    // Real minimums on both tracks: a two-up layout that can
-                    // squeeze either side to nothing is worse than one column.
-                    // Below the threshold the tracks collapse to a single
-                    // column and the children stack in reading order.
-                    // The threshold is what the two tracks actually need —
-                    // 340 + 16 gap + 380 — not a stock breakpoint. `@3xl` is
-                    // 768px, which stacked a pane with 741px of room in it.
-                    sideBySide &&
-                      "@min-[736px]:grid-cols-[minmax(340px,1fr)_minmax(380px,420px)]",
-                  )}
-                >
-                  {/* Reading column: what is being decided, then the finding. */}
-                  <div className="flex min-w-0 flex-col gap-4">
-                    <DecisionHeader action={action} warrantyCase={warrantyCase} />
+            {/*
+              Container root. The split below reacts to this pane's own width
+              rather than the window's — `xl:` measured the viewport, which says
+              nothing about the space left after the queue and whichever rail is
+              open, and at 1280px it was putting a 420px decision card next to a
+              115px finding.
+            */}
+            <div className="@container flex min-h-0 min-w-[340px] flex-1">
+              {/*
+                Scrolls only while stacked. Side by side the two columns scroll
+                themselves, so reading the finding does not drag the decision
+                off screen and scrolling a long rationale does not move the
+                argument it is about.
+              */}
+              <div
+                className={cn(
+                  "min-h-0 flex-1 p-5",
+                  sideBySide
+                    ? "overflow-y-auto @min-[736px]:overflow-hidden"
+                    : "overflow-y-auto",
+                )}
+              >
+                {warrantyCase && rich ? (
+                  <div
+                    className={cn(
+                      "grid items-start gap-4 [&>*]:min-w-0",
+                      // Real minimums on both tracks: a two-up layout that can
+                      // squeeze either side to nothing is worse than one column.
+                      // Below the threshold the tracks collapse to a single
+                      // column and the children stack in reading order.
+                      // The threshold is what the two tracks actually need —
+                      // 340 + 16 gap + 380 — not a stock breakpoint. `@3xl` is
+                      // 768px, which stacked a pane with 741px of room in it.
+                      sideBySide &&
+                        "@min-[736px]:h-full @min-[736px]:items-stretch @min-[736px]:grid-cols-[minmax(340px,1fr)_minmax(380px,420px)]",
+                    )}
+                  >
+                    {/* Reading column: what is being decided, then the finding.
+                      Its own scroller side by side; part of the page's when
+                      stacked, so a single column is one continuous read. */}
+                    <div
+                      className={cn(
+                        "flex min-w-0 flex-col gap-4",
+                        sideBySide &&
+                          "@min-[736px]:min-h-0 @min-[736px]:overflow-y-auto @min-[736px]:pr-1",
+                      )}
+                    >
+                      <DecisionHeader
+                        action={action}
+                        warrantyCase={warrantyCase}
+                      />
 
-                    <FindingCauses action={action} columns={sideBySide ? 2 : 1} />
+                      <FindingCauses
+                        action={action}
+                        columns={sideBySide ? 2 : 1}
+                      />
 
-                    {/* The clauses the finding is tested against. It sits under
+                      {/* The clauses the finding is tested against. It sits under
                         the causes because it is what turns two established facts
                         into a coverage position — and because the one failing
                         clause is the reason the split falls where it does. */}
-                    {policyTest?.checks?.length ? (
-                      <PolicyTestCard
-                        checks={policyTest.checks}
-                        agreement={agreementName}
-                        marked={policyTest.marked}
+                      {policyTest?.checks?.length ? (
+                        <PolicyTestCard
+                          checks={policyTest.checks}
+                          agreement={agreementName}
+                          marked={policyTest.marked}
+                        />
+                      ) : null}
+
+                      {/* Ends the reading column rather than spanning both: with
+                        each track scrolling on its own, a full-width row below
+                        them has nowhere to sit. */}
+                      <CaseContextHint
+                        warrantyCase={warrantyCase}
+                        railOpen={railOpen}
+                        onOpenRail={() => setRightPanel("case")}
+                        onOpenDocuments={() => {
+                          setRightPanel("case");
+                          setRailTab("documents");
+                        }}
                       />
-                    ) : null}
-                  </div>
+                    </div>
 
-                  {/*
-                    Deciding column — sticky beside the finding when there is
-                    room, and simply the next thing down when there is not.
-                    Rendered once either way: the previous version mounted a
-                    second copy for the stacked case, which threw away the
-                    card's state — a half-typed rationale included — every time
-                    the layout flipped.
+                    {/*
+                    Deciding column — its own scroller beside the finding, the
+                    next thing down when stacked. Rendered once either way: the
+                    previous version mounted a second copy for the stacked case,
+                    which threw away the card's state — a half-typed rationale
+                    included — every time the layout flipped.
+
+                    Scrolling itself replaces the sticky positioning this had:
+                    sticky only pins the top of a card taller than the viewport,
+                    so the submit button stayed out of reach.
                   */}
-                  <div className={cn(sideBySide && "@min-[736px]:sticky @min-[736px]:top-0")}>
-                    <CoverageDecisionCard
-                      action={action}
-                      warrantyCase={warrantyCase}
-                      onCompleted={onCompleted}
-                      onReopen={() => reopenDecision(action.id)}
-                      position={position}
-                      onPositionChange={setPosition}
-                    />
+                    <div
+                      className={cn(
+                        sideBySide &&
+                          "@min-[736px]:min-h-0 @min-[736px]:overflow-y-auto @min-[736px]:pr-1",
+                      )}
+                    >
+                      <CoverageDecisionCard
+                        action={action}
+                        warrantyCase={warrantyCase}
+                        onCompleted={onCompleted}
+                        onReopen={() => reopenDecision(action.id)}
+                        position={position}
+                        onPositionChange={setPosition}
+                      />
+                    </div>
                   </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <Card className="gap-2 p-5">
+                      <span className="text-base font-semibold">
+                        Why this reached you
+                      </span>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {action.whyThisReachedYou}
+                      </p>
+                    </Card>
 
-                  {/* Spans both tracks: it is a pointer to the rail, not part
-                      of either argument. */}
-                  <div className="@min-[736px]:col-span-2">
-                    <CaseContextHint
-                      warrantyCase={warrantyCase}
-                      railOpen={railOpen}
-                      onOpenRail={() => setRightPanel("case")}
-                      onOpenDocuments={() => {
-                        setRightPanel("case");
-                        setRailTab("documents");
-                      }}
-                    />
+                    {warrantyCase && (
+                      <DecisionForm
+                        action={action}
+                        warrantyCase={warrantyCase}
+                        onCompleted={onCompleted}
+                      />
+                    )}
+
+                    {warrantyCase && (
+                      <CaseContextHint
+                        warrantyCase={warrantyCase}
+                        railOpen={railOpen}
+                        onOpenRail={() => setRightPanel("case")}
+                        onOpenDocuments={() => {
+                          setRightPanel("case");
+                          setRailTab("documents");
+                        }}
+                      />
+                    )}
                   </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  <Card className="gap-2 p-5">
-                    <span className="text-base font-semibold">Why this reached you</span>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {action.whyThisReachedYou}
-                    </p>
-                  </Card>
-
-                  {warrantyCase && (
-                    <DecisionForm
-                      action={action}
-                      warrantyCase={warrantyCase}
-                      onCompleted={onCompleted}
-                    />
-                  )}
-
-                  {warrantyCase && (
-                    <CaseContextHint
-                      warrantyCase={warrantyCase}
-                      railOpen={railOpen}
-                      onOpenRail={() => setRightPanel("case")}
-                      onOpenDocuments={() => {
-                        setRightPanel("case");
-                        setRailTab("documents");
-                      }}
-                    />
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* The right-edge controls, shown only when the case panel is shut —
@@ -393,7 +458,10 @@ export function TaskDetail({
                 sit under the action header rather than beside it, so the
                 action's identity stays put whichever panel is showing. */}
             {warrantyCase && chatOpen && !rich && (
-              <AskAiPanel warrantyCase={warrantyCase} onClose={() => setRightPanel(null)} />
+              <AskAiPanel
+                warrantyCase={warrantyCase}
+                onClose={() => setRightPanel(null)}
+              />
             )}
 
             {warrantyCase && chatOpen && rich && (
@@ -426,8 +494,12 @@ export function TaskDetail({
                         <ExternalLink className="size-4" />
                       </a>
                     </div>
-                    <div className="truncate text-xs text-muted-foreground" title={warrantyCase.id}>
-                      {shortCaseId(warrantyCase.id)} · {warrantyCase.asset.model} ·{" "}
+                    <div
+                      className="truncate text-xs text-muted-foreground"
+                      title={warrantyCase.id}
+                    >
+                      {shortCaseId(warrantyCase.id)} ·{" "}
+                      {warrantyCase.asset.model} ·{" "}
                       {money(warrantyCase.claimValue)}
                     </div>
                   </div>
@@ -465,7 +537,6 @@ export function TaskDetail({
           </div>
         </motion.div>
       </AnimatePresence>
-
     </div>
   );
 }

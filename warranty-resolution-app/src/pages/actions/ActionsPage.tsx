@@ -60,6 +60,15 @@ export function ActionsPage() {
   const { profile } = useRole();
   const settled = useSettled(INTRO_SKELETON_MS);
 
+  // Remembered, like the right-hand rail: someone who works from the decision
+  // and not the list should not have to collapse it on every visit.
+  const [queueCollapsed, setQueueCollapsed] = useState(
+    () => localStorage.getItem("actions.queue") === "collapsed",
+  );
+  useEffect(() => {
+    localStorage.setItem("actions.queue", queueCollapsed ? "collapsed" : "open");
+  }, [queueCollapsed]);
+
   // Deep links:
   //   ?task=…  selects an action (from a case's "Open in queue")
   //   ?case=…  scopes the queue to one case (from "Open in Actions")
@@ -213,6 +222,8 @@ export function ActionsPage() {
         selectedId={selected?.id ?? ""}
         onSelect={setSelectedId}
         width={queue.width}
+        collapsed={queueCollapsed}
+        onToggleCollapsed={() => setQueueCollapsed((c) => !c)}
         headerChips={headerChips}
         filters={filters}
         onFilters={setFilters}
@@ -220,7 +231,11 @@ export function ActionsPage() {
         onToggleFilters={() => setPanelOpen((o) => !o)}
       />
 
-      <ResizeHandle onPointerDown={queue.onPointerDown} aria-label="Resize actions list" />
+      {/* Nothing to drag once the queue is a rail — and the handle would read
+          as a second, broken way to bring it back. */}
+      {!queueCollapsed && (
+        <ResizeHandle onPointerDown={queue.onPointerDown} aria-label="Resize actions list" />
+      )}
 
       {selected ? (
         <TaskDetail action={selected} warrantyCase={casesById.get(selected.caseId)} />

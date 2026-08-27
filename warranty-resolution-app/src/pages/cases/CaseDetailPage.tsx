@@ -189,7 +189,7 @@ export function CaseDetailPage() {
               </Meta>
 
               <div className="flex w-full flex-wrap items-center gap-2">
-                {primaryAction && (
+                {primaryAction && flags.showDecideShortcut && (
                   <Button asChild>
                     <Link
                       to="/cases/$caseId/tasks/$taskId"
@@ -200,10 +200,16 @@ export function CaseDetailPage() {
                   </Button>
                 )}
                 {openActions.length > 0 && (
-                  <Button variant="outline" asChild>
+                  // Leads with the count, because that is what the reader is
+                  // scanning for — and with the shortcut off this is the only
+                  // way through to the work, so it takes the primary style.
+                  <Button
+                    variant={flags.showDecideShortcut ? "outline" : "default"}
+                    asChild
+                  >
                     <Link to="/actions" search={{ case: warrantyCase.id }}>
                       <Inbox className="size-4" />
-                      Open in Actions ({openActions.length})
+                      {openActions.length} open {openActions.length === 1 ? "task" : "tasks"}
                     </Link>
                   </Button>
                 )}

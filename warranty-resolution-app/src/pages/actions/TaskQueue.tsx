@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { shortCaseId } from "@/lib/warranty/format";
 import { formatRemaining } from "@/lib/warranty/sla";
@@ -34,6 +35,8 @@ export function TaskQueue({
   selectedId,
   onSelect,
   width,
+  collapsed = false,
+  onToggleCollapsed,
   headerChips,
   filters,
   onFilters,
@@ -46,6 +49,9 @@ export function TaskQueue({
   onSelect: (id: string) => void;
   /** Current width in px, driven by the drag handle in ActionsPage. */
   width: number;
+  /** Collapsed to a rail — the decision gets the whole pane. */
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
   headerChips?: React.ReactNode;
   filters: TaskFilters;
   onFilters: (filters: TaskFilters) => void;
@@ -101,6 +107,33 @@ export function TaskQueue({
   const openCount = visible.filter((a) => a.status === "Open").length;
   const filterCount = activeTaskFilterCount(filters);
 
+  if (collapsed) {
+    // A rail rather than nothing: the count is the reason to come back, and
+    // hiding the queue entirely would leave no way to reopen it.
+    return (
+      <div className="flex h-full shrink-0 flex-col items-center gap-2 border-r border-border bg-muted/40 py-4">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onToggleCollapsed}
+              aria-label={`Show the actions list (${openCount} open)`}
+              className="grid size-11 place-items-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <PanelLeftOpen className="size-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Show the actions list</TooltipContent>
+        </Tooltip>
+        {openCount > 0 && (
+          <span className="rounded-full bg-primary/15 px-1.5 text-xs font-semibold tabular-nums text-primary">
+            {openCount}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       style={{ width }}
@@ -111,12 +144,30 @@ export function TaskQueue({
       <div className="flex items-center gap-2 px-5 pb-3 pt-4">
         <h2 className="text-sm font-semibold">My actions</h2>
         <span className="text-sm text-muted-foreground">({openCount})</span>
+        {onToggleCollapsed && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={onToggleCollapsed}
+                aria-label="Hide the actions list"
+                className="ml-auto grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <PanelLeftClose className="size-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Hide the actions list</TooltipContent>
+          </Tooltip>
+        )}
         <Button
           variant="outline"
           size="sm"
           onClick={onToggleFilters}
           aria-label={filterCount > 0 ? `Filters (${filterCount} active)` : "Filter actions"}
-          className={cn("ml-auto", (panelOpen || filterCount > 0) && "border-primary text-primary")}
+          className={cn(
+            !onToggleCollapsed && "ml-auto",
+            (panelOpen || filterCount > 0) && "border-primary text-primary",
+          )}
         >
           <SlidersHorizontal className="size-4" />
           Filters

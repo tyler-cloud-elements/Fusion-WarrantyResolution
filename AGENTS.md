@@ -228,6 +228,17 @@ each other. Those are the case:
 
 ## The decision screens
 
+The Actions queue **collapses to a rail** — a toggle in its header, a rail carrying the open
+count to bring it back, remembered in localStorage like the right-hand panel. The resize handle
+is withdrawn while collapsed, since there is nothing to drag and it would read as a second,
+broken way to reopen the list.
+
+The decision pane has **two independent scrollers** when it is side by side: reading the
+finding no longer drags the decision off screen, and scrolling a long rationale does not move
+the argument it is about. Stacked, the pane scrolls as one, because a single column is one
+continuous read. That replaced sticky positioning on the decision card, which only pinned the
+top of a card taller than the viewport and so put the submit button out of reach.
+
 `/actions` holds a skeleton for two seconds before it renders — `INTRO_SKELETON_MS` in
 `ActionsPage`. Deliberate, and not a fetch: on demo data the queue is already in memory and
 appearing instantly reads as a screenshot rather than a system that went and looked. It is a
@@ -329,6 +340,7 @@ room up should not have to set them twice.
 | Agent confidence | on | Hides the percentage and the precedent rollup. |
 | Reasoning capture | **off** | The agree / keep asking / stop asking tri-state under the decision. Off by default: it asks the signer to grade the agent's reasoning as well as make the call, and the assessment rail already collects that per signal, with a thumb, which is the more useful shape of the same feedback. |
 | Case plans tab | **off** | The only flag that is off by default. The case plan is design-time material and Act III is about running work, so the nav entry is hidden. `/case-plans` still resolves by URL either way, so a presenter can deep-link to it without turning the nav on. |
+| Decide shortcut | on | The "Decide: …" button on a case header, straight to the console. Off, the Actions queue is the only way in — and the task-count button takes the primary style, since it becomes the way through to the work. |
 | Compact finding | on | Each cause is one row — which side it lands on, what it is, and the clause that establishes it — with the argument, the provenance stamp and the sources an expand away. About a hundred words less on a pane already carrying a decision, and the two sides stay beside each other in the narrow Actions layout where the cards stack. Off, the two full cause cards come back: they land harder on a projector, the rows read better for someone working the queue. |
 | Side-by-side action | on | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the assessment take the same width; two columns squeezed into a third of the window is worse than one. |
 | Use demo data | on | Ignore the live tenant and run on the bundled dataset. **On by default**: the app opens in the state it can always be trusted in — the storyboard's exact numbers, no sign-in, nothing that depends on a tenant being up. Turning it off is the single switch that goes live, and it is what arms the overlay. While on it **overrides the overlay** and hides every link out to the tenant (Open case run, New case), because demo rows point at nothing and a dead link reads as a bug. |

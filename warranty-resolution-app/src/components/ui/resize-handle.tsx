@@ -25,8 +25,10 @@ export function ResizeHandle({
         className,
       )}
     >
-      {/* Resting seam */}
-      <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border transition-colors group-hover:bg-primary/40" />
+      {/* Resting seam. Deliberately stronger than a plain border: it divides two
+          panes that both carry cards, and at `bg-border` the queue and the
+          decision read as one surface with a hairline through it. */}
+      <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-foreground/15 transition-colors group-hover:bg-primary/40" />
       {/* Wider grip that appears on hover / drag */}
       <span className="absolute inset-y-0 left-1/2 w-1 -translate-x-1/2 rounded-full bg-primary/0 transition-colors group-hover:bg-primary/40 group-active:bg-primary" />
     </div>

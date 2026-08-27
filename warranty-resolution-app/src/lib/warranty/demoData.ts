@@ -267,8 +267,18 @@ const CASE_0417: WarrantyCase = {
   queueReason: "No rule resolves a combined cause",
   claimValue: 16272.5,
   lineStatus: "Down · no divert",
+  // How long the customer's line has been down — the talk track's number, and a
+  // different clock from the case's own. The line failed four days ago; the
+  // claim reached us twelve hours ago, which is where this case starts.
   lineDownHours: 96,
-  openedAt: minutesAgo(96 * 60),
+  // Just before the first entry in the trail below (11 hr 40 min ago).
+  //
+  // It used to be 96 hours, borrowed from the line-down figure, which put the
+  // case three days past its 24-hour P1 budget and stamped BREACHED on a case
+  // whose every other clock is green — including the header two lines up, which
+  // reads "2 hr 13 min left". Nothing on the case happened in that window
+  // either: its earliest event is 11 hr 40 min old.
+  openedAt: minutesAgo(11 * 60 + 45),
   lastUpdatedAt: minutesAgo(12),
   slaMinutes: 4 * 60,
   elapsedMinutes: 4 * 60 - 133,

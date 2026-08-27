@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { ResizeHandle } from "@/components/ui/resize-handle";
+import { ActionsSkeleton } from "@/components/warranty/CaseSkeletons";
 import { TaskFiltersPanel } from "@/components/warranty/TaskFiltersPanel";
 import { useResizableWidth } from "@/hooks/useResizableWidth";
 import {
@@ -11,7 +12,7 @@ import {
 } from "@/lib/warranty/taskFilters";
 import { shortCaseId } from "@/lib/warranty/format";
 import { isOverdue } from "@/lib/warranty/taskFilters";
-import { useActions, useCases } from "@/lib/warranty/useCases";
+import { useActionsResult, useCases } from "@/lib/warranty/useCases";
 import { useRole } from "@/lib/role/useRole";
 import { TaskQueue } from "./TaskQueue";
 import { TaskDetail } from "./TaskDetail";
@@ -33,10 +34,31 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
   );
 }
 
+/**
+ * How long the queue shows a skeleton before it shows work.
+ *
+ * Deliberate, and not a fetch: on demo data the actions are in memory and would
+ * otherwise appear instantly, which reads as a screenshot rather than a system
+ * that went and looked. It is a floor, not an addition — a live read that takes
+ * longer keeps the skeleton up rather than waiting this out first.
+ */
+const INTRO_SKELETON_MS = 2000;
+
+/** True once `ms` have passed since mount. */
+function useSettled(ms: number): boolean {
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setSettled(true), ms);
+    return () => window.clearTimeout(id);
+  }, [ms]);
+  return settled;
+}
+
 export function ActionsPage() {
-  const allActions = useActions();
+  const { actions: allActions, isLoading } = useActionsResult();
   const { cases } = useCases();
   const { profile } = useRole();
+  const settled = useSettled(INTRO_SKELETON_MS);
 
   // Deep links:
   //   ?task=…  selects an action (from a case's "Open in queue")
@@ -177,6 +199,11 @@ export function ActionsPage() {
       </span>
     </div>
   );
+
+  // Both waits at once, so the floor and a slow read overlap instead of adding
+  // up. Placed after every hook — an early return above them would change the
+  // hook order between renders.
+  if (!settled || isLoading) return <ActionsSkeleton />;
 
   return (
     <div className="flex h-full">

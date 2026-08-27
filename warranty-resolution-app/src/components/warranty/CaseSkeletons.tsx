@@ -113,3 +113,74 @@ export function DecisionConsoleSkeleton() {
     </PageContainer>
   );
 }
+
+/**
+ * The Actions pane, before it has anything in it.
+ *
+ * Traces the real three-part layout — queue, decision column, decision card —
+ * so the page does not jump when the content replaces it. The queue's fixed
+ * width matches the pane's default so the seam does not move either.
+ */
+export function ActionsSkeleton() {
+  return (
+    <div className="flex h-full" aria-busy="true" aria-label="Loading actions">
+      {/* Queue */}
+      <div className="flex w-[385px] shrink-0 flex-col gap-3 border-r border-border p-4">
+        <div className="flex items-center justify-between">
+          <Line className="h-5 w-28" />
+          <Line className="h-8 w-20" />
+        </div>
+        <Line className="h-9 w-full" />
+        <Line className="h-3 w-24" />
+        {Array.from({ length: 3 }, (_, i) => (
+          <Card key={i} className="gap-2 p-4">
+            <Line className="h-4 w-48" />
+            <Line className="h-3 w-40" />
+            <Line className="h-3 w-28" />
+            <Line className="h-5 w-20" />
+          </Card>
+        ))}
+      </div>
+
+      {/* Decision pane */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex flex-col gap-3 border-b border-border p-5">
+          <Line className="h-6 w-[26rem] max-w-full" />
+          <Line className="h-3 w-40" />
+          <div className="flex flex-wrap gap-6">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="flex flex-col gap-1.5">
+                <Line className="h-3 w-14" />
+                <Line className="h-4 w-24" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid flex-1 items-start gap-4 p-5 xl:grid-cols-[minmax(0,1fr)_400px]">
+          <div className="flex flex-col gap-4">
+            <Card className="flex flex-col gap-2 p-4">
+              <Line className="h-4 w-56" />
+              <Line className="h-3 w-72 max-w-full" />
+              <Line className="h-3 w-full" />
+              <Line className="h-3 w-4/5" />
+            </Card>
+            <Card className="flex flex-col gap-3 p-4">
+              <Line className="h-3 w-40" />
+              <Line className="h-10 w-full" />
+              <Line className="h-10 w-full" />
+              <Line className="h-4 w-64 max-w-full" />
+            </Card>
+          </div>
+          <Card className="flex flex-col gap-3 p-4">
+            <Line className="h-5 w-32" />
+            {Array.from({ length: 3 }, (_, i) => (
+              <Line key={i} className="h-12 w-full" />
+            ))}
+            <Line className="h-24 w-full" />
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

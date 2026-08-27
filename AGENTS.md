@@ -228,6 +228,14 @@ each other. Those are the case:
 
 ## The decision screens
 
+`/actions` holds a skeleton for two seconds before it renders — `INTRO_SKELETON_MS` in
+`ActionsPage`. Deliberate, and not a fetch: on demo data the queue is already in memory and
+appearing instantly reads as a screenshot rather than a system that went and looked. It is a
+**floor, not an addition** — a live read that takes longer keeps the skeleton up rather than
+waiting the two seconds out first. It plays on entering the route, not on switching between
+actions once you are there. Delete the `!settled` term to remove it.
+
+
 Two screens render the same decision: `/actions` (queue beside it) and
 `/cases/:id/tasks/:taskId` (full width). They share their parts, so a change lands in both.
 

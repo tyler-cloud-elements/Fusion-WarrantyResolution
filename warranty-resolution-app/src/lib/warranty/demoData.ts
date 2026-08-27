@@ -1283,9 +1283,12 @@ export const DEMO_ACTIONS: CaseAction[] = [
       },
     ],
     verdict: {
-      headline: "Both causes are established. Neither is sole.",
+      // Says what follows from the two rows, not what the header already said.
+      // `whyThisReachedYou` sits directly above this and covers the escalation;
+      // repeating it here is what made the block read like a slogan.
+      headline: "No rule covers both causes.",
       detail:
-        "No coverage rule in the case plan resolves a combined cause. That is why this case is in front of a person rather than closing on its own.",
+        "Each holds up on its own evidence, and they point opposite ways — the defect toward cover, the unapproved change away from it. The agreement is silent on what happens when both apply, so the split has to be decided here.",
     },
     costLines: [
       { id: "parts", name: "Parts — gearbox", amount: 8450 },

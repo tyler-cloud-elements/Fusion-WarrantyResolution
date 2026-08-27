@@ -103,21 +103,31 @@ export function TaskDetail({
   const [railTab, setRailTab] = useState("overview");
   const caseActions = useActionsForCase(action.caseId);
 
+  const { actionSideBySide } = useFlags();
+
   /**
    * Which panel occupies the right column — one piece of state, not two
    * booleans, because the two panels share the space and can never both be
    * open. Two booleans would let an impossible state be represented.
+   *
+   * A remembered choice always wins. Without one, the side-by-side flag decides:
+   * the right column and the second column are the same width, so defaulting the
+   * case panel open with that flag on would mean the layout it asks for is never
+   * the one you see. Opening the panel from here still stacks the pane, which is
+   * the fallback the flag's hint promises.
    */
-  const [rightPanel, setRightPanel] = useState<"case" | "assessment" | null>(() =>
-    localStorage.getItem("actions.rightPanel") === "none" ? null : "case",
-  );
+  const [rightPanel, setRightPanel] = useState<"case" | "assessment" | null>(() => {
+    const stored = localStorage.getItem("actions.rightPanel");
+    if (stored === "none") return null;
+    if (stored === "case" || stored === "assessment") return stored;
+    return actionSideBySide ? null : "case";
+  });
   useEffect(() => {
     localStorage.setItem("actions.rightPanel", rightPanel ?? "none");
   }, [rightPanel]);
 
   const railOpen = rightPanel === "case";
   const chatOpen = rightPanel === "assessment";
-  const { actionSideBySide } = useFlags();
 
   const slaStatus = slaStatusFor(action.elapsedMinutes, action.slaMinutes);
   // Same switch the full-screen console uses: an action carrying established

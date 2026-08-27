@@ -11,10 +11,13 @@ export interface FeatureFlags {
   /**
    * Run on the bundled demo dataset instead of the live tenant.
    *
-   * Off by default: the app is pointed at a real Maestro case, and the demo
-   * dataset is the fallback for when there is no tenant, no sign-in, or the
-   * read fails. Turn it on to rehearse offline, or to get the storyboard's exact
-   * numbers back when the live case has drifted from them.
+   * On by default: the app opens in the state it can always be trusted in — the
+   * storyboard's exact numbers, no sign-in, nothing that depends on a tenant
+   * being up. Turn it off to go live, which is also what arms the overlay and
+   * every link out to Maestro.
+   *
+   * The demo set stays the fallback either way: no tenant, no sign-in, or a
+   * failed read all land back here.
    */
   useMocks: boolean;
   /**
@@ -31,7 +34,8 @@ export interface FeatureFlags {
    * and a failed one falls back to the demo set whole. That is the honest
    * setting; this one is the demonstrable setting, which is why it leads.
    *
-   * Ignored when `useMocks` is on — there is nothing live to overlay.
+   * Ignored while `useMocks` is on — there is nothing live to overlay — which
+   * is the shipped state. Turning demo data off is what brings this into play.
    */
   overlayMocks: boolean;
   /**
@@ -68,33 +72,34 @@ export interface FeatureFlags {
    * Lay the Actions pane out like the console — finding and decision side by
    * side — when there is room for it.
    *
-   * "When there is room" is not decoration: the case-details panel takes the
-   * same horizontal space, so with that panel open the pane falls back to the
-   * stacked layout regardless. Two columns squeezed into a third of the window
-   * is worse than one.
+   * On by default, so Actions reads the way the console does. "When there is
+   * room" is not decoration: the case-details panel takes the same horizontal
+   * space, so with that panel open the pane falls back to the stacked layout
+   * regardless. Two columns squeezed into a third of the window is worse than
+   * one.
    */
   actionSideBySide: boolean;
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
-  useMocks: false,
+  useMocks: true,
   overlayMocks: true,
   showOpposingCause: true,
   showAgentConfidence: true,
   showReasoningCapture: true,
   showCasePlans: false,
   showHomepageSplash: true,
-  actionSideBySide: false,
+  actionSideBySide: true,
 };
 
 export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: string }> = {
   useMocks: {
     label: "Use demo data",
-    hint: "Ignore the live tenant and run on the bundled dataset. Off by default.",
+    hint: "Ignore the live tenant and run on the bundled dataset. On by default; turn it off to go live.",
   },
   overlayMocks: {
     label: "Overlay mock on live",
-    hint: "Keep the demo queue and pull real stage state, ids, links and tasks over it. On by default.",
+    hint: "Keep the demo queue and pull real stage state, ids, links and tasks over it. Needs demo data off.",
   },
   showOpposingCause: {
     label: "Opposing cause tile",

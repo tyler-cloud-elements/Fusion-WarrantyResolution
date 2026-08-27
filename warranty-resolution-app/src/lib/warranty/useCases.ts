@@ -414,6 +414,17 @@ export function fireEvidenceUploadEvent(warrantyCase: WarrantyCase) {
   });
 }
 
+/**
+ * True once scene 15's upload has landed on this case.
+ *
+ * Read off the case rather than tracked separately, so it stays right when the
+ * session state is reset underneath it — and it lets the menu item say "already
+ * arrived" instead of looking live and doing nothing on a second click.
+ */
+export function hasEvidenceUploadFired(warrantyCase: WarrantyCase): boolean {
+  return warrantyCase.evidence.some((e) => e.id === EVIDENCE_UPLOAD_EVENT.document.id);
+}
+
 /** Accepts the agent's proposed reroute, opening the lane it recommended. */
 export function acceptReassessment(warrantyCase: WarrantyCase, lane: string) {
   const current = caseOverrides[warrantyCase.id] ?? {};

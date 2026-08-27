@@ -1,9 +1,26 @@
 import { useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { ChevronLeft, ExternalLink, Inbox, RefreshCw, Upload } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ExternalLink,
+  FlaskConical,
+  Inbox,
+  RefreshCw,
+  RotateCcw,
+  Upload,
+} from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PageContainer } from "@/components/PageContainer";
 import { AskAiPanel } from "@/components/warranty/AskAiPanel";
 import { CaseDetailSkeleton } from "@/components/warranty/CaseSkeletons";
@@ -16,7 +33,9 @@ import { formatRemaining, formatSlaBudget } from "@/lib/warranty/sla";
 import {
   acceptReassessment,
   fireEvidenceUploadEvent,
+  hasEvidenceUploadFired,
   patchCase,
+  resetDemoState,
   useActionsForCase,
   useCase,
   useCaseAutoRefresh,
@@ -40,6 +59,9 @@ export function CaseDetailPage() {
   const actions = useActionsForCase(caseId ?? "");
   const { profile } = useRole();
   const flags = useFlags();
+  // Drives the upload item's done state, so a second click reads as spent
+  // rather than as a button that stopped working.
+  const uploadFired = Boolean(warrantyCase && hasEvidenceUploadFired(warrantyCase));
 
   // An open case is still being moved by the process, so it re-reads itself
   // every ten seconds for as long as this page is on screen.
@@ -186,14 +208,63 @@ export function CaseDetailPage() {
                   </Button>
                 )}
                 {/*
-                  Scene 15's trigger. A real deployment fires the configured
-                  webhook and the platform delivers the event; without one, this
-                  simulates the same arrival locally so the beat still lands.
+                  Manual actions — a presenter's controls, deliberately one step
+                  back from the case's own buttons.
+                     Everything else in this row is work: decide the action, open
+                  the queue. These stand in for events the platform would deliver
+                  on its own — a real deployment fires the configured webhook and
+                  the event arrives — so they belong behind a menu that says as
+                  much, rather than sitting at the same weight as "Decide" and
+                  inviting a click mid-demo.
                 */}
-                <Button variant="outline" onClick={() => fireEvidenceUploadEvent(warrantyCase)}>
-                  <Upload className="size-4" />
-                  Simulate customer evidence upload
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    {/* Pushed to the end of the row — same area, last in line. */}
+                    <Button variant="outline" className="ml-auto">
+                      <FlaskConical className="size-4" />
+                      Manual actions
+                      <ChevronDown className="size-4 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent align="start" className="w-80">
+                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                      Fired by hand, in place of the real event
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                      onSelect={() => fireEvidenceUploadEvent(warrantyCase)}
+                      disabled={uploadFired}
+                      className="flex items-start gap-2 py-2"
+                    >
+                      <Upload className="mt-0.5 size-4 shrink-0" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium">Customer evidence upload</span>
+                        <span className="block text-xs leading-snug text-muted-foreground">
+                          {uploadFired
+                            ? "Already arrived on this case."
+                            : "New photos land mid-case and wake the case agent."}
+                        </span>
+                      </span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                      onSelect={resetDemoState}
+                      className="flex items-start gap-2 py-2"
+                    >
+                      <RotateCcw className="mt-0.5 size-4 shrink-0" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium">Reset session state</span>
+                        <span className="block text-xs leading-snug text-muted-foreground">
+                          Clears every decision and event taken since the page loaded.
+                        </span>
+                      </span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </Card>

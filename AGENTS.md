@@ -238,9 +238,9 @@ room up should not have to set them twice.
 | Agent confidence | on | Hides the percentage and the precedent rollup. |
 | Reasoning capture | on | Hides the agree / keep asking / stop asking tri-state. |
 | Case plans tab | **off** | The only flag that is off by default. The case plan is design-time material and Act III is about running work, so the nav entry is hidden. `/case-plans` still resolves by URL either way, so a presenter can deep-link to it without turning the nav on. |
-| Side-by-side action | off | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the assessment take the same width; two columns squeezed into a third of the window is worse than one. |
-| Use demo data | **off** | Ignore the live tenant and run on the bundled dataset. Off by default — the app points at a real Maestro case, and the demo set is the fallback for no tenant, no sign-in, or a failed read. Turn it on to rehearse offline, or to get the storyboard's exact numbers back once the live case has drifted from them. **Overrides the overlay** and hides every link out to the tenant (Open case run, New case), because demo rows point at nothing and a dead link reads as a bug. |
-| Overlay mock on live | on | Keeps the demo queue and paints the tenant over it. Off, the two sources never mix — a successful read shows only what the tenant has. On is the demonstrable setting and is why it leads; off is the honest one. Inert while **Use demo data** is on, and the sidebar row says so rather than looking live. |
+| Side-by-side action | on | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the assessment take the same width; two columns squeezed into a third of the window is worse than one. |
+| Use demo data | on | Ignore the live tenant and run on the bundled dataset. **On by default**: the app opens in the state it can always be trusted in — the storyboard's exact numbers, no sign-in, nothing that depends on a tenant being up. Turning it off is the single switch that goes live, and it is what arms the overlay. While on it **overrides the overlay** and hides every link out to the tenant (Open case run, New case), because demo rows point at nothing and a dead link reads as a bug. |
+| Overlay mock on live | on | Keeps the demo queue and paints the tenant over it. Off, the two sources never mix — a successful read shows only what the tenant has. On is the demonstrable setting and is why it leads; off is the honest one. **Inert until Use demo data is turned off**, which is the shipped state; the sidebar row says so rather than looking live. |
 | Morning brief | on | The overnight summary above the work queue — greeting, narrative, four trend tiles, and three pulse cards (cases by stage, SLA posture, autonomy rate). Every figure is computed from the same case list the queue renders, so it cannot disagree with the table underneath it. **When on it also hides two things that would otherwise say the same thing twice:** the standalone "Agent summary" card (the brief opens with that exact line) and the personal KPI row. Turn it off and both come back. |
 
 > The KPI row it hides — avg. coverage decision time, restoration adherence, critical cases at
@@ -311,7 +311,8 @@ To go live:
    of the wiring.
 4. Reconcile the decision `actionType` codes against the deployed Action App schema —
    SDD §4 SME review item 10. Each human task declares its dispatch code in `casePlan.ts`.
-5. Sign in from the banner on the work queue.
+5. Turn **Use demo data** off in the sidebar's Feature flags, then sign in from the work
+   queue. That flag is the switch: on, nothing reads the tenant and no link points at it.
 
 ### External App scopes
 
@@ -329,8 +330,10 @@ Coded App that is `https://<org>.uipath.host/<routing-name>`.
 
 ## Running against the live tenant
 
-The app defaults to live. `warranty-resolution-app/.env` (gitignored) carries the FUSION
-tenant; `.env.example` carries the shape.
+The app ships on demo data — **Use demo data** is on, which is the one switch between the two
+worlds. Turn it off to go live; everything below then applies.
+`warranty-resolution-app/.env` (gitignored) carries the FUSION tenant; `.env.example` carries
+the shape.
 
 | Setting | Value |
 |---|---|

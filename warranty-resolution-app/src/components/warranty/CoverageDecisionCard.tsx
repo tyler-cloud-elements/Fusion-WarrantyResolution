@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Label, Mono } from "@/components/warranty/CoverageConsole";
 import { useFlags } from "@/lib/flags";
 import { cn } from "@/lib/utils";
-import { moneyExact, outcomeLabel, timeOnly } from "@/lib/warranty/format";
+import { moneyExact, outcomeLabel, shortCaseId, timeOnly } from "@/lib/warranty/format";
 import { REASONING_OPTIONS } from "@/lib/warranty/demoData";
 import { recordDecision } from "@/lib/warranty/useCases";
 import { useRole } from "@/lib/role/useRole";
@@ -226,8 +226,8 @@ function SettledState({
           <b className="block text-[15px] font-semibold">
             {outcomeLabel(action.completedOutcome ?? "")} authorised
           </b>
-          <span className="block text-xs text-muted-foreground">
-            {action.caseId}
+          <span className="block text-xs text-muted-foreground" title={action.caseId}>
+            {shortCaseId(action.caseId)}
             {action.completedAt ? ` · ${timeOnly(action.completedAt)}` : ""}
           </span>
         </span>
@@ -399,6 +399,8 @@ export function CoverageDecisionCard({
         <>
           <div className="flex flex-col gap-4 p-4">
             <fieldset className="flex flex-col gap-1.5">
+              {/* Full id here on purpose: a screen reader has no column to
+                  overflow, and an elided identifier is worse to hear. */}
               <legend className="sr-only">Coverage decision for {action.caseId}</legend>
               <Label className="mb-0.5">Coverage position</Label>
               {action.options.map((option) => {

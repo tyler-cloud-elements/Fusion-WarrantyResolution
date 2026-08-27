@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { moneyExact } from "@/lib/warranty/format";
+import { moneyExact, shortCaseId } from "@/lib/warranty/format";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 
 /**
@@ -58,8 +58,11 @@ export function DecisionHeader({
   return (
     <Card className={cn("gap-1.5 p-4", className)}>
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        <span className="font-mono text-[11.5px] tracking-tight text-muted-foreground">
-          {warrantyCase.id}
+        <span
+          className="font-mono text-[11.5px] tracking-tight text-muted-foreground"
+          title={warrantyCase.id}
+        >
+          {shortCaseId(warrantyCase.id)}
         </span>
         <h2 className="text-[15px] font-semibold leading-tight">{warrantyCase.customer}</h2>
         {warrantyCase.customerSegment && (

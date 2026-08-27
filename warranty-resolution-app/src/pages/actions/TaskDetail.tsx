@@ -27,7 +27,7 @@ import { PriorityBadge, SlaBadge } from "@/components/warranty/badges";
 import { appOrigin } from "@/lib/app-base";
 import { useFlags } from "@/lib/flags";
 import { cn } from "@/lib/utils";
-import { initialsOf, money, timeOnly } from "@/lib/warranty/format";
+import { initialsOf, money, shortCaseId, timeOnly } from "@/lib/warranty/format";
 import { formatElapsed, formatSlaBudget, slaStatusFor } from "@/lib/warranty/sla";
 import { reopenDecision, useActionsForCase } from "@/lib/warranty/useCases";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
@@ -185,8 +185,9 @@ export function TaskDetail({
                 to="/cases/$caseId"
                 params={{ caseId: action.caseId }}
                 className="tabular-nums text-primary transition-colors hover:underline"
+                title={action.caseId}
               >
-                {action.caseId}
+                {shortCaseId(action.caseId)}
               </Link>
             </MetaItem>
             <MetaItem label="Due">{timeOnly(action.dueAt)}</MetaItem>
@@ -400,8 +401,8 @@ export function TaskDetail({
                         <ExternalLink className="size-4" />
                       </a>
                     </div>
-                    <div className="truncate text-xs text-muted-foreground">
-                      {warrantyCase.id} · {warrantyCase.asset.model} ·{" "}
+                    <div className="truncate text-xs text-muted-foreground" title={warrantyCase.id}>
+                      {shortCaseId(warrantyCase.id)} · {warrantyCase.asset.model} ·{" "}
                       {money(warrantyCase.claimValue)}
                     </div>
                   </div>

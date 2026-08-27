@@ -4,6 +4,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { shortCaseId } from "@/lib/warranty/format";
 import { formatRemaining } from "@/lib/warranty/sla";
 import {
   activeTaskFilterCount,
@@ -223,8 +224,9 @@ export function TaskQueue({
                       params={{ caseId: action.caseId }}
                       onClick={(e) => e.stopPropagation()}
                       className="w-fit text-xs tabular-nums text-muted-foreground transition-colors hover:text-primary"
+                      title={action.caseId}
                     >
-                      {action.caseId}
+                      {shortCaseId(action.caseId)}
                     </Link>
                     <span className="text-xs text-muted-foreground">
                       {done

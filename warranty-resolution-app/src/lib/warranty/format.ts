@@ -118,3 +118,28 @@ const OUTCOME_LABELS: Record<string, string> = {
 export function outcomeLabel(outcome: string): string {
   return OUTCOME_LABELS[outcome] ?? outcome.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
+
+/**
+ * A case id short enough to sit in a queue card.
+ *
+ * Demo ids are already short — `WR-2026-0417` passes through untouched. Live
+ * ones are the case process name with a run number welded on, e.g.
+ * `IndustrialWarrantyResolution-16331444`, which is three times the width of
+ * the column it has to live in.
+ *
+ * The elision is in the middle, not the end, because the run number is the only
+ * part that identifies anything: every case on the screen shares the prefix, and
+ * truncating to `IndustrialWarrant…` would leave rows that cannot be told apart.
+ * Callers should keep the full id in a `title` so hovering still gives it whole.
+ */
+export function shortCaseId(id: string, max = 16): string {
+  if (id.length <= max) return id;
+
+  const cut = id.lastIndexOf("-");
+  const tail = cut > 0 ? id.slice(cut) : "";
+  // Only worth preserving if the tail leaves room for a recognisable head.
+  if (tail.length && tail.length <= max - 3) {
+    return `${id.slice(0, max - tail.length - 1)}…${tail}`;
+  }
+  return `${id.slice(0, max - 1)}…`;
+}

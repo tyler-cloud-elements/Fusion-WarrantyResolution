@@ -276,6 +276,21 @@ The coverage position lives in the host page, not the decision card, because the
 it as well as the card setting it. `CoverageDecisionCard` takes an optional `position` /
 `onPositionChange` and keeps its own state when they are absent.
 
+### Case ids on screen
+
+Demo ids are `WR-2026-0417`. Live ones are the case process name with a run number welded on —
+`IndustrialWarrantyResolution-16331444` — three times the width of the columns they have to
+live in, and identical across every case in the tenant.
+
+`shortCaseId()` in `lib/warranty/format.ts` elides **the middle**, keeping the run number
+whole: `Indust…-16331444`. Cutting the tail instead would leave rows that cannot be told
+apart, which is the opposite of what an identifier is for. Anything at or under the cap — every
+demo id — passes through untouched, so this is invisible until the app is pointed at a tenant.
+
+Every call site pairs it with `title={fullId}`, so hovering still gives the id whole. The one
+place the full id is rendered outright is the decision card's `sr-only` legend: a screen reader
+has no column to overflow, and an elided identifier is worse to hear.
+
 ## Feature flags
 
 Presenter switches, in the sidebar footer under **Feature flags**. They persist to

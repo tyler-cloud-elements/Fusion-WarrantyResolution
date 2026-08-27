@@ -9,6 +9,7 @@ import {
   decodeTaskFilters,
   type TaskFilters,
 } from "@/lib/warranty/taskFilters";
+import { shortCaseId } from "@/lib/warranty/format";
 import { isOverdue } from "@/lib/warranty/taskFilters";
 import { useActions, useCases } from "@/lib/warranty/useCases";
 import { useRole } from "@/lib/role/useRole";
@@ -99,8 +100,9 @@ export function ActionsPage() {
           to="/cases/$caseId"
           params={{ caseId: scopedCase.id }}
           className="shrink-0 font-semibold text-primary hover:underline"
+          title={scopedCase.id}
         >
-          {scopedCase.id}
+          {shortCaseId(scopedCase.id)}
         </Link>
         <span className="truncate text-muted-foreground">· {scopedCase.customer}</span>
         <Link

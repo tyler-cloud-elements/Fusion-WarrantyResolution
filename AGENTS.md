@@ -244,6 +244,24 @@ fixed while the card's totals move with the position. They cannot disagree. The 
 agent-recommendation tile stays out, because that one would restate the decision card and go
 stale the moment a position changed.
 
+**The two-column split is a container query, not a breakpoint.** `xl:` measured the window,
+which says nothing about the space left in the pane after the queue and whichever rail is
+open — at 1280px it was putting a 420px decision card beside a 115px finding. The pane is now
+an `@container` and the split turns on at `@min-[736px]`, which is what the two tracks
+actually need (340 + 16 gap + 380). Both tracks carry real minimums, so neither can be
+squeezed to nothing.
+
+Opening the **assessment** no longer restacks the pane. The two rails are not equivalent: the
+case rail is `flex-1` and claims whatever is left, so with it open there is genuinely no room
+for two columns; the assessment is a fixed 330px the pane can usually absorb. Reflowing for it
+also felt destructive — you open it to ask about the decision and the decision jumps out from
+beside the finding to underneath it. At laptop widths (~1500px) four columns still cannot fit
+in one window, so it stacks there; from ~1800px the layout holds.
+
+The decision card is rendered **once**, as a grid child. It used to be mounted twice — one copy
+per layout — which threw away its state, a half-typed rationale included, every time the
+layout flipped.
+
 **The finding is two rows, not two cards** — under `compactFinding`, which is on. A cause
 collapses to its side, its title and one clause; the full argument, the established stamp and
 the sources open underneath. The verdict drops its slab in this mode, because under two rows
@@ -301,7 +319,7 @@ room up should not have to set them twice.
 |---|---|---|
 | Opposing cause tile | on | Drops the second cause, on the customer. The heading, the "both established" stamp and the verdict box all change with it — with one cause the case is a clean approval, and claiming a combined cause would be a lie. |
 | Agent confidence | on | Hides the percentage and the precedent rollup. |
-| Reasoning capture | on | Hides the agree / keep asking / stop asking tri-state. |
+| Reasoning capture | **off** | The agree / keep asking / stop asking tri-state under the decision. Off by default: it asks the signer to grade the agent's reasoning as well as make the call, and the assessment rail already collects that per signal, with a thumb, which is the more useful shape of the same feedback. |
 | Case plans tab | **off** | The only flag that is off by default. The case plan is design-time material and Act III is about running work, so the nav entry is hidden. `/case-plans` still resolves by URL either way, so a presenter can deep-link to it without turning the nav on. |
 | Compact finding | on | Each cause is one row — which side it lands on, what it is, and the clause that establishes it — with the argument, the provenance stamp and the sources an expand away. About a hundred words less on a pane already carrying a decision, and the two sides stay beside each other in the narrow Actions layout where the cards stack. Off, the two full cause cards come back: they land harder on a projector, the rows read better for someone working the queue. |
 | Side-by-side action | on | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the assessment take the same width; two columns squeezed into a third of the window is worse than one. |

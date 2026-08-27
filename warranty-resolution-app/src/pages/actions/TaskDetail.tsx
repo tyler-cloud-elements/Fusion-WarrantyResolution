@@ -135,10 +135,21 @@ export function TaskDetail({
   // Same switch the full-screen console uses: an action carrying established
   // causes gets the combined-cause treatment, everything else the plain form.
   const rich = Boolean(action.causes?.length);
-  // Two columns only when the flag asks for it AND nothing else is competing for
-  // the width. The case panel and the assessment rail both take the same space,
-  // so with either open the pane stacks — which is what the flag's hint promises.
-  const sideBySide = actionSideBySide && rich && rightPanel === null;
+  /**
+   * Two columns when the flag asks for it and the case rail is not taking the
+   * width.
+   *
+   * The two rails are not equivalent, despite sharing a column. The case rail is
+   * elastic — `flex-1`, so it claims whatever is left — and with it open there is
+   * genuinely no room for two columns here. The assessment is a fixed 330px,
+   * which the pane can absorb.
+   *
+   * More to the point, reflowing for the assessment made it feel destructive:
+   * you open it to ask about the decision, and the decision jumps out from
+   * beside the finding to underneath it. Opening a panel to read something
+   * should not rearrange the thing you were reading.
+   */
+  const sideBySide = actionSideBySide && rich && rightPanel !== "case";
 
   // The policy test travels as a fold on the action; the Actions pane has no
   // fold stack, so it is pulled out and shown as its own card.
@@ -243,13 +254,29 @@ export function TaskDetail({
             <div
               className={cn(
                 "min-w-[340px] flex-1 overflow-y-auto p-5",
-                sideBySide
-                  ? "grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_420px] [&>*]:min-w-0"
-                  : "flex flex-col gap-4 [&>*]:shrink-0",
+                // A container, so the split below reacts to this pane's own
+                // width rather than the window's. `xl:` measured the viewport,
+                // which says nothing about the space left after the queue and
+                // whichever rail is open — at 1280px it was putting a 420px
+                // decision card next to a 115px finding.
+                "@container",
               )}
             >
               {warrantyCase && rich ? (
-                <>
+                <div
+                  className={cn(
+                    "grid items-start gap-4 [&>*]:min-w-0",
+                    // Real minimums on both tracks: a two-up layout that can
+                    // squeeze either side to nothing is worse than one column.
+                    // Below the threshold the tracks collapse to a single
+                    // column and the children stack in reading order.
+                    // The threshold is what the two tracks actually need —
+                    // 340 + 16 gap + 380 — not a stock breakpoint. `@3xl` is
+                    // 768px, which stacked a pane with 741px of room in it.
+                    sideBySide &&
+                      "@min-[736px]:grid-cols-[minmax(340px,1fr)_minmax(380px,420px)]",
+                  )}
+                >
                   {/* Reading column: what is being decided, then the finding. */}
                   <div className="flex min-w-0 flex-col gap-4">
                     <DecisionHeader action={action} warrantyCase={warrantyCase} />
@@ -267,18 +294,30 @@ export function TaskDetail({
                         marked={policyTest.marked}
                       />
                     ) : null}
+                  </div>
 
-                    {!sideBySide && (
-                      <CoverageDecisionCard
-                        action={action}
-                        warrantyCase={warrantyCase}
-                        onCompleted={onCompleted}
-                        onReopen={() => reopenDecision(action.id)}
-                        position={position}
-                        onPositionChange={setPosition}
-                      />
-                    )}
+                  {/*
+                    Deciding column — sticky beside the finding when there is
+                    room, and simply the next thing down when there is not.
+                    Rendered once either way: the previous version mounted a
+                    second copy for the stacked case, which threw away the
+                    card's state — a half-typed rationale included — every time
+                    the layout flipped.
+                  */}
+                  <div className={cn(sideBySide && "@min-[736px]:sticky @min-[736px]:top-0")}>
+                    <CoverageDecisionCard
+                      action={action}
+                      warrantyCase={warrantyCase}
+                      onCompleted={onCompleted}
+                      onReopen={() => reopenDecision(action.id)}
+                      position={position}
+                      onPositionChange={setPosition}
+                    />
+                  </div>
 
+                  {/* Spans both tracks: it is a pointer to the rail, not part
+                      of either argument. */}
+                  <div className="@min-[736px]:col-span-2">
                     <CaseContextHint
                       warrantyCase={warrantyCase}
                       railOpen={railOpen}
@@ -289,23 +328,9 @@ export function TaskDetail({
                       }}
                     />
                   </div>
-
-                  {/* Deciding column — sticky, like the console's. */}
-                  {sideBySide && (
-                    <div className="xl:sticky xl:top-0">
-                      <CoverageDecisionCard
-                        action={action}
-                        warrantyCase={warrantyCase}
-                        onCompleted={onCompleted}
-                        onReopen={() => reopenDecision(action.id)}
-                        position={position}
-                        onPositionChange={setPosition}
-                      />
-                    </div>
-                  )}
-                </>
+                </div>
               ) : (
-                <>
+                <div className="flex flex-col gap-4">
                   <Card className="gap-2 p-5">
                     <span className="text-base font-semibold">Why this reached you</span>
                     <p className="text-sm leading-relaxed text-muted-foreground">
@@ -332,7 +357,7 @@ export function TaskDetail({
                       }}
                     />
                   )}
-                </>
+                </div>
               )}
             </div>
 

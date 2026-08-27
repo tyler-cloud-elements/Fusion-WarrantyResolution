@@ -49,7 +49,13 @@ export interface FeatureFlags {
   showOpposingCause: boolean;
   /** Show the agent's confidence percentage and precedent rollup. */
   showAgentConfidence: boolean;
-  /** Show the reasoning tri-state under the decision. */
+  /**
+   * Show the reasoning tri-state under the decision.
+   *
+   * Off by default. It asks the signer to grade the agent's reasoning as well
+   * as make the call, and the assessment rail already collects that — per
+   * signal, with a thumb, which is the more useful shape of the same feedback.
+   */
   showReasoningCapture: boolean;
   /**
    * Show the Case plans entry in the left nav.
@@ -100,7 +106,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   overlayMocks: true,
   showOpposingCause: true,
   showAgentConfidence: true,
-  showReasoningCapture: true,
+  showReasoningCapture: false,
   showCasePlans: false,
   showHomepageSplash: true,
   actionSideBySide: true,
@@ -126,7 +132,7 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
   },
   showReasoningCapture: {
     label: "Reasoning capture",
-    hint: "The agree / keep asking / stop asking tri-state under the decision.",
+    hint: "The agree / keep asking / stop asking tri-state under the decision. Off by default.",
   },
   showCasePlans: {
     label: "Case plans tab",

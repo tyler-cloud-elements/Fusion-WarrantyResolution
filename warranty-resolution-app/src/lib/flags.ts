@@ -79,6 +79,20 @@ export interface FeatureFlags {
    * one.
    */
   actionSideBySide: boolean;
+  /**
+   * Collapse the finding's two causes into one row each.
+   *
+   * On, each cause is a line — which side it lands on, what it is, and the one
+   * clause that establishes it — with the full argument, the provenance stamp
+   * and the sources an expand away. That is about a hundred words less on a
+   * pane already competing with the decision card, and it keeps the two sides
+   * beside each other in the narrow Actions layout, where the cards stack.
+   *
+   * Off, the original two cards come back. Worth having as a switch rather than
+   * a rewrite: the cards make the combined cause land harder on a projector,
+   * and the rows read better for someone actually working the queue.
+   */
+  compactFinding: boolean;
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
@@ -90,6 +104,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   showCasePlans: false,
   showHomepageSplash: true,
   actionSideBySide: true,
+  compactFinding: true,
 };
 
 export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: string }> = {
@@ -120,6 +135,10 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
   showHomepageSplash: {
     label: "Morning brief",
     hint: "The overnight summary, trend tiles and pulse cards above the work queue.",
+  },
+  compactFinding: {
+    label: "Compact finding",
+    hint: "One row per cause, detail on expand. Off, the two full cause cards come back.",
   },
   actionSideBySide: {
     label: "Side-by-side action",

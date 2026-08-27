@@ -226,6 +226,93 @@ function CauseCard({ cause }: { cause: DecisionCause }) {
 }
 
 /**
+ * The same cause, as one line.
+ *
+ * Which side it lands on, what it is, and the clause that establishes it. The
+ * argument itself is not gone — it is one click down, alongside the provenance
+ * stamp and the sources, which is where it belongs on a pane that is also
+ * carrying a decision. The side stays colour-coded and stays in the leading
+ * position, because "on us / on them" is the thing being read first.
+ */
+function CauseRow({ cause }: { cause: DecisionCause }) {
+  const [open, setOpen] = useState(false);
+  const covered = cause.side === "covered";
+  // A finding's first sentence is usually its setup, so the fallback trims
+  // rather than truncating on a sentence boundary.
+  const summary = cause.summary ?? `${cause.body.slice(0, 72).trimEnd()}…`;
+
+  return (
+    <div className="border-b border-border/60 last:border-0">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-start gap-2.5 py-2 text-left transition-colors hover:bg-muted/40"
+      >
+        <span
+          aria-hidden
+          className={cn(
+            "mt-px grid size-4 shrink-0 place-items-center rounded text-[10px] font-bold",
+            covered
+              ? "bg-success/15 text-success"
+              : "bg-destructive/15 text-destructive",
+          )}
+        >
+          {covered ? "✓" : "✗"}
+        </span>
+        <span
+          className={cn(
+            "mt-0.5 w-[52px] shrink-0 text-[9px] font-semibold uppercase tracking-[0.09em]",
+            covered ? "text-success" : "text-destructive",
+          )}
+        >
+          {covered ? "On us" : "On them"}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[13px] font-semibold leading-snug">{cause.title}</span>
+          <span className="block text-[11.5px] leading-snug text-muted-foreground">
+            {summary}
+          </span>
+        </span>
+        <ChevronDown
+          className={cn(
+            "mt-1 size-3.5 shrink-0 text-muted-foreground transition-transform",
+            !open && "-rotate-90",
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="pb-2.5 pl-[74px] pr-1">
+          <p className="text-[12.5px] leading-relaxed text-muted-foreground">{cause.body}</p>
+          <span
+            className={cn(
+              "mt-1.5 block text-xs font-semibold",
+              covered ? "text-success" : "text-destructive",
+            )}
+          >
+            → {cause.points}
+          </span>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <Mono className="text-[9.5px]">{cause.established}</Mono>
+            <span className="flex flex-wrap gap-1">
+              {cause.sources.map((source) => (
+                <span
+                  key={source}
+                  className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                >
+                  {source}
+                </span>
+              ))}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * The finding — the established causes and what follows from them.
  *
  * The `showOpposingCause` flag drops the excluded cause. That is not a cosmetic
@@ -241,7 +328,7 @@ export function FindingCauses({
   /** 1 forces a stacked layout — for the narrower Actions pane. */
   columns?: 1 | 2;
 }) {
-  const { showOpposingCause } = useFlags();
+  const { showOpposingCause, compactFinding } = useFlags();
   if (!action.causes?.length) return null;
 
   const causes = showOpposingCause
@@ -262,14 +349,30 @@ export function FindingCauses({
         </Mono>
       </div>
 
-      <div className={cn("grid gap-3", combined && columns === 2 && "lg:grid-cols-2")}>
-        {causes.map((cause) => (
-          <CauseCard key={cause.label} cause={cause} />
-        ))}
-      </div>
+      {compactFinding ? (
+        <div className="flex flex-col">
+          {causes.map((cause) => (
+            <CauseRow key={cause.label} cause={cause} />
+          ))}
+        </div>
+      ) : (
+        <div className={cn("grid gap-3", combined && columns === 2 && "lg:grid-cols-2")}>
+          {causes.map((cause) => (
+            <CauseCard key={cause.label} cause={cause} />
+          ))}
+        </div>
+      )}
 
       {action.verdict && combined && (
-        <div className="rounded-lg border border-border bg-muted/50 p-3.5">
+        <div
+          className={cn(
+            "rounded-lg",
+            // Beside two full cards the verdict needs its own weight to read as
+            // the conclusion. Under two rows it already is the heaviest thing
+            // on the card, and a slab would just add furniture.
+            compactFinding ? "pt-0.5" : "border border-border bg-muted/50 p-3.5",
+          )}
+        >
           <b className="text-[15px] font-semibold tracking-tight">{action.verdict.headline}</b>
           <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
             {action.verdict.detail}

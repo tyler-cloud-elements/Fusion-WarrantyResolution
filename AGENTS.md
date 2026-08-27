@@ -239,6 +239,12 @@ tile here; both are deliberately left out, because the decision card states the 
 split and the recommendation, and saying them twice invites them to disagree the moment a
 position changes.
 
+**The finding is two rows, not two cards** — under `compactFinding`, which is on. A cause
+collapses to its side, its title and one clause; the full argument, the established stamp and
+the sources open underneath. The verdict drops its slab in this mode, because under two rows
+it is already the heaviest thing on the card. The flag exists so the before and after can be
+shown side by side rather than argued about: 836px of cards against 356px of rows.
+
 **The policy test is the argument, not supporting material.** Seven clauses, each with a
 verdict and the system that answered. Three verdicts, not two: a check nobody could run is not
 a check that came back clean. Operator-error contribution is **open** — the site never provided
@@ -277,6 +283,7 @@ room up should not have to set them twice.
 | Agent confidence | on | Hides the percentage and the precedent rollup. |
 | Reasoning capture | on | Hides the agree / keep asking / stop asking tri-state. |
 | Case plans tab | **off** | The only flag that is off by default. The case plan is design-time material and Act III is about running work, so the nav entry is hidden. `/case-plans` still resolves by URL either way, so a presenter can deep-link to it without turning the nav on. |
+| Compact finding | on | Each cause is one row — which side it lands on, what it is, and the clause that establishes it — with the argument, the provenance stamp and the sources an expand away. About a hundred words less on a pane already carrying a decision, and the two sides stay beside each other in the narrow Actions layout where the cards stack. Off, the two full cause cards come back: they land harder on a projector, the rows read better for someone working the queue. |
 | Side-by-side action | on | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the assessment take the same width; two columns squeezed into a third of the window is worse than one. |
 | Use demo data | on | Ignore the live tenant and run on the bundled dataset. **On by default**: the app opens in the state it can always be trusted in — the storyboard's exact numbers, no sign-in, nothing that depends on a tenant being up. Turning it off is the single switch that goes live, and it is what arms the overlay. While on it **overrides the overlay** and hides every link out to the tenant (Open case run, New case), because demo rows point at nothing and a dead link reads as a bug. |
 | Overlay mock on live | on | Keeps the demo queue and paints the tenant over it. Off, the two sources never mix — a successful read shows only what the tenant has. On is the demonstrable setting and is why it leads; off is the honest one. **Inert until Use demo data is turned off**, which is the shipped state; the sidebar row says so rather than looking live. |

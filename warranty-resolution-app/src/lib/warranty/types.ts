@@ -192,6 +192,14 @@ export interface DecisionCause {
   label: string;
   title: string;
   body: string;
+  /**
+   * The body in one clause, for the collapsed row.
+   *
+   * Not a truncation of `body` — the first sentence of a finding is usually its
+   * setup, not its point. Absent, the row falls back to trimming the body,
+   * which reads worse but never leaves the row blank.
+   */
+  summary?: string;
   /** "→ Points to covered" / "→ Points to excluded". */
   points: string;
   /** Provenance stamp, e.g. "ESTABLISHED 03-20 ON SITE". */

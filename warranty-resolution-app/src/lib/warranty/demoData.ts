@@ -1265,6 +1265,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
         title: "Component defect, inside its term",
         body:
           "Induction drive gearbox internal failure. The component was 30 months into a 60-month rated service life. Bearing race spalling consistent with a manufacturing defect — not with overload, contamination, or missed lubrication. Replaced on site, first-time fix confirmed.",
+        summary: "30 of 60 months · defect signature, not wear",
         points: "Points to covered",
         established: "ESTABLISHED 03-20 ON SITE",
         sources: ["FieldLink", "WT-9"],
@@ -1275,6 +1276,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
         title: "Configuration change, unapproved",
         body:
           "Drive control parameters were changed on 2026-02-14 — acceleration ramp and current limit raised above the commissioned envelope. No approval record exists. ESA §4.2 requires configuration changes to be approved in writing before they take effect.",
+        summary: "Limits raised 02-14 · no approval on record",
         points: "Points to excluded",
         established: "CHANGE LOGGED 02-14",
         sources: ["Vault-PLM", "Sentinel"],

@@ -226,6 +226,28 @@ each other. Those are the case:
 
 ---
 
+### Clocks on WR-2026-0417
+
+One clock needs attention, and it is the one the header shows: **Resolution decision SLA, at
+risk, 2 hr 13 min left of 4 hr.** Nothing is breached.
+
+At risk is *derived*, not authored. The stage has burned 107 of 240 minutes — 45%, comfortably
+on track by the ordinary 75% threshold — so the escalation comes from somewhere else: a P1
+case whose line is still down is at risk on the clock it is currently running, however much of
+that clock is left. The clock is not at risk because it is nearly spent; it is at risk because
+the thing it protects has been failing for 96 hours. The row says so in place of the usual
+"triggered when" line.
+
+That rule (`escalateWhileLineDown` in `caseSlas.ts`) is deliberately narrow. It touches only
+the stage the case is actually in — escalating the case clock and the task clock too would put
+three copies of one fact on screen — and it never escalates past At risk, because whether a
+clock has *breached* is a question about that clock alone.
+
+The coverage-decision **task** SLA is no longer listed. It fell on the same minute as the
+stage it belongs to, being the same budget from the same start, so it was one commitment shown
+twice — and once the stage escalated, the two sat side by side with identical countdowns
+reporting different statuses. A task clock that duplicates its stage's is now dropped.
+
 ## The decision screens
 
 The Actions queue **collapses to a rail** — a toggle in its header, a rail carrying the open

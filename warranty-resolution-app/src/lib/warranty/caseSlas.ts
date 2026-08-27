@@ -46,6 +46,34 @@ function dueFrom(now: number, elapsedMinutes: number, budgetMinutes: number): Da
 }
 
 /**
+ * A P1 case whose line is still down is at risk on the clock it is currently
+ * running, however much of that clock is left.
+ *
+ * Burn percentage is the wrong measure here. WR-2026-0417 has used 107 of 240
+ * minutes — 45%, comfortably "On track" by the ordinary threshold — while the
+ * customer's line has been down 96 hours with no divert. The clock is not at
+ * risk because it is nearly spent; it is at risk because the thing it exists to
+ * protect is already failing.
+ *
+ * Deliberately narrow. It escalates one entry — the stage the case is actually
+ * in — rather than every clock on the case: a P1 with a dead line would
+ * otherwise light up its case clock, its stage clock and its task clock with
+ * three copies of one fact, which is noise rather than signal. It never
+ * escalates past At risk, because whether a clock has *breached* is a question
+ * about that clock and nothing else.
+ */
+function escalateWhileLineDown(
+  warrantyCase: WarrantyCase,
+  status: SlaStatus,
+): SlaStatus {
+  if (status !== "On track") return status;
+  if (warrantyCase.priority !== "P1") return status;
+  // "Down · no divert" and the like. A restored or degraded line does not count.
+  if (!/^down\b/i.test(warrantyCase.lineStatus ?? "")) return status;
+  return "At risk";
+}
+
+/**
  * All clocks on the case, most urgent first within each level.
  *
  * A stage that has not been entered yet contributes a "Not triggered" row rather
@@ -115,9 +143,10 @@ export function getCaseSlas(
       // long-running parallel stage at exactly 100% and report a breach that is
       // an artefact of the clamp rather than of the case. A live instance
       // replaces this with real stage entry times.
-      elapsed =
-        stage.name === warrantyCase.currentStage ? warrantyCase.elapsedMinutes : caseElapsed;
+      const current = stage.name === warrantyCase.currentStage;
+      elapsed = current ? warrantyCase.elapsedMinutes : caseElapsed;
       status = slaStatusFor(elapsed, stage.slaMinutes);
+      if (current) status = escalateWhileLineDown(warrantyCase, status);
     }
 
     entries.push({
@@ -131,17 +160,39 @@ export function getCaseSlas(
           ? `${stage.name} is entered`
           : state === "skipped"
             ? "the stage was bypassed"
-            : `${stage.name} was entered`,
+            : // Says why it is at risk when the burn alone would not explain it.
+              status === "At risk" && slaStatusFor(elapsed, stage.slaMinutes) === "On track"
+              ? `the line has been down ${warrantyCase.lineDownHours ?? 0} hours on a P1 case`
+              : `${stage.name} was entered`,
     });
   }
 
   // ── Action level ──────────────────────────────────────────────────────────
+  //
+  // A task clock that falls on the same minute as the stage it belongs to is
+  // that stage's clock under another name — the stage is blocked on the task,
+  // both run the same budget from the same start, and listing both puts one
+  // commitment on the screen twice. Worse, the two can disagree: a P1 stage
+  // escalated by a dead line would sit beside its own task reporting "On track"
+  // with an identical countdown, which reads as a bug rather than as nuance.
+  const currentStageEntry = entries.find(
+    (e) => e.level === "stage" && e.label === `${warrantyCase.currentStage} SLA`,
+  );
+
   for (const action of actions) {
+    const dueAt = dueFrom(now, action.elapsedMinutes, action.slaMinutes);
+    const duplicatesStage =
+      action.status !== "Completed" &&
+      currentStageEntry != null &&
+      action.stage === warrantyCase.currentStage &&
+      Math.abs(dueAt.getTime() - currentStageEntry.dueAt.getTime()) < MINUTE;
+    if (duplicatesStage) continue;
+
     entries.push({
       id: `action:${action.id}`,
       level: "action",
       label: `${action.title} task SLA`,
-      dueAt: dueFrom(now, action.elapsedMinutes, action.slaMinutes),
+      dueAt,
       status:
         action.status === "Completed"
           ? "Met"

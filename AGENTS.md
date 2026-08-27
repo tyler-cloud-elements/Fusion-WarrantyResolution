@@ -239,7 +239,8 @@ room up should not have to set them twice.
 | Reasoning capture | on | Hides the agree / keep asking / stop asking tri-state. |
 | Case plans tab | **off** | The only flag that is off by default. The case plan is design-time material and Act III is about running work, so the nav entry is hidden. `/case-plans` still resolves by URL either way, so a presenter can deep-link to it without turning the nav on. |
 | Side-by-side action | off | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the assessment take the same width; two columns squeezed into a third of the window is worse than one. |
-| Use demo data | **off** | Ignore the live tenant and run on the bundled dataset. Off by default — the app points at a real Maestro case, and the demo set is the fallback for no tenant, no sign-in, or a failed read. Turn it on to rehearse offline, or to get the storyboard's exact numbers back once the live case has drifted from them. |
+| Use demo data | **off** | Ignore the live tenant and run on the bundled dataset. Off by default — the app points at a real Maestro case, and the demo set is the fallback for no tenant, no sign-in, or a failed read. Turn it on to rehearse offline, or to get the storyboard's exact numbers back once the live case has drifted from them. **Overrides the overlay** and hides every link out to the tenant (Open case run, New case), because demo rows point at nothing and a dead link reads as a bug. |
+| Overlay mock on live | on | Keeps the demo queue and paints the tenant over it. Off, the two sources never mix — a successful read shows only what the tenant has. On is the demonstrable setting and is why it leads; off is the honest one. Inert while **Use demo data** is on, and the sidebar row says so rather than looking live. |
 | Morning brief | on | The overnight summary above the work queue — greeting, narrative, four trend tiles, and three pulse cards (cases by stage, SLA posture, autonomy rate). Every figure is computed from the same case list the queue renders, so it cannot disagree with the table underneath it. **When on it also hides two things that would otherwise say the same thing twice:** the standalone "Agent summary" card (the brief opens with that exact line) and the personal KPI row. Turn it off and both come back. |
 
 > The KPI row it hides — avg. coverage decision time, restoration adherence, critical cases at
@@ -298,6 +299,12 @@ To go live:
 2. Fill in `warranty-resolution-app/.env` — see `.env.example`. At minimum:
    `VITE_UIPATH_BASE_URL`, `VITE_UIPATH_ORG_NAME`, `VITE_UIPATH_TENANT_NAME`,
    `VITE_UIPATH_CLIENT_ID`, `VITE_CASE_PROCESS_KEY`.
+   `VITE_UIPATH_BASE_URL` is the **api** host, not the portal. The portal origin sends no
+   `Access-Control-Allow-Origin`, so from a browser every call dies in preflight; identity
+   answers on the api host too (it 302s to the portal), so one value covers auth and data.
+   Links *out* are the other direction — `portalUrl()` in `config.ts` derives `cloud.` back
+   from `api.` for "Open case run", Action Center and Jobs, since an API host renders nothing
+   for a person. `VITE_UIPATH_PORTAL_URL` overrides the derivation.
 3. Reconcile `src/lib/warranty/casePlan.ts` against the published plan. The service layer
    matches live stage and task names against those definitions by **normalised name**
    (lowercased, non-alphanumerics stripped), so keeping the names identical is the whole
@@ -327,15 +334,52 @@ tenant; `.env.example` carries the shape.
 
 | Setting | Value |
 |---|---|
-| Base URL / org / tenant | `https://cloud.uipath.com` · `businessorchestration` · `FUSION` |
+| Base URL / org / tenant | `https://api.uipath.com` · `businessorchestration` · `FUSION` |
+| Portal origin (derived) | `https://cloud.uipath.com` |
 | External App client id | `52be2376-b348-492a-9ea5-c7ec704141e6` |
 | Case processKey | `6ea32614-e78e-46d7-84eb-8b27599a014e` |
 | Folder key | `cbf6dec7-939a-4eeb-ab3f-f78065dc9b27` |
 
-**Live and demo never blend.** The queue is one or the other, and the banner always names
-which and why. The rule that matters: a *failed* read falls back to the demo set, a
-*successful* read that returns nothing shows an empty queue. Padding a real queue with
-fictional rows would make the counts lie.
+**Live and demo never blend — except deliberately, under one flag.** With **Overlay live on
+demo** off, the queue is one or the other and the banner names which and why: a *failed* read
+falls back to the demo set, a *successful* read that returns nothing shows an empty queue,
+because padding a real queue with fictional rows would make the counts lie.
+
+With the overlay **on** — the default — they blend on purpose, and narrowly. The demo cases
+stay the queue and keep everything the story rests on; four things come from the tenant:
+
+| From the tenant | Why |
+|---|---|
+| Case id | The row *is* the real case, and its route is the real route |
+| Instance and folder key | "Open case run" opens the actual run |
+| Stage state | The board shows where the process got to, not where the script says — except `status`, below |
+| Action task id | Signing the decision completes a real Action Center task |
+
+Pairing is **positional, newest instance first** — a Maestro instance id has no relationship
+to a demo business id, so there is nothing to match on. Newest-first is the demo's own working
+order: `DEMO_CASES` opens with the three cases that need a person, Sarah Chen's `WR-2026-0417`
+first, so the run started minutes before the keynote becomes her case, and starting another
+from **New case** makes that new one the hero in turn.
+
+The queue stays exactly the demo set — all 41 rows, three of them needing a person. Instances
+past the last demo case are **not** appended: the screen's claim is three out of forty-one,
+and a tenant carrying a dozen rehearsal runs would bury it. Demo cases past the end of the
+live set stay demo, so the queue still tells the story when the tenant holds one instance or
+none. Turn the overlay off to see everything the tenant actually has.
+
+One field resists the pattern: **`status` stays demo.** It is not really a stage fact — it is
+what the queue sorts and counts on — and a rehearsal instance sitting in *Progressing* would
+quietly empty the three-cases-need-you claim, leaving the app telling the truth about an
+instance nobody came to see instead of the story everybody did.
+
+Live stage states *merge* rather than replace: live wins on every stage it names, and demo
+stages the live plan says nothing about survive. A matching plan therefore takes over
+completely, and a diverging one degrades to showing what it knows instead of blanking the
+board.
+
+The merge logic lives in `src/lib/warranty/overlay.ts`, kept free of hooks so it can be read
+and tested on its own — which field crosses over is the most consequential decision in the
+app, and getting it wrong makes the screen quietly lie about a real case.
 
 - **Cases** come from `CaseInstances.getAll({ processKey })`, with stages, variables and
   execution history per instance. A live instance whose business id matches a demo row takes

@@ -409,6 +409,13 @@ export interface WarrantyCase {
   closureReason?: string;
   /** False for rows sourced from the bundled demo dataset rather than Maestro. */
   isLive: boolean;
+  /**
+   * Under the overlay flag, the demo case this row is painted over.
+   *
+   * The row wears the live instance's id, so the demo id it started as would
+   * otherwise be lost — and the demo actions still refer to the case by it.
+   */
+  overlaidFrom?: string;
 }
 
 /** Fleet-level numbers for the Performance page — storyboard scene 12. */

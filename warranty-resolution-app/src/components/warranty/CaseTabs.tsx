@@ -165,7 +165,7 @@ export function CaseTabs({
   function addComment() {
     const text = draft.trim();
     if (!text) return;
-    addCaseComment(warrantyCase.id, {
+    addCaseComment(warrantyCase, {
       author: profile.name,
       role: profile.title,
       time: new Date().toISOString(),

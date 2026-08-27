@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { RefreshCw, Search, TriangleAlert } from "lucide-react";
+import { Check, Copy, Layers, Radio, RefreshCw, Search, TriangleAlert } from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/PageContainer";
 import { MetricTile } from "@/components/dashboard/MetricTile";
@@ -17,12 +18,12 @@ import {
   QueueReasonPill,
   SlaBadge,
 } from "@/components/warranty/badges";
-import { useFlags } from "@/lib/flags";
+import { liveLinksAllowed, useFlags } from "@/lib/flags";
 import { cn } from "@/lib/utils";
 import { relativeTime } from "@/lib/warranty/format";
 import { useAgentSummary, useCases, useInsights } from "@/lib/warranty/useCases";
 import { useRole } from "@/lib/role/useRole";
-import { isUiPathConfigured } from "@/services/uipath/config";
+import { buildSdkConfig, isUiPathConfigured } from "@/services/uipath/config";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
 import type { WarrantyCase } from "@/lib/warranty/types";
 
@@ -88,13 +89,103 @@ function CaseRow({ warrantyCase }: { warrantyCase: WarrantyCase }) {
   );
 }
 
+/** Shows the redirect URI this build sends, with one click to copy it. */
+function RedirectUriHint() {
+  const [copied, setCopied] = useState(false);
+  // Optional on the SDK config union (the secret-auth branch has none),
+  // but always present on the OAuth branch this app uses.
+  const uri = buildSdkConfig().redirectUri ?? "";
+
+  return (
+    <button
+      type="button"
+      title="Copy — this must match the External App registration exactly"
+      onClick={() => {
+        void navigator.clipboard?.writeText(uri).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        });
+      }}
+      className="flex items-center gap-1 text-[10.5px] text-muted-foreground transition-colors hover:text-foreground"
+    >
+      {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+      <span className="font-mono">{uri}</span>
+    </button>
+  );
+}
+
+/**
+ * Where the rows came from, as one icon beside Refresh.
+ *
+ * This used to be a banner, which is the wrong weight for it: on a live queue
+ * the sentence is true, unchanging, and read once, while the state behind it is
+ * worth confirming at a glance every time the page is opened. So the state is
+ * always visible and the sentence is one hover away.
+ *
+ * Three states, and the icon alone distinguishes them: demo (a warning, because
+ * nothing on screen is real), overlay (layered, the default), and live.
+ */
+function SourceBadge({
+  isDemo,
+  isOverlay,
+  reason,
+  authError,
+}: {
+  isDemo: boolean;
+  isOverlay: boolean;
+  reason?: string;
+  authError?: string | null;
+}) {
+  const { label, hint, icon: Icon, tone } = isDemo
+    ? {
+        label: "Demo data",
+        hint: reason ?? "No live Maestro case instances were read.",
+        icon: TriangleAlert,
+        tone: "text-warning",
+      }
+    : isOverlay
+      ? {
+          label: "Overlay",
+          hint: reason ?? "Demo cases, overlaid with live stage state, ids and tasks.",
+          icon: Layers,
+          tone: "text-muted-foreground",
+        }
+      : {
+          label: "Live",
+          hint: "Every row is a Maestro case instance.",
+          icon: Radio,
+          tone: "text-success",
+        };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* A button rather than a bare span so it is reachable by keyboard —
+            the tooltip is the only place this explanation now lives. */}
+        <button
+          type="button"
+          aria-label={`Data source: ${label}. ${hint}`}
+          className="grid size-9 shrink-0 place-items-center rounded-md border border-border transition-colors hover:bg-muted"
+        >
+          <Icon className={cn("size-4", tone)} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="max-w-72">
+        <span className="font-medium">{label}.</span> {hint}
+        {authError && <span className="mt-1 block text-destructive">{authError}</span>}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function CasesListPage() {
-  const { cases, isDemo, isLoading, reason, refresh } = useCases();
+  const { cases, isDemo, isOverlay, isLoading, reason, refresh } = useCases();
   const insights = useInsights();
   const summary = useAgentSummary();
   const { profile } = useRole();
   const { isAuthenticated, isLoading: authLoading, login, error: authError } = useUiPath();
-  const { showHomepageSplash } = useFlags();
+  const flags = useFlags();
+  const { showHomepageSplash } = flags;
 
   const [tab, setTab] = useState<QueueTab>("action");
   const [search, setSearch] = useState("");
@@ -142,37 +233,47 @@ export function CasesListPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <SourceBadge
+              isDemo={isDemo}
+              isOverlay={isOverlay}
+              reason={reason}
+              authError={authError}
+            />
             <Button variant="outline" onClick={refresh} disabled={isLoading}>
               <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
               Refresh
             </Button>
-            <NewCaseDialog onStarted={refresh} />
+            {/* Starting a case starts a real Orchestrator job, which has no
+                meaning while the queue is the bundled dataset. */}
+            {liveLinksAllowed(flags) && <NewCaseDialog onStarted={refresh} />}
           </div>
         </div>
 
         {/*
-          One banner covers every reason the list is not live: no tenant
-          configured, no case process key, not signed in, or a failed read. It
-          states which, and offers the only action that can change it.
+          Signing in is the one thing a person can do about the queue not being
+          live, so it stays a button. Everything explanatory that used to sit in
+          a banner here is now on the source badge beside Refresh — the state is
+          worth glancing at every time, the sentence only occasionally.
         */}
-        {isDemo && (
-          <Card className="flex-row flex-wrap items-start gap-3 border-dashed p-4">
-            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
+        {isUiPathConfigured() && !isAuthenticated && (
+          <Card className="flex-row flex-wrap items-center gap-3 border-dashed p-3">
             <div className="min-w-0 flex-1 text-sm">
-              <span className="font-medium">Demo data.</span>{" "}
-              {/* The reason comes from the data layer rather than being worked
-                  out again here — two copies of this logic would eventually
-                  disagree about why the queue is not live. */}
+              <span className="font-medium">Not signed in.</span>{" "}
               <span className="text-muted-foreground">
-                {reason ?? "No live Maestro case instances were read."}
+                The queue is the bundled dataset until you are.
               </span>
               {authError && <span className="block text-destructive">{authError}</span>}
             </div>
-            {isUiPathConfigured() && !isAuthenticated && (
+            <div className="flex shrink-0 items-center gap-2">
               <Button size="sm" onClick={() => void login()} disabled={authLoading}>
                 {authLoading ? "Signing in…" : "Sign in to UiPath"}
               </Button>
-            )}
+              {/* The one value an "Invalid redirect_uri" failure turns on.
+                  Identity compares it character for character against the
+                  External App registration, so it is worth being able to read
+                  and copy the exact string this build sends. */}
+              <RedirectUriHint />
+            </div>
           </Card>
         )}
 

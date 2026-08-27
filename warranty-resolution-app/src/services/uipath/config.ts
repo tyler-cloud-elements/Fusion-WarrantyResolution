@@ -5,6 +5,7 @@
 // state to leave it in until the real case is published.
 
 import type { UiPathSDKConfig } from "@uipath/uipath-typescript/core";
+import { getAppBase } from "@/lib/app-base";
 
 function env(key: string): string {
   const value = import.meta.env[key as keyof ImportMetaEnv];
@@ -12,13 +13,47 @@ function env(key: string): string {
 }
 
 export const uipathConfig = {
+  /**
+   * The API host the SDK calls — `https://api.uipath.com`, not the portal.
+   *
+   * The portal origin serves no `Access-Control-Allow-Origin`, so every request
+   * from the browser dies in preflight:
+   *   blocked by CORS policy: No 'Access-Control-Allow-Origin' header
+   * The `api.` host is the one that answers cross-origin. Identity is reachable
+   * through it too, so auth and data share this one value.
+   */
   baseUrl: env("VITE_UIPATH_BASE_URL"),
   orgName: env("VITE_UIPATH_ORG_NAME"),
   tenantName: env("VITE_UIPATH_TENANT_NAME"),
   clientId: env("VITE_UIPATH_CLIENT_ID"),
   redirectUri: env("VITE_UIPATH_REDIRECT_URI"),
   scopes: env("VITE_UIPATH_SCOPES"),
+  /** Overrides the derived portal origin. Rarely needed — see `portalUrl()`. */
+  portalUrl: env("VITE_UIPATH_PORTAL_URL"),
 } as const;
+
+/**
+ * The origin a PERSON should be sent to, which is not the one the SDK calls.
+ *
+ * `api.uipath.com` answers API requests; `cloud.uipath.com` serves the UI. Deep
+ * links (a case run, an Action Center task, the jobs list) have to use the
+ * second or they land on an API host that renders nothing.
+ *
+ * Production is the awkward one: its API host has no environment label to keep,
+ * so `api.` maps to `cloud.` rather than simply being dropped. Everywhere else
+ * the label is the environment and only `api.` comes out:
+ *   api.uipath.com          → cloud.uipath.com
+ *   staging.api.uipath.com  → staging.uipath.com
+ *   alpha.api.uipath.com    → alpha.uipath.com
+ *
+ * Set VITE_UIPATH_PORTAL_URL for a host these two rules do not describe.
+ */
+export function portalUrl(): string {
+  if (uipathConfig.portalUrl) return uipathConfig.portalUrl;
+  return uipathConfig.baseUrl
+    .replace(/^(https?:\/\/)api\./, "$1cloud.")
+    .replace(/^(https?:\/\/[^./]+)\.api\./, "$1.");
+}
 
 export const caseConfig = {
   /** processKey of the published Maestro case. Blank ⇒ demo dataset only. */
@@ -67,14 +102,28 @@ export function isAssistantConfigured(): boolean {
 }
 
 /**
- * Default redirect URI: the app's own origin + path. That is what the UiPath
- * Coded Apps host needs, since the app is served under /<routing-name>/ and the
- * External App is registered against that exact URL.
+ * Default redirect URI: the app's MOUNT POINT, never the current route.
+ *
+ * OAuth compares redirect_uri against the registered value character for
+ * character, so it has to be the same string from every screen. The obvious
+ * `origin + window.location.pathname` is only stable under a hash router (where
+ * pathname is always "/"); this app routes on the history API, so from /cases it
+ * would send `http://localhost:5173/cases` and identity rejects it with
+ * `invalid_request — Invalid redirect_uri`.
+ *
+ * `getAppBase()` is the mount point — "/" locally, "/<routing-name>" on UiPath
+ * Coded Apps — so this yields one value per deployment:
+ *   http://localhost:5173/
+ *   https://<org>.uipath.host/<routing-name>/
+ *
+ * The trailing slash matches what a hash-routed app produces, which is the shape
+ * these External Apps are normally registered with. If yours is registered
+ * without it, set VITE_UIPATH_REDIRECT_URI explicitly — it must match exactly.
  */
 function defaultRedirectUri(): string {
   if (typeof window === "undefined") return "";
-  const { origin, pathname } = window.location;
-  return pathname === "/" ? origin : `${origin}${pathname}`;
+  const base = getAppBase();
+  return base === "/" ? `${window.location.origin}/` : `${window.location.origin}${base}/`;
 }
 
 export function buildSdkConfig(): UiPathSDKConfig {
@@ -88,10 +137,10 @@ export function buildSdkConfig(): UiPathSDKConfig {
   };
 }
 
-/** Deep link to a task in Action Center, for the "Open in Action Center" affordance. */
+/** Deep link to a task in Action Center — portal host, so a person can open it. */
 export function actionCenterUrl(taskId: number | string): string | null {
   if (!uipathConfig.baseUrl || !uipathConfig.orgName || !uipathConfig.tenantName) return null;
-  return `${uipathConfig.baseUrl}/${uipathConfig.orgName}/${uipathConfig.tenantName}/actions_/tasks/${taskId}`;
+  return `${portalUrl()}/${uipathConfig.orgName}/${uipathConfig.tenantName}/actions_/tasks/${taskId}`;
 }
 
 /**
@@ -101,6 +150,8 @@ export function actionCenterUrl(taskId: number | string): string | null {
  * of the path and the folder rides as a query param, both of which the page
  * needs to resolve the run:
  *   /{org}/{tenant}/maestro_/cases/{processKey}/instances/{instanceId}?folderKey=…
+ *
+ * Built on the portal origin, not the API host the SDK talks to.
  */
 export function maestroInstanceUrl(
   instanceId: string,
@@ -113,7 +164,7 @@ export function maestroInstanceUrl(
 
   const folder = folderKey || caseConfig.folderKey;
   const query = folder ? `?folderKey=${encodeURIComponent(folder)}` : "";
-  return `${uipathConfig.baseUrl}/${uipathConfig.orgName}/${uipathConfig.tenantName}/maestro_/cases/${key}/instances/${instanceId}${query}`;
+  return `${portalUrl()}/${uipathConfig.orgName}/${uipathConfig.tenantName}/maestro_/cases/${key}/instances/${instanceId}${query}`;
 }
 
 /** True once the "New case" button has somewhere to send a job. */

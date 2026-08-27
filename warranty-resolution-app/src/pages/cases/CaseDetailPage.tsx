@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { ChevronLeft, ExternalLink, Inbox, Upload } from "lucide-react";
+import { ChevronLeft, ExternalLink, Inbox, RefreshCw, Upload } from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageContainer } from "@/components/PageContainer";
 import { AskAiPanel } from "@/components/warranty/AskAiPanel";
+import { CaseDetailSkeleton } from "@/components/warranty/CaseSkeletons";
 import { CaseTabs } from "@/components/warranty/CaseTabs";
 import { ReassessmentCard } from "@/components/warranty/ReassessmentCard";
 import { CaseStatusBadge, PriorityBadge, SlaBadge } from "@/components/warranty/badges";
+import { cn } from "@/lib/utils";
 import { money } from "@/lib/warranty/format";
 import { formatRemaining, formatSlaBudget } from "@/lib/warranty/sla";
 import {
@@ -17,7 +19,9 @@ import {
   patchCase,
   useActionsForCase,
   useCase,
+  useCaseAutoRefresh,
 } from "@/lib/warranty/useCases";
+import { liveLinksAllowed, useFlags } from "@/lib/flags";
 import { useRole } from "@/lib/role/useRole";
 import { maestroInstanceUrl } from "@/services/uipath/config";
 
@@ -32,9 +36,14 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
 
 export function CaseDetailPage() {
   const { caseId } = useParams({ strict: false }) as { caseId: string };
-  const warrantyCase = useCase(caseId);
+  const { warrantyCase, isLoading, isRefreshing, refresh } = useCase(caseId);
   const actions = useActionsForCase(caseId ?? "");
   const { profile } = useRole();
+  const flags = useFlags();
+
+  // An open case is still being moved by the process, so it re-reads itself
+  // every ten seconds for as long as this page is on screen.
+  useCaseAutoRefresh(warrantyCase);
 
   const [tab, setTab] = useState("overview");
   // Open the panel automatically only where there is room alongside the case
@@ -42,6 +51,11 @@ export function CaseDetailPage() {
   const [chatOpen, setChatOpen] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1620,
   );
+
+  // Undefined while loading is not the same as absent. Landing here by URL —
+  // a refresh, a pasted link — starts with an empty store, and calling that a
+  // missing case put a 404 on screen for a case that was seconds from arriving.
+  if (isLoading && !warrantyCase) return <CaseDetailSkeleton />;
 
   if (!warrantyCase) {
     return (
@@ -61,7 +75,12 @@ export function CaseDetailPage() {
 
   const openActions = actions.filter((a) => a.status === "Open");
   const primaryAction = openActions[0];
-  const instanceUrl = maestroInstanceUrl(warrantyCase.instanceId, warrantyCase.folderKey);
+  // Demo rows carry no instance id, so this is already null for them — the flag
+  // check is the explicit half of the same rule: under demo data nothing links
+  // out, because there is nothing on the other end.
+  const instanceUrl = liveLinksAllowed(flags)
+    ? maestroInstanceUrl(warrantyCase.instanceId, warrantyCase.folderKey)
+    : null;
   // Inline editing on the Details tab belongs to whoever owns the case.
   const editable = profile.name === warrantyCase.owner;
 
@@ -77,6 +96,16 @@ export function CaseDetailPage() {
               <ChevronLeft className="size-4" /> Work queue
             </Link>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refresh}
+                disabled={isRefreshing}
+                title="Refresh this case"
+              >
+                <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
+                Refresh
+              </Button>
               {instanceUrl && (
                 <Button variant="outline" size="sm" asChild>
                   <a href={instanceUrl} target="_blank" rel="noreferrer">
@@ -161,7 +190,7 @@ export function CaseDetailPage() {
                   webhook and the platform delivers the event; without one, this
                   simulates the same arrival locally so the beat still lands.
                 */}
-                <Button variant="outline" onClick={fireEvidenceUploadEvent}>
+                <Button variant="outline" onClick={() => fireEvidenceUploadEvent(warrantyCase)}>
                   <Upload className="size-4" />
                   Simulate customer evidence upload
                 </Button>
@@ -173,8 +202,8 @@ export function CaseDetailPage() {
             <ReassessmentCard
               reassessment={warrantyCase.reassessment}
               acceptLabel="Route to engineering exception"
-              onAccept={() => acceptReassessment(warrantyCase.id, "Engineering exception")}
-              onOverride={() => acceptReassessment(warrantyCase.id, warrantyCase.currentStage)}
+              onAccept={() => acceptReassessment(warrantyCase, "Engineering exception")}
+              onOverride={() => acceptReassessment(warrantyCase, warrantyCase.currentStage)}
             />
           )}
 

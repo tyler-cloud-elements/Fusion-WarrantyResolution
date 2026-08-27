@@ -6,7 +6,7 @@
 // evidence) where Maestro carries none. That way pointing the app at a real case
 // mid-build improves it rather than emptying it.
 
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -17,6 +17,7 @@ import {
   EVIDENCE_UPLOAD_EVENT,
 } from "./demoData";
 import { activityFor } from "./activity";
+import { mergeAction, mergeCases, overlayActions, overlayCases } from "./overlay";
 import type {
   ActivityItem,
   CaseAction,
@@ -35,57 +36,22 @@ const CASES_KEY = ["warranty", "cases"] as const;
 const ACTIONS_KEY = ["warranty", "actions"] as const;
 const STALE_TIME_MS = 30_000;
 
-/** Live fields win; demo fields fill the gaps Maestro does not carry. */
-function mergeCase(demo: WarrantyCase, live: WarrantyCase): WarrantyCase {
-  return {
-    ...demo,
-    ...live,
-    customer: live.customer || demo.customer,
-    site: live.site || demo.site,
-    description: live.description || demo.description,
-    owner: live.owner || demo.owner,
-    ownerRole: live.ownerRole || demo.ownerRole,
-    claimValue: live.claimValue || demo.claimValue,
-    asset: {
-      model: live.asset.model || demo.asset.model,
-      serial: live.asset.serial || demo.asset.serial,
-      description: live.asset.description || demo.asset.description,
-      inServiceMonths: live.asset.inServiceMonths || demo.asset.inServiceMonths,
-      warrantyStatus: live.asset.warrantyStatus || demo.asset.warrantyStatus,
-    },
-    evidence: live.evidence.length ? live.evidence : demo.evidence,
-    trail: live.trail.length ? live.trail : demo.trail,
-    variables: { ...demo.variables, ...live.variables },
-    isLive: true,
-  };
-}
-
-/**
- * Live instances, with the demo row of the same id filling gaps Maestro does
- * not carry. Demo rows with no live counterpart are NOT appended: once the app
- * is reading a real case, padding the queue with fictional rows would make the
- * counts lie. Callers decide when to show the demo set instead — never blended.
- */
-function mergeCases(live: WarrantyCase[]): WarrantyCase[] {
-  const byId = new Map(DEMO_CASES.map((c) => [c.id, c]));
-  return live.map((liveCase) => {
-    const demo = byId.get(liveCase.id);
-    return demo ? mergeCase(demo, liveCase) : liveCase;
-  });
-}
-
 export interface CasesResult {
   cases: WarrantyCase[];
   /** True when nothing live was read and the list is the bundled dataset. */
   isDemo: boolean;
+  /** True when demo rows are on screen wearing live ids, stages and links. */
+  isOverlay: boolean;
   isLoading: boolean;
+  /** A refetch over data already on screen — a spinner, not a skeleton. */
+  isRefreshing: boolean;
   reason?: string;
   refresh: () => void;
 }
 
 export function useCases(): CasesResult {
-  const { sdk, isAuthenticated } = useUiPath();
-  const { useMocks } = useFlags();
+  const { sdk, isAuthenticated, isLoading: authLoading } = useUiPath();
+  const { useMocks, overlayMocks } = useFlags();
   const queryClient = useQueryClient();
 
   // Live is the default. The demo dataset is what you get when the flag asks for
@@ -111,6 +77,9 @@ export function useCases(): CasesResult {
     if (useMocks || !enabled || query.data?.degraded) {
       // No tenant, not signed in, the read failed, or the flag asked for it.
       base = DEMO_CASES;
+    } else if (overlayMocks) {
+      // The demo queue, wearing the tenant's ids, stages and links.
+      base = overlayCases(live);
     } else if (live.length > 0) {
       base = mergeCases(live);
     } else {
@@ -120,14 +89,18 @@ export function useCases(): CasesResult {
     }
 
     return base.map((c) => (overrides[c.id] ? { ...c, ...overrides[c.id] } : c));
-  }, [query.data, overrides, useMocks, enabled]);
+  }, [query.data, overrides, useMocks, overlayMocks, enabled]);
 
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: CASES_KEY });
   }, [queryClient]);
 
+  const isOverlay = cases.some((c) => c.overlaidFrom);
+
   const reason = useMocks
     ? "Demo data — the Use demo data flag is on"
+    : isOverlay
+      ? "Demo cases, overlaid with live stage state, ids and tasks"
     : !isUiPathConfigured()
       ? "No UiPath tenant is configured"
       : !isCaseConfigured()
@@ -139,41 +112,81 @@ export function useCases(): CasesResult {
   return {
     cases,
     isDemo: !enabled || (query.data?.degraded ?? true),
-    isLoading: enabled && query.isLoading,
+    isOverlay,
+    // Auth settling counts. While the provider is still restoring a token
+    // `enabled` is false, so `cases` is the demo set — and a live case id read
+    // from the URL is "not found" until the token lands. Callers that resolve
+    // one case need to hold their verdict across both waits, not just the query.
+    isLoading: authLoading || (enabled && query.isLoading),
+    isRefreshing: query.isFetching,
     reason,
     refresh,
   };
 }
 
-export function useCase(caseId: string | undefined): WarrantyCase | undefined {
-  const { cases } = useCases();
-  return useMemo(() => cases.find((c) => c.id === caseId), [cases, caseId]);
+export interface CaseResult {
+  warrantyCase: WarrantyCase | undefined;
+  /** Still resolving — `warrantyCase` being undefined does not yet mean absent. */
+  isLoading: boolean;
+  isRefreshing: boolean;
+  refresh: () => void;
+}
+
+/**
+ * One case by id.
+ *
+ * Returns the wait alongside the case because the two undefineds mean opposite
+ * things: not loaded yet, versus genuinely no such case. Reading a deep link on
+ * a cold load hits the first for a second or two, and treating that as the
+ * second is how "Case … not found" ends up on screen for a case that exists.
+ */
+export function useCase(caseId: string | undefined): CaseResult {
+  const { cases, isLoading, isRefreshing, refresh } = useCases();
+  const warrantyCase = useMemo(() => cases.find((c) => c.id === caseId), [cases, caseId]);
+  return { warrantyCase, isLoading, isRefreshing, refresh };
+}
+
+/** How often an open case re-reads itself. */
+const CASE_POLL_MS = 10_000;
+
+/**
+ * Keeps an open case current while someone is looking at it.
+ *
+ * A case in flight is being moved by the process — a stage completes, a task
+ * appears — and none of that arrives on its own, so the page would sit on
+ * whatever was true when it loaded. Polling stops at Closed, where there is
+ * nothing left to move, and while the tab is hidden, so a demo left open in a
+ * background tab is not quietly hammering the tenant.
+ *
+ * Actions ride along: they hang off the case, and a stage advancing is usually
+ * exactly when a new one shows up.
+ */
+export function useCaseAutoRefresh(warrantyCase: WarrantyCase | undefined): void {
+  const queryClient = useQueryClient();
+  const live = Boolean(warrantyCase?.isLive) && warrantyCase?.status !== "Closed";
+
+  useEffect(() => {
+    if (!live) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      void queryClient.invalidateQueries({ queryKey: CASES_KEY });
+      void queryClient.invalidateQueries({ queryKey: ACTIONS_KEY });
+    }, CASE_POLL_MS);
+    return () => window.clearInterval(id);
+  }, [live, queryClient]);
 }
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 
-/**
- * Live fields win; the demo action supplies the argument Action Center does not
- * carry — the causes, the cost lines, the authority limit, the recommendation.
- * Matched on `actionType`, which is the Action App's own dispatch code.
- */
-function mergeAction(demo: CaseAction, live: CaseAction): CaseAction {
-  return {
-    ...demo,
-    ...live,
-    title: live.title || demo.title,
-    stage: live.stage || demo.stage,
-    assignee: live.assignee || demo.assignee,
-    whyThisReachedYou: live.whyThisReachedYou || demo.whyThisReachedYou,
-    options: live.options.length && !demo.options.length ? live.options : demo.options,
-    recommendation: live.recommendation.headline ? live.recommendation : demo.recommendation,
-  };
+export interface ActionsResult {
+  actions: CaseAction[];
+  isLoading: boolean;
 }
 
-export function useActions(): CaseAction[] {
+export function useActionsResult(): ActionsResult {
   const { sdk, isAuthenticated } = useUiPath();
-  const { useMocks } = useFlags();
-  const { cases } = useCases();
+  const { useMocks, overlayMocks } = useFlags();
+  const { cases, isLoading: casesLoading } = useCases();
   const completions = useCompletions();
 
   const liveCases = useMemo(
@@ -189,7 +202,7 @@ export function useActions(): CaseAction[] {
     staleTime: STALE_TIME_MS,
   });
 
-  return useMemo(() => {
+  const actions = useMemo(() => {
     const live = query.data?.actions ?? [];
 
     // Same rule as the case list: fall back to the demo set only when we could
@@ -198,6 +211,10 @@ export function useActions(): CaseAction[] {
     let base: CaseAction[];
     if (!enabled || query.data?.degraded) {
       base = DEMO_ACTIONS;
+    } else if (overlayMocks) {
+      // The demo actions, re-pointed at the overlaid cases and carrying the
+      // real task ids where Action Center has one open.
+      base = overlayActions(cases, live);
     } else {
       base = live.map((a) => {
         const demo = DEMO_ACTIONS.find((d) => d.actionType === a.actionType);
@@ -209,12 +226,27 @@ export function useActions(): CaseAction[] {
       const completion = completions[action.id];
       return completion ? { ...action, ...completion } : action;
     });
-  }, [query.data, completions, enabled]);
+  }, [query.data, completions, enabled, overlayMocks, cases]);
+
+  // Two waits in series: actions can only be fetched once the cases they hang
+  // off are known, so this query has not even started while cases are loading.
+  return { actions, isLoading: casesLoading || (enabled && query.isLoading) };
 }
 
-export function useAction(actionId: string | undefined): CaseAction | undefined {
-  const actions = useActions();
-  return useMemo(() => actions.find((a) => a.id === actionId), [actions, actionId]);
+export function useActions(): CaseAction[] {
+  return useActionsResult().actions;
+}
+
+export interface ActionResult {
+  action: CaseAction | undefined;
+  isLoading: boolean;
+}
+
+/** One action by id, with the same not-yet / not-there distinction as `useCase`. */
+export function useAction(actionId: string | undefined): ActionResult {
+  const { actions, isLoading } = useActionsResult();
+  const action = useMemo(() => actions.find((a) => a.id === actionId), [actions, actionId]);
+  return { action, isLoading };
 }
 
 export function useActionsForCase(caseId: string): CaseAction[] {
@@ -251,6 +283,14 @@ export function useAgentSummary() {
 // Decisions taken and events fired during a demo live in module state rather
 // than localStorage: a run should start clean every reload, and the presenter
 // should never have to clear storage between rehearsals.
+//
+// Every mutator below takes the case being looked at, not its id. That is the
+// whole point: overrides are keyed by the id ON SCREEN, which since the app went
+// live-by-default is a Maestro id, not a demo one. Resolving the case being
+// changed out of DEMO_CASES instead — as these once did — silently no-ops every
+// one of them the moment a live read succeeds, because no demo row carries that
+// id. Taking the case itself makes the base state and the override key come from
+// the same object, so there is nothing left to mismatch.
 
 type CaseOverride = Partial<WarrantyCase>;
 type ActionCompletion = Partial<CaseAction>;
@@ -322,48 +362,52 @@ export function reopenDecision(actionId: string) {
 }
 
 /** Records which evidence a decision-maker marked useful — the signal capture. */
-export function markEvidenceHelpful(caseId: string, evidenceId: string, helpful: boolean | null) {
-  const current = caseOverrides[caseId]?.evidence;
-  const base = current ?? DEMO_CASES.find((c) => c.id === caseId)?.evidence ?? [];
-  patchCase(caseId, {
+export function markEvidenceHelpful(
+  warrantyCase: WarrantyCase,
+  evidenceId: string,
+  helpful: boolean | null,
+) {
+  // The override is read first so two ratings in one render both land; the case
+  // on screen is the fallback, and it already has any earlier override folded in.
+  const base = caseOverrides[warrantyCase.id]?.evidence ?? warrantyCase.evidence;
+  patchCase(warrantyCase.id, {
     evidence: base.map((e) => (e.id === evidenceId ? { ...e, helpful } : e)),
   });
 }
 
 /** Adds uploaded documents to a case's evidence, newest first. */
-export function addCaseEvidence(caseId: string, documents: EvidenceDocument[]) {
-  const target = DEMO_CASES.find((c) => c.id === caseId);
-  if (!target) return;
-  const existing = caseOverrides[caseId]?.evidence ?? target.evidence;
+export function addCaseEvidence(warrantyCase: WarrantyCase, documents: EvidenceDocument[]) {
+  const existing = caseOverrides[warrantyCase.id]?.evidence ?? warrantyCase.evidence;
   // Same file picked twice is the same document, not two.
   const fresh = documents.filter((d) => !existing.some((e) => e.id === d.id));
   if (fresh.length === 0) return;
-  patchCase(caseId, {
+  patchCase(warrantyCase.id, {
     evidence: [...fresh, ...existing],
     lastUpdatedAt: new Date().toISOString(),
   });
 }
 
 /** Appends a comment to a case's discussion. */
-export function addCaseComment(caseId: string, comment: CaseComment) {
-  const target = DEMO_CASES.find((c) => c.id === caseId);
-  if (!target) return;
-  const existing = caseOverrides[caseId]?.comments ?? target.comments;
-  patchCase(caseId, { comments: [...existing, comment] });
+export function addCaseComment(warrantyCase: WarrantyCase, comment: CaseComment) {
+  const existing = caseOverrides[warrantyCase.id]?.comments ?? warrantyCase.comments;
+  patchCase(warrantyCase.id, { comments: [...existing, comment] });
 }
 
 /**
  * The storyboard's scene 15: a customer upload lands mid-case, wakes the case
  * agent, and the agent proposes a reroute nobody asked it for.
+ *
+ * Fires on the case being looked at rather than on the one the scene was written
+ * around. The button sits on every case's page, so pinning the event to a single
+ * authored id meant it did nothing on any other case — and nothing at all once
+ * the hero case came back from Maestro wearing a live id.
  */
-export function fireEvidenceUploadEvent() {
-  const target = DEMO_CASES.find((c) => c.id === EVIDENCE_UPLOAD_EVENT.caseId);
-  if (!target) return;
-
-  const existing = caseOverrides[target.id]?.evidence ?? target.evidence;
+export function fireEvidenceUploadEvent(warrantyCase: WarrantyCase) {
+  const existing = caseOverrides[warrantyCase.id]?.evidence ?? warrantyCase.evidence;
+  // Fire twice and the second is a no-op, not a duplicate row.
   if (existing.some((e) => e.id === EVIDENCE_UPLOAD_EVENT.document.id)) return;
 
-  patchCase(target.id, {
+  patchCase(warrantyCase.id, {
     evidence: [...existing, EVIDENCE_UPLOAD_EVENT.document],
     reassessment: EVIDENCE_UPLOAD_EVENT.reassessment,
     lastUpdatedAt: new Date().toISOString(),
@@ -371,18 +415,15 @@ export function fireEvidenceUploadEvent() {
 }
 
 /** Accepts the agent's proposed reroute, opening the lane it recommended. */
-export function acceptReassessment(caseId: string, lane: string) {
-  const target = DEMO_CASES.find((c) => c.id === caseId);
-  if (!target) return;
+export function acceptReassessment(warrantyCase: WarrantyCase, lane: string) {
+  const current = caseOverrides[warrantyCase.id] ?? {};
+  const lanes = current.activeLanes ?? warrantyCase.activeLanes;
+  const trail = current.trail ?? warrantyCase.trail;
 
-  const current = caseOverrides[caseId] ?? {};
-  const lanes = current.activeLanes ?? target.activeLanes;
-  const trail = current.trail ?? target.trail;
-
-  patchCase(caseId, {
+  patchCase(warrantyCase.id, {
     activeLanes: lanes.includes(lane) ? lanes : [...lanes, lane],
     reassessment: undefined,
-    stageStates: { ...(current.stageStates ?? target.stageStates), sx2: "active" },
+    stageStates: { ...(current.stageStates ?? warrantyCase.stageStates), sx2: "active" },
     trail: [
       ...trail,
       {
@@ -390,7 +431,7 @@ export function acceptReassessment(caseId: string, lane: string) {
         actor: "human",
         actorLabel: "HT",
         step: `Route to ${lane} accepted`,
-        stage: target.currentStage,
+        stage: warrantyCase.currentStage,
         time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
       },
     ],

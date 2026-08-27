@@ -18,6 +18,23 @@ export interface FeatureFlags {
    */
   useMocks: boolean;
   /**
+   * Keep the demo dataset as the spine and paint the live tenant over it.
+   *
+   * The two sources carry different things. The demo set carries the story —
+   * the customer, the asset, the evidence, the combined-cause argument — and
+   * the tenant carries what is actually true right now: which stage the case
+   * reached, the instance and task ids, the links that open the real run. On,
+   * you get both: the storyboard's case, wired to a live instance, so "open the
+   * case run" lands somewhere real and a decision completes a real task.
+   *
+   * Off, the two never mix: a successful read shows only what the tenant has,
+   * and a failed one falls back to the demo set whole. That is the honest
+   * setting; this one is the demonstrable setting, which is why it leads.
+   *
+   * Ignored when `useMocks` is on — there is nothing live to overlay.
+   */
+  overlayMocks: boolean;
+  /**
    * Show the second, opposing cause on the decision console.
    *
    * On, the finding reads as a genuine combined cause — two established causes
@@ -61,6 +78,7 @@ export interface FeatureFlags {
 
 export const DEFAULT_FLAGS: FeatureFlags = {
   useMocks: false,
+  overlayMocks: true,
   showOpposingCause: true,
   showAgentConfidence: true,
   showReasoningCapture: true,
@@ -73,6 +91,10 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
   useMocks: {
     label: "Use demo data",
     hint: "Ignore the live tenant and run on the bundled dataset. Off by default.",
+  },
+  overlayMocks: {
+    label: "Overlay mock on live",
+    hint: "Keep the demo queue and pull real stage state, ids, links and tasks over it. On by default.",
   },
   showOpposingCause: {
     label: "Opposing cause tile",
@@ -99,6 +121,33 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
     hint: "Finding and decision in two columns, like the console. Stacks anyway while the case panel is open.",
   },
 };
+
+/**
+ * Flags the current combination makes inert, and what is overriding them.
+ *
+ * Some of these switches are not independent. Demo data and the overlay are the
+ * clearest pair: with demo data on there is no live read at all, so there is
+ * nothing for the overlay to paint on, and leaving its toggle looking live
+ * invites someone to flip it mid-demo and conclude the app is broken. The data
+ * layer already resolves the precedence — this is how the UI says so out loud.
+ */
+export function suppressedFlags(
+  flags: FeatureFlags,
+): Partial<Record<keyof FeatureFlags, string>> {
+  const suppressed: Partial<Record<keyof FeatureFlags, string>> = {};
+  if (flags.useMocks) {
+    suppressed.overlayMocks = "Overridden by Use demo data — nothing live to overlay.";
+  }
+  return suppressed;
+}
+
+/**
+ * True when the app may show links out to the tenant — a case run, a task, a
+ * job. Demo rows point at nothing, and a dead "Open case run" reads as a bug.
+ */
+export function liveLinksAllowed(flags: FeatureFlags): boolean {
+  return !flags.useMocks;
+}
 
 const STORAGE_KEY = "warranty-app-flags";
 

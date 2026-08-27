@@ -7,6 +7,7 @@ import {
   isModified,
   resetFlags,
   setFlag,
+  suppressedFlags,
   useFlags,
   type FeatureFlags,
 } from "@/lib/flags";
@@ -20,17 +21,26 @@ import {
 function FlagRow({
   flagKey,
   value,
+  suppressed,
   onChange,
 }: {
   flagKey: keyof FeatureFlags;
   value: boolean;
+  /** Why this flag currently does nothing, when something else overrides it. */
+  suppressed?: string;
   onChange: (next: boolean) => void;
 }) {
   const { label, hint } = FLAG_LABELS[flagKey];
+  // Still switchable while suppressed — a presenter setting the room up should
+  // be able to arrange both halves of a pair in either order — but dimmed, and
+  // saying what is overriding it instead of what it would do.
   return (
     <label
-      className="flex cursor-pointer items-start gap-2 rounded-md px-1.5 py-1.5 transition-colors hover:bg-sidebar-accent"
-      title={hint}
+      className={cn(
+        "flex cursor-pointer items-start gap-2 rounded-md px-1.5 py-1.5 transition-colors hover:bg-sidebar-accent",
+        suppressed && "opacity-55",
+      )}
+      title={suppressed ?? hint}
     >
       {/* A switch rather than a checkbox: these are on/off states of the running
           demo, not items being selected. */}
@@ -42,7 +52,7 @@ function FlagRow({
         onClick={() => onChange(!value)}
         className={cn(
           "mt-0.5 inline-flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-          value ? "bg-primary" : "bg-muted-foreground/30",
+          value && !suppressed ? "bg-primary" : "bg-muted-foreground/30",
         )}
       >
         <span
@@ -54,7 +64,9 @@ function FlagRow({
       </button>
       <span className="min-w-0 flex-1">
         <span className="block text-xs font-medium leading-tight">{label}</span>
-        <span className="block text-[10.5px] leading-snug text-muted-foreground">{hint}</span>
+        <span className="block text-[10.5px] leading-snug text-muted-foreground">
+          {suppressed ?? hint}
+        </span>
       </span>
     </label>
   );
@@ -67,6 +79,7 @@ export function FeatureFlagsPanel() {
   const { state, isMobile } = useSidebar();
   const [open, setOpen] = useState(false);
   const modified = isModified(flags);
+  const suppressed = suppressedFlags(flags);
 
   // The collapsed rail has no room for labels, and the icon alone would be a
   // mystery, so the section hides until the sidebar is expanded.
@@ -100,6 +113,7 @@ export function FeatureFlagsPanel() {
               key={key}
               flagKey={key}
               value={flags[key]}
+              suppressed={suppressed[key]}
               onChange={(next) => setFlag(key, next)}
             />
           ))}

@@ -502,9 +502,13 @@ const CASE_0417: WarrantyCase = {
 /**
  * Scene 15's mid-case event, kept separate so the demo can fire it on demand
  * rather than showing the case as already reassessed.
+ *
+ * Carries no case id on purpose. It was written around WR-2026-0417, but the
+ * button that fires it applies it to whichever case is open — a case read from
+ * Maestro has a live id, and an authored id here only invited the event to be
+ * filed against a case nobody is looking at.
  */
 export const EVIDENCE_UPLOAD_EVENT = {
-  caseId: "WR-2026-0417",
   document: {
     // Deliberately not in the ev-0417-N sequence: this document arrives at run
     // time, and a sequential id would collide the moment the authored set grows.

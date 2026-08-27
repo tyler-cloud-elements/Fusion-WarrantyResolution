@@ -1,21 +1,21 @@
+import { useEffect } from "react";
 import {
   createRootRoute,
   createRoute,
   createRouter,
   Outlet,
-  redirect,
+  useNavigate,
+  useRouterState,
 } from "@tanstack/react-router";
 import { BarChart3, FileText, Inbox, Workflow } from "lucide-react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ApolloShell, type ShellNavItem } from "@/components/ui/shell";
-import { ThemeProvider } from "@/components/ui/shell-theme-provider";
+import { Spinner } from "@/components/ui/spinner";
 import { FeatureFlagsPanel } from "@/components/warranty/FeatureFlagsPanel";
 import { PersonaSwitcher } from "@/components/warranty/PersonaSwitcher";
 import { getAppBase } from "@/lib/app-base";
-import { RoleProvider } from "@/lib/role/RoleProvider";
 import { useFlags } from "@/lib/flags";
 import { useActions, useCases } from "@/lib/warranty/useCases";
-import { UiPathProvider } from "@/services/uipath/UiPathProvider";
+import { useUiPath } from "@/services/uipath/UiPathProvider";
 import { ActionsPage } from "@/pages/actions/ActionsPage";
 import { CasesListPage } from "@/pages/cases/CasesListPage";
 import { CaseDetailPage } from "@/pages/cases/CaseDetailPage";
@@ -33,27 +33,7 @@ const NAV_ITEMS: ShellNavItem[] = [
   { path: "/case-plans", label: "case_plans", icon: Workflow },
 ];
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    // Case state changes while a demo is running; a refetch on focus is the
-    // cheapest way to keep a projected screen honest after an alt-tab.
-    queries: { refetchOnWindowFocus: true, retry: 1 },
-  },
-});
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider storageKey="warranty-app-theme">
-        <UiPathProvider>
-          <RoleProvider>
-            <Outlet />
-          </RoleProvider>
-        </UiPathProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
-  ),
-});
+const rootRoute = createRootRoute({ component: Outlet });
 
 function NavBadge({ count }: { count: number }) {
   return (
@@ -106,13 +86,39 @@ const shellRoute = createRoute({
   component: ShellLayout,
 });
 
-// The queue is the landing screen — the demo opens on the work, not a dashboard.
+/**
+ * The landing route, which is also the OAuth redirect target.
+ *
+ * It cannot redirect in `beforeLoad`: identity returns to the mount point with
+ * `?code=&state=` on the URL, and a redirect there would strip them before the
+ * SDK could exchange them — the sign-in would loop with no error. So it renders
+ * instead, and hands off to the queue once the exchange has settled.
+ */
+function LandingPage() {
+  const navigate = useNavigate();
+  const { isLoading } = useUiPath();
+  const params = new URLSearchParams(useRouterState().location.searchStr);
+  const inCallback = params.has("code") && params.has("state");
+
+  useEffect(() => {
+    if (inCallback || isLoading) return;
+    void navigate({ to: "/cases", replace: true });
+  }, [inCallback, isLoading, navigate]);
+
+  return (
+    <div className="flex h-full items-center justify-center">
+      <span className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Spinner className="size-4" />
+        {inCallback || isLoading ? "Signing you in…" : "Opening your queue…"}
+      </span>
+    </div>
+  );
+}
+
 const indexRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: "/",
-  beforeLoad: () => {
-    throw redirect({ to: "/cases" });
-  },
+  component: LandingPage,
 });
 
 const casesRoute = createRoute({

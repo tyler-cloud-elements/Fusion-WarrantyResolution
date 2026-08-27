@@ -40,14 +40,14 @@ function fileToDocument(file: File, uploadedBy: string): EvidenceDocument {
   };
 }
 
-function UploadButton({ caseId }: { caseId: string }) {
+function UploadButton({ warrantyCase }: { warrantyCase: WarrantyCase }) {
   const { profile } = useRole();
   const inputRef = useRef<HTMLInputElement>(null);
 
   function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (files.length > 0) {
-      addCaseEvidence(caseId, files.map((f) => fileToDocument(f, profile.name)));
+      addCaseEvidence(warrantyCase, files.map((f) => fileToDocument(f, profile.name)));
     }
     // Reset so picking the same file again still fires onChange.
     e.target.value = "";
@@ -81,7 +81,7 @@ export function CaseDocumentsWidget({
         title="Documents"
         onOpen={onOpen}
       >
-        <UploadButton caseId={warrantyCase.id} />
+        <UploadButton warrantyCase={warrantyCase} />
       </WidgetHeader>
 
       {latest.length === 0 ? (
@@ -128,7 +128,7 @@ export function CaseDocumentsTab({ warrantyCase }: { warrantyCase: WarrantyCase 
           >
             {showRatings ? "Hide ratings" : "Rate usefulness"}
           </Button>
-          <UploadButton caseId={warrantyCase.id} />
+          <UploadButton warrantyCase={warrantyCase} />
         </div>
       </div>
 
@@ -136,7 +136,7 @@ export function CaseDocumentsTab({ warrantyCase }: { warrantyCase: WarrantyCase 
         documents={warrantyCase.evidence}
         onHelpful={
           showRatings
-            ? (evidenceId, helpful) => markEvidenceHelpful(warrantyCase.id, evidenceId, helpful)
+            ? (evidenceId, helpful) => markEvidenceHelpful(warrantyCase, evidenceId, helpful)
             : undefined
         }
       />

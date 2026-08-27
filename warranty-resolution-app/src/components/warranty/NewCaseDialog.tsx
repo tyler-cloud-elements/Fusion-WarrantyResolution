@@ -21,7 +21,12 @@ import {
 import { Label } from "@/components/warranty/CoverageConsole";
 import { cn } from "@/lib/utils";
 import { startNewCase } from "@/services/uipath/caseService";
-import { caseConfig, isNewCaseConfigured } from "@/services/uipath/config";
+import {
+  caseConfig,
+  isNewCaseConfigured,
+  portalUrl,
+  uipathConfig,
+} from "@/services/uipath/config";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
 
 // Starts a case by starting the configured Orchestrator process with the demo
@@ -94,9 +99,8 @@ export function NewCaseDialog({ onStarted }: { onStarted?: () => void }) {
     }
   }
 
-  const jobsUrl = `${import.meta.env.VITE_UIPATH_BASE_URL ?? ""}/${
-    import.meta.env.VITE_UIPATH_ORG_NAME ?? ""
-  }/${import.meta.env.VITE_UIPATH_TENANT_NAME ?? ""}/orchestrator_/jobs`;
+  // Portal host, not the API host — this is a link for a person to click.
+  const jobsUrl = `${portalUrl()}/${uipathConfig.orgName}/${uipathConfig.tenantName}/orchestrator_/jobs`;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

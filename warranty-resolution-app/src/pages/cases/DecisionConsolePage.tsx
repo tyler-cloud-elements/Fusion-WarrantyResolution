@@ -11,6 +11,7 @@ import {
   DetailFolds,
   FindingCauses,
 } from "@/components/warranty/CoverageConsole";
+import { DecisionConsoleSkeleton } from "@/components/warranty/CaseSkeletons";
 import { CoverageDecisionCard } from "@/components/warranty/CoverageDecisionCard";
 import { DecisionForm } from "@/components/warranty/DecisionForm";
 import { EvidenceList, HelpfulToggle } from "@/components/warranty/EvidenceList";
@@ -81,7 +82,7 @@ function SignalCaptureRail({
                 <span className="min-w-0 flex-1 text-sm">{document.title}</span>
                 <HelpfulToggle
                   value={document.helpful}
-                  onChange={(next) => markEvidenceHelpful(warrantyCase.id, document.id, next)}
+                  onChange={(next) => markEvidenceHelpful(warrantyCase, document.id, next)}
                 />
               </li>
             ))}
@@ -213,9 +214,14 @@ function PlainConsole({
 
 export function DecisionConsolePage() {
   const { caseId, taskId } = useParams({ strict: false }) as { caseId: string; taskId: string };
-  const action = useAction(taskId);
-  const warrantyCase = useCase(caseId);
+  const { action, isLoading: actionLoading } = useAction(taskId);
+  const { warrantyCase, isLoading: caseLoading } = useCase(caseId);
   const navigate = useNavigate();
+
+  // Same distinction as the case page: still arriving, versus not there.
+  if ((actionLoading || caseLoading) && (!action || !warrantyCase)) {
+    return <DecisionConsoleSkeleton />;
+  }
 
   if (!action || !warrantyCase) {
     return (
@@ -290,7 +296,7 @@ export function DecisionConsolePage() {
                   <EvidenceList
                     documents={warrantyCase.evidence}
                     onHelpful={(evidenceId, helpful) =>
-                      markEvidenceHelpful(warrantyCase.id, evidenceId, helpful)
+                      markEvidenceHelpful(warrantyCase, evidenceId, helpful)
                     }
                   />
                 </div>

@@ -7,6 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { sidebarSpring } from "./shell-animations";
 import { UserProfileMenuItems } from "./shell-user-profile-menu-items";
 import { useUser } from "./shell-user-provider";
@@ -39,23 +40,39 @@ export const UserProfile = ({
     <AnimatePresence mode="wait">
       {isCollapsed ? (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <motion.button
-              type="button"
-              className="flex items-center justify-center cursor-pointer rounded-full p-1"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              whileTap={{ scale: 0.95 }}
-              transition={sidebarSpring}
-            >
-              <Avatar className="w-9 h-9 rounded-full shrink-0">
-                <AvatarFallback className="w-9 h-9 bg-muted rounded-full text-sidebar-foreground">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-            </motion.button>
-          </DropdownMenuTrigger>
+          {/* Collapsed, this is two initials and nothing else — the one control
+              in the rail that cannot be read at all without a tooltip. */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <motion.button
+                  type="button"
+                  // Collapsed this is two initials, which name nobody.
+                  aria-label={`${firstName} ${lastName}`.trim()}
+                  className="flex items-center justify-center cursor-pointer rounded-full p-1"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={sidebarSpring}
+                >
+                  <Avatar className="w-9 h-9 rounded-full shrink-0">
+                    <AvatarFallback className="w-9 h-9 bg-muted rounded-full text-sidebar-foreground">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                </motion.button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <span className="font-medium">
+                {firstName} {lastName}
+              </span>
+              <span className="block text-muted-foreground">
+                {user?.email ?? t("user_email_placeholder")}
+              </span>
+            </TooltipContent>
+          </Tooltip>
           <DropdownMenuContent
             className="w-56"
             align={collapsedMenuAlign}
@@ -78,32 +95,46 @@ export const UserProfile = ({
         </DropdownMenu>
       ) : (
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <motion.button
-              type="button"
-              key="expanded"
-              className="flex items-center gap-3 w-full min-w-0 cursor-pointer rounded-lg p-1 hover:bg-sidebar-accent transition-colors"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              whileTap={{ scale: 0.98 }}
-              transition={sidebarSpring}
-            >
-              <Avatar className="w-9 h-9 rounded-full shrink-0">
-                <AvatarFallback className="w-9 h-9 bg-muted rounded-full text-sidebar-foreground">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0 flex-1 text-left">
-                <span className="text-sm text-sidebar-foreground font-medium truncate">
-                  {firstName} {lastName}
-                </span>
-                <span className="text-xs text-sidebar-foreground/70 truncate">
-                  {user?.email ?? t("user_email_placeholder")}
-                </span>
-              </div>
-            </motion.button>
-          </DropdownMenuTrigger>
+          {/* Both lines truncate at the sidebar's width, and an email is the
+              kind of thing people read character by character. */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <motion.button
+                  type="button"
+                  key="expanded"
+                  className="flex items-center gap-3 w-full min-w-0 cursor-pointer rounded-lg p-1 hover:bg-sidebar-accent transition-colors"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={sidebarSpring}
+                >
+                  <Avatar className="w-9 h-9 rounded-full shrink-0">
+                    <AvatarFallback className="w-9 h-9 bg-muted rounded-full text-sidebar-foreground">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0 flex-1 text-left">
+                    <span className="text-sm text-sidebar-foreground font-medium truncate">
+                      {firstName} {lastName}
+                    </span>
+                    <span className="text-xs text-sidebar-foreground/70 truncate">
+                      {user?.email ?? t("user_email_placeholder")}
+                    </span>
+                  </div>
+                </motion.button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <span className="font-medium">
+                {firstName} {lastName}
+              </span>
+              <span className="block text-muted-foreground">
+                {user?.email ?? t("user_email_placeholder")}
+              </span>
+            </TooltipContent>
+          </Tooltip>
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width)"
             align="start"

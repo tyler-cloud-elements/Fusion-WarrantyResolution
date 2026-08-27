@@ -63,6 +63,10 @@ function CollapsedLogo({
             onMouseLeave={() => setButtonHovered(false)}
             className="flex items-center justify-center cursor-pointer"
             type="button"
+            // The logo swaps to a panel icon on hover and has no text either
+            // way, so the tooltip is its only label — and a tooltip is not a
+            // name. Collapsed, this is the control that gets the rail back.
+            aria-label={t("open_sidebar")}
           >
             <motion.div
               className={cn(

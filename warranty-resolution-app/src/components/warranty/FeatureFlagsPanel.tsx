@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, FlaskConical, RotateCcw } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   FLAG_LABELS,
@@ -87,24 +88,37 @@ export function FeatureFlagsPanel() {
 
   return (
     <div className="flex flex-col border-t border-sidebar-border pt-2">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-sidebar-accent"
-      >
-        <FlaskConical className="size-3.5 shrink-0 text-muted-foreground" />
-        <span className="text-xs font-medium">Feature flags</span>
-        {modified && (
-          <span className="size-1.5 rounded-full bg-primary" title="Changed from defaults" />
-        )}
-        <ChevronDown
-          className={cn(
-            "ml-auto size-3.5 shrink-0 text-muted-foreground transition-transform",
-            !open && "-rotate-90",
-          )}
-        />
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            className="flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-sidebar-accent"
+          >
+            <FlaskConical className="size-3.5 shrink-0 text-muted-foreground" />
+            <span className="text-xs font-medium">Feature flags</span>
+            {modified && <span className="size-1.5 rounded-full bg-primary" />}
+            <ChevronDown
+              className={cn(
+                "ml-auto size-3.5 shrink-0 text-muted-foreground transition-transform",
+                !open && "-rotate-90",
+              )}
+            />
+          </button>
+        </TooltipTrigger>
+        {/* "Feature flags" names the section without saying what it is for, and
+            the dot beside it is unexplained until you hover it. Both belong in
+            one tooltip on the row rather than a title on the dot alone. */}
+        <TooltipContent side="right" className="max-w-64">
+          <span className="font-medium">Presenter switches</span>
+          <span className="block text-muted-foreground">
+            {modified
+              ? "Some differ from the shipped defaults — open to review or reset them."
+              : "Turn parts of the demo on and off. All at their shipped defaults."}
+          </span>
+        </TooltipContent>
+      </Tooltip>
 
       {open && (
         <div className="flex flex-col gap-0.5 pb-1">

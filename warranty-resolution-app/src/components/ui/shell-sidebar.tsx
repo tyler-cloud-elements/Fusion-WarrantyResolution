@@ -246,6 +246,7 @@ function SidebarNav({
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton
                             tooltip={getTooltipText(item.label)}
+                            aria-label={getTooltipText(item.label)}
                             isActive={showParentActive}
                             className={navButtonClass}
                           >
@@ -330,7 +331,12 @@ function SidebarNav({
                       asChild
                       className={navButtonClass}
                     >
-                      <Link to={item.path}>
+                      {/* Named as well as tooltipped. Collapsed, the label text
+                          is gone from the DOM and a Radix tooltip only sets
+                          aria-describedby while it is open, so without this a
+                          screen reader announces the rail as three unnamed
+                          links. */}
+                      <Link to={item.path} aria-label={getTooltipText(item.label)}>
                         <motion.span
                           className="inline-flex items-center justify-center shrink-0"
                           {...(isCollapsed

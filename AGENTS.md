@@ -231,13 +231,18 @@ each other. Those are the case:
 Two screens render the same decision: `/actions` (queue beside it) and
 `/cases/:id/tasks/:taskId` (full width). They share their parts, so a change lands in both.
 
-**The header states the case before anything argues about it.** Customer, standing, asset with
-its identity confirmation, the agreement and its expiry, then the sentence about why a person
-is looking at it. This replaced a "Why this reached you" card that asked the reader to take
-the escalation on trust. The console mock also puts a claim-total and an agent-recommendation
-tile here; both are deliberately left out, because the decision card states the total, the
-split and the recommendation, and saying them twice invites them to disagree the moment a
-position changes.
+**The header states the case before anything argues about it.** Customer, standing, the claim
+as filed, then one line of asset and cover, then the sentence about why a person is looking at
+it. It replaced a "Why this reached you" card that asked the reader to take the escalation on
+trust.
+
+Kept deliberately thin: the serial, the identity check and the agreement's reference number
+are all a click away in the case drawer, none of them changes the decision, and carrying them
+here pushed the finding below the fold. The claim total is the one duplication allowed — the
+decision card shows a total too, but a different one, since this is the claim **as filed** and
+fixed while the card's totals move with the position. They cannot disagree. The mock's
+agent-recommendation tile stays out, because that one would restate the decision card and go
+stale the moment a position changed.
 
 **The finding is two rows, not two cards** — under `compactFinding`, which is on. A cause
 collapses to its side, its title and one clause; the full argument, the established stamp and

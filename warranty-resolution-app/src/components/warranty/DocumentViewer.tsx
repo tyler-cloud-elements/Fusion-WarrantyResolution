@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Download, ExternalLink, FileText, Sparkles, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Download, ExternalLink, FileText, Loader2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,6 +24,59 @@ import type { EvidenceDocument, ExtractedField } from "@/lib/warranty/types";
 // PDFs render in the browser's own viewer via an <object>. That is deliberate:
 // bundling a PDF renderer to show seven demo documents would cost more than the
 // rest of the app, and the native viewer already does search, zoom and print.
+
+/**
+ * A `blob:` URL for the document, re-typed as a PDF.
+ *
+ * The static host behind a deployed coded app serves every bundled file as
+ * `application/octet-stream`, and `uip codedapp publish` exposes no per-file
+ * content-type knob. A browser handed a PDF under that type downloads it
+ * instead of rendering it — so opening a document fired a download and left an
+ * empty pane behind. Fetching the bytes and re-wrapping them in a Blob typed
+ * `application/pdf` puts back the type the host dropped: the native viewer
+ * takes over, "New tab" opens inline, and Download still names the file.
+ *
+ * Locally this is a no-op beyond one extra fetch — Vite already serves the
+ * right type, and a correctly-typed body is reused as-is.
+ */
+function usePdfUrl(href: string | undefined) {
+  const [url, setUrl] = useState<string>();
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setUrl(undefined);
+    setFailed(false);
+    if (!href) return;
+
+    let objectUrl: string | undefined;
+    let cancelled = false;
+
+    fetch(href)
+      .then((res) => {
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        return res.blob();
+      })
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(
+          blob.type === "application/pdf" ? blob : new Blob([blob], { type: "application/pdf" }),
+        );
+        setUrl(objectUrl);
+      })
+      .catch(() => {
+        // Fall back to the raw URL — no worse than not trying, and correct the
+        // day the host starts sending a real content type.
+        if (!cancelled) setFailed(true);
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [href]);
+
+  return { url, failed };
+}
 
 function FieldRow({ field }: { field: ExtractedField }) {
   const missing = field.value === "" || field.value === "—";
@@ -73,6 +126,11 @@ export function DocumentViewer({
   // Resolved against the app mount point: a bare relative path would resolve
   // against the current route and 404 on anything deeper than the root.
   const href = doc.fileUrl ? assetUrl(doc.fileUrl) : undefined;
+  const { url: pdfUrl, failed } = usePdfUrl(href);
+  // Everything the browser touches goes through the re-typed blob; the raw URL
+  // is only a fallback for a fetch that never landed.
+  const viewUrl = pdfUrl ?? (failed ? href : undefined);
+  const filename = doc.fileUrl?.split("/").pop();
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
@@ -111,14 +169,23 @@ export function DocumentViewer({
 
         {href && (
           <>
-            <Button variant="outline" size="sm" asChild>
-              <a href={href} target="_blank" rel="noreferrer">
-                <ExternalLink className="size-4" />
-                New tab
-              </a>
+            {/* Held back until the blob exists: pointed at the raw URL this
+                button downloads the file rather than opening it. */}
+            <Button variant="outline" size="sm" asChild={!!viewUrl} disabled={!viewUrl}>
+              {viewUrl ? (
+                <a href={viewUrl} target="_blank" rel="noreferrer">
+                  <ExternalLink className="size-4" />
+                  New tab
+                </a>
+              ) : (
+                <>
+                  <ExternalLink className="size-4" />
+                  New tab
+                </>
+              )}
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <a href={href} download>
+              <a href={viewUrl ?? href} download={filename}>
                 <Download className="size-4" />
                 Download
               </a>
@@ -140,25 +207,36 @@ export function DocumentViewer({
         {/* The page */}
         <div className="min-h-0 flex-1 bg-muted/40 p-3">
           {href ? (
-            <object
-              data={href}
-              type="application/pdf"
-              className="size-full rounded-lg border border-border bg-card"
-              aria-label={doc.title}
-            >
-              {/* Shown when the browser has no inline PDF viewer. */}
-              <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-                <FileText className="size-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  This browser can&rsquo;t display the PDF inline.
-                </p>
-                <Button asChild>
-                  <a href={href} target="_blank" rel="noreferrer">
-                    Open {doc.title}
-                  </a>
-                </Button>
+            viewUrl ? (
+              <object
+                data={viewUrl}
+                type="application/pdf"
+                className="size-full rounded-lg border border-border bg-card"
+                aria-label={doc.title}
+              >
+                {/* Shown when the browser has no inline PDF viewer. */}
+                <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+                  <FileText className="size-8 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    This browser can&rsquo;t display the PDF inline.
+                  </p>
+                  <Button asChild>
+                    <a href={viewUrl} target="_blank" rel="noreferrer">
+                      Open {doc.title}
+                    </a>
+                  </Button>
+                </div>
+              </object>
+            ) : (
+              /* Fetching the bytes. A frame rather than a spinner alone, so the
+                 pane keeps its shape and the page doesn't jump when it lands. */
+              <div className="flex h-full items-center justify-center rounded-lg border border-border bg-card">
+                <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-4 animate-spin" />
+                  Loading document&hellip;
+                </span>
               </div>
-            </object>
+            )
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border p-8 text-center">
               <FileText className="size-6 text-muted-foreground" />

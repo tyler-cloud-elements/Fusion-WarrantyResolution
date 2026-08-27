@@ -26,11 +26,13 @@ import type {
   ReasoningVerdict,
   WarrantyCase,
 } from "./types";
-import { fetchCases } from "@/services/uipath/caseService";
-import { isCaseConfigured } from "@/services/uipath/config";
+import { fetchActions, fetchCases } from "@/services/uipath/caseService";
+import { isCaseConfigured, isUiPathConfigured } from "@/services/uipath/config";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
+import { useFlags } from "@/lib/flags";
 
 const CASES_KEY = ["warranty", "cases"] as const;
+const ACTIONS_KEY = ["warranty", "actions"] as const;
 const STALE_TIME_MS = 30_000;
 
 /** Live fields win; demo fields fill the gaps Maestro does not carry. */
@@ -58,20 +60,18 @@ function mergeCase(demo: WarrantyCase, live: WarrantyCase): WarrantyCase {
   };
 }
 
+/**
+ * Live instances, with the demo row of the same id filling gaps Maestro does
+ * not carry. Demo rows with no live counterpart are NOT appended: once the app
+ * is reading a real case, padding the queue with fictional rows would make the
+ * counts lie. Callers decide when to show the demo set instead — never blended.
+ */
 function mergeCases(live: WarrantyCase[]): WarrantyCase[] {
-  if (live.length === 0) return DEMO_CASES;
-
   const byId = new Map(DEMO_CASES.map((c) => [c.id, c]));
-  const merged: WarrantyCase[] = [];
-
-  for (const liveCase of live) {
+  return live.map((liveCase) => {
     const demo = byId.get(liveCase.id);
-    merged.push(demo ? mergeCase(demo, liveCase) : liveCase);
-    if (demo) byId.delete(liveCase.id);
-  }
-  // Demo cases with no live counterpart still show — the queue counts the
-  // storyboard quotes depend on them.
-  return [...merged, ...byId.values()];
+    return demo ? mergeCase(demo, liveCase) : liveCase;
+  });
 }
 
 export interface CasesResult {
@@ -85,8 +85,13 @@ export interface CasesResult {
 
 export function useCases(): CasesResult {
   const { sdk, isAuthenticated } = useUiPath();
+  const { useMocks } = useFlags();
   const queryClient = useQueryClient();
-  const enabled = Boolean(sdk) && isAuthenticated && isCaseConfigured();
+
+  // Live is the default. The demo dataset is what you get when the flag asks for
+  // it, when there is no tenant, or when the read fails — never a silent blend
+  // of the two, because a queue that is half real is worse than either.
+  const enabled = !useMocks && Boolean(sdk) && isAuthenticated && isCaseConfigured();
 
   const query = useQuery({
     queryKey: CASES_KEY,
@@ -98,19 +103,44 @@ export function useCases(): CasesResult {
   const overrides = useCaseOverrides();
 
   const cases = useMemo(() => {
-    const base = mergeCases(query.data?.cases ?? []);
+    const live = query.data?.cases ?? [];
+
+    // Four outcomes, spelled out rather than nested, because which one you are
+    // looking at is the single most important thing about this screen.
+    let base: WarrantyCase[];
+    if (useMocks || !enabled || query.data?.degraded) {
+      // No tenant, not signed in, the read failed, or the flag asked for it.
+      base = DEMO_CASES;
+    } else if (live.length > 0) {
+      base = mergeCases(live);
+    } else {
+      // Reading live worked and the case genuinely has no instances. An empty
+      // queue is the truth here; falling back to demo rows would invent work.
+      base = [];
+    }
+
     return base.map((c) => (overrides[c.id] ? { ...c, ...overrides[c.id] } : c));
-  }, [query.data, overrides]);
+  }, [query.data, overrides, useMocks, enabled]);
 
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: CASES_KEY });
   }, [queryClient]);
 
+  const reason = useMocks
+    ? "Demo data — the Use demo data flag is on"
+    : !isUiPathConfigured()
+      ? "No UiPath tenant is configured"
+      : !isCaseConfigured()
+        ? "No case process key is configured"
+        : !isAuthenticated
+          ? "Sign in to read the live case"
+          : query.data?.reason;
+
   return {
     cases,
     isDemo: !enabled || (query.data?.degraded ?? true),
     isLoading: enabled && query.isLoading,
-    reason: enabled ? query.data?.reason : "Demo data — no case process key configured",
+    reason,
     refresh,
   };
 }
@@ -122,16 +152,64 @@ export function useCase(caseId: string | undefined): WarrantyCase | undefined {
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 
+/**
+ * Live fields win; the demo action supplies the argument Action Center does not
+ * carry — the causes, the cost lines, the authority limit, the recommendation.
+ * Matched on `actionType`, which is the Action App's own dispatch code.
+ */
+function mergeAction(demo: CaseAction, live: CaseAction): CaseAction {
+  return {
+    ...demo,
+    ...live,
+    title: live.title || demo.title,
+    stage: live.stage || demo.stage,
+    assignee: live.assignee || demo.assignee,
+    whyThisReachedYou: live.whyThisReachedYou || demo.whyThisReachedYou,
+    options: live.options.length && !demo.options.length ? live.options : demo.options,
+    recommendation: live.recommendation.headline ? live.recommendation : demo.recommendation,
+  };
+}
+
 export function useActions(): CaseAction[] {
+  const { sdk, isAuthenticated } = useUiPath();
+  const { useMocks } = useFlags();
+  const { cases } = useCases();
   const completions = useCompletions();
-  return useMemo(
-    () =>
-      DEMO_ACTIONS.map((action) => {
-        const completion = completions[action.id];
-        return completion ? { ...action, ...completion } : action;
-      }),
-    [completions],
+
+  const liveCases = useMemo(
+    () => cases.filter((c) => c.isLive && c.instanceId).map((c) => ({ instanceId: c.instanceId, id: c.id })),
+    [cases],
   );
+  const enabled = !useMocks && Boolean(sdk) && isAuthenticated && liveCases.length > 0;
+
+  const query = useQuery({
+    queryKey: [...ACTIONS_KEY, liveCases.map((c) => c.instanceId).join(",")],
+    queryFn: () => fetchActions(sdk!, liveCases),
+    enabled,
+    staleTime: STALE_TIME_MS,
+  });
+
+  return useMemo(() => {
+    const live = query.data?.actions ?? [];
+
+    // Same rule as the case list: fall back to the demo set only when we could
+    // not read, never when the read succeeded and returned nothing. A live case
+    // with no open task should show an empty queue, not three invented ones.
+    let base: CaseAction[];
+    if (!enabled || query.data?.degraded) {
+      base = DEMO_ACTIONS;
+    } else {
+      base = live.map((a) => {
+        const demo = DEMO_ACTIONS.find((d) => d.actionType === a.actionType);
+        return demo ? mergeAction(demo, a) : a;
+      });
+    }
+
+    return base.map((action) => {
+      const completion = completions[action.id];
+      return completion ? { ...action, ...completion } : action;
+    });
+  }, [query.data, completions, enabled]);
 }
 
 export function useAction(actionId: string | undefined): CaseAction | undefined {

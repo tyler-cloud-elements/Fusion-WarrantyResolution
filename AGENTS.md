@@ -239,6 +239,7 @@ room up should not have to set them twice.
 | Reasoning capture | on | Hides the agree / keep asking / stop asking tri-state. |
 | Case plans tab | **off** | The only flag that is off by default. The case plan is design-time material and Act III is about running work, so the nav entry is hidden. `/case-plans` still resolves by URL either way, so a presenter can deep-link to it without turning the nav on. |
 | Side-by-side action | off | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the assessment take the same width; two columns squeezed into a third of the window is worse than one. |
+| Use demo data | **off** | Ignore the live tenant and run on the bundled dataset. Off by default — the app points at a real Maestro case, and the demo set is the fallback for no tenant, no sign-in, or a failed read. Turn it on to rehearse offline, or to get the storyboard's exact numbers back once the live case has drifted from them. |
 | Morning brief | on | The overnight summary above the work queue — greeting, narrative, four trend tiles, and three pulse cards (cases by stage, SLA posture, autonomy rate). Every figure is computed from the same case list the queue renders, so it cannot disagree with the table underneath it. **When on it also hides two things that would otherwise say the same thing twice:** the standalone "Agent summary" card (the brief opens with that exact line) and the personal KPI row. Turn it off and both come back. |
 
 > The KPI row it hides — avg. coverage decision time, restoration adherence, critical cases at
@@ -319,11 +320,62 @@ Coded App that is `https://<org>.uipath.host/<routing-name>`.
 
 ---
 
+## Running against the live tenant
+
+The app defaults to live. `warranty-resolution-app/.env` (gitignored) carries the FUSION
+tenant; `.env.example` carries the shape.
+
+| Setting | Value |
+|---|---|
+| Base URL / org / tenant | `https://cloud.uipath.com` · `businessorchestration` · `FUSION` |
+| External App client id | `52be2376-b348-492a-9ea5-c7ec704141e6` |
+| Case processKey | `6ea32614-e78e-46d7-84eb-8b27599a014e` |
+| Folder key | `cbf6dec7-939a-4eeb-ab3f-f78065dc9b27` |
+
+**Live and demo never blend.** The queue is one or the other, and the banner always names
+which and why. The rule that matters: a *failed* read falls back to the demo set, a
+*successful* read that returns nothing shows an empty queue. Padding a real queue with
+fictional rows would make the counts lie.
+
+- **Cases** come from `CaseInstances.getAll({ processKey })`, with stages, variables and
+  execution history per instance. A live instance whose business id matches a demo row takes
+  the demo's presentation fields (customer, asset, evidence) where Maestro carries none.
+- **Actions** come from Action Center via `Tasks.getAll`, matched to their case instance.
+  Action Center carries the title, assignee, status, priority and clock — it does **not**
+  carry the console's argument (the two causes, the cost lines, the authority limit), so
+  those are merged from the demo action with the same `actionType`. `mapTask` never invents a
+  finding Maestro did not send.
+- **Open case run** on the case detail deep-links to the instance in Maestro, folder key
+  included, which the page needs to resolve the run.
+
+### New case
+
+The button beside Refresh on the work queue starts a process job with:
+
+```json
+{ "demoScenario": "Standard", "demoRunId": "WR-RUN-0001", "ownerEmail": "tyler.toth@uipath.com" }
+```
+
+Scenario is one of Standard · MissingEvidence · Rejected · Critical. The run id is minted
+fresh per dialog (seeded from the clock, so two people on one tenant do not collide) and is
+editable. Owner defaults to the signed-in user's email and is free text.
+
+Two things worth knowing:
+
+- **`inputArguments` goes to Orchestrator as a JSON string, not an object.** An object
+  silently starts the job with no arguments — which looks like success and produces an empty
+  case.
+- **It starts `VITE_NEW_CASE_PROCESS_KEY`, which falls back to the case process.** Those demo
+  arguments read like a seeding wrapper rather than the case's own intake contract, so if a
+  separate launcher process exists, point that variable at it — no code change.
+
+---
+
 ## What is NOT built
 
 Called out so nobody assumes otherwise:
 
-- **No Maestro writes beyond task completion.** Pause, cancel, reopen and instance
+- **No Maestro writes beyond task completion and starting a job.** Pause, cancel, reopen and instance
   migration (scene 16's *Migrate* dialog) are not implemented — the SDK exposes
   `pause`/`close`/`reopen` on `CaseInstances` if they are wanted.
 - **No real evidence storage.** `VITE_EVIDENCE_ENTITY_ID` reads documents from a Data

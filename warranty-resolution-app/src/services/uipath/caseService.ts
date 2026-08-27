@@ -16,12 +16,19 @@ import { Entities } from "@uipath/uipath-typescript/entities";
 import type { EntityRecord, FieldMetaData } from "@uipath/uipath-typescript/entities";
 import { Tasks, TaskType } from "@uipath/uipath-typescript/tasks";
 import type { TaskCompleteOptions, TaskGetResponse } from "@uipath/uipath-typescript/tasks";
+import { Processes } from "@uipath/uipath-typescript/processes";
 import type { UiPath } from "@uipath/uipath-typescript/core";
 import { UiPathError } from "@uipath/uipath-typescript/core";
 
-import { findStage, normaliseName, PRIMARY_STAGES } from "@/lib/warranty/casePlan";
+import {
+  findStage,
+  normaliseName,
+  PRIMARY_STAGES,
+  stageForActionType,
+} from "@/lib/warranty/casePlan";
 import { slaStatusFor } from "@/lib/warranty/sla";
 import type {
+  CaseAction,
   CaseStatus,
   EvidenceDocument,
   Priority,
@@ -480,6 +487,176 @@ export async function completeTask(
       : { type: task.type, action: outcome };
 
   await task.complete(options);
+}
+
+// ── Live actions ────────────────────────────────────────────────────────────
+
+/** Action Center priorities map onto the case's P1–P4 bands. */
+const TASK_PRIORITY: Record<string, Priority> = {
+  Critical: "P1",
+  High: "P2",
+  Medium: "P3",
+  Low: "P4",
+};
+
+/**
+ * The Action App dispatch code a task carries.
+ *
+ * SDD §4 puts every human decision behind one code-switched Action App, so the
+ * `actionType` in the task's data is what separates a coverage decision from a
+ * closure disposition. Falls back to matching the title against the case plan,
+ * because a task raised before that field was wired still has to land somewhere.
+ */
+function readActionType(task: TaskGetResponse): string {
+  const data = task.data as Record<string, unknown> | undefined;
+  const declared = data && typeof data.actionType === "string" ? data.actionType : "";
+  if (declared) return declared;
+
+  const title = normaliseName(String(task.title ?? ""));
+  for (const stage of PRIMARY_STAGES) {
+    for (const t of stage.tasks) {
+      if (t.actionType && title.includes(normaliseName(t.name))) return t.actionType;
+    }
+  }
+  return "";
+}
+
+function minutesUntil(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const at = Date.parse(iso);
+  return Number.isNaN(at) ? null : Math.round((at - Date.now()) / 60_000);
+}
+
+/**
+ * Shapes one live Action Center task into the app's action model.
+ *
+ * Only what Action Center actually carries is filled in — title, assignee,
+ * status, priority, the clock. The console's argument (the two causes, the cost
+ * lines, the authority limit) is not in a task payload, so it is left off here
+ * and merged from the matching demo action by `useCases`, the same way case
+ * presentation fields are. That keeps this function honest: it never invents a
+ * finding that Maestro did not send.
+ */
+export function mapTask(task: TaskGetResponse, caseId: string): CaseAction {
+  const actionType = readActionType(task);
+  const stage = stageForActionType(actionType);
+  const sla = task.taskSlaDetail ?? task.taskSlaDetails?.[0] ?? null;
+  const dueAt = (sla as { dueDate?: string } | null)?.dueDate ?? null;
+
+  const remaining = minutesUntil(dueAt);
+  const elapsedSinceCreated = Math.max(
+    0,
+    Math.round((Date.now() - Date.parse(task.createdTime)) / 60_000),
+  );
+  // Prefer the real deadline; without one, the stage's own budget is the best
+  // available frame for how far through the clock this task is.
+  const slaMinutes =
+    remaining != null && remaining + elapsedSinceCreated > 0
+      ? remaining + elapsedSinceCreated
+      : (stage?.slaMinutes ?? 4 * 60);
+
+  return {
+    id: String(task.id),
+    caseId,
+    actionType,
+    title: task.title,
+    stage: stage?.name ?? "",
+    assignee: task.assignedToUser?.name ?? task.taskAssigneeName ?? "Unassigned",
+    priority: TASK_PRIORITY[String(task.priority)] ?? "P3",
+    blocking: true,
+    dueAt: dueAt ?? new Date(Date.now() + slaMinutes * 60_000).toISOString(),
+    slaMinutes,
+    elapsedMinutes: Math.min(elapsedSinceCreated, slaMinutes),
+    whyThisReachedYou: "",
+    options: (stage?.tasks.find((t) => t.actionType === actionType)?.outcomes ?? []).map(
+      (outcome) => ({ outcome, label: outcome, rationale: "", supported: true }),
+    ),
+    recommendation: {
+      headline: "",
+      detail: "",
+      confidence: "medium",
+      recommendedOutcome: "",
+      evidenceBasis: [],
+    },
+    status: normaliseStatus(task.status) === "completed" ? "Completed" : "Open",
+    completedBy: task.completedByUser?.name,
+    completedAt: task.completedTime ?? undefined,
+    completedOutcome: task.action ?? undefined,
+  };
+}
+
+export interface LiveActionsResult {
+  actions: CaseAction[];
+  degraded: boolean;
+  reason?: string;
+}
+
+/**
+ * Every open Action Center task belonging to the given case instances.
+ *
+ * One `getAll` for the whole set rather than one per case: the queue shows every
+ * case at once, and a request per row would be dozens of round trips for a list
+ * that is already on screen.
+ */
+export async function fetchActions(
+  sdk: UiPath,
+  cases: { instanceId: string; id: string }[],
+): Promise<LiveActionsResult> {
+  if (cases.length === 0) return { actions: [], degraded: false };
+
+  try {
+    const result = await new Tasks(sdk).getAll({ pageSize: 200 });
+    const byInstance = cases.filter((c) => c.instanceId);
+
+    const actions: CaseAction[] = [];
+    for (const task of result.items) {
+      const owner = byInstance.find((c) => taskMatchesInstance(task, c.instanceId));
+      if (!owner) continue;
+      actions.push(mapTask(task, owner.id));
+    }
+    return { actions, degraded: false };
+  } catch (err) {
+    const reason = err instanceof UiPathError ? err.message : String(err);
+    console.warn("fetchActions failed:", reason);
+    return { actions: [], degraded: true, reason };
+  }
+}
+
+// ── Starting a case ─────────────────────────────────────────────────────────
+
+export interface NewCaseInput {
+  /** Standard | MissingEvidence | Rejected | Critical */
+  demoScenario: string;
+  demoRunId: string;
+  ownerEmail: string;
+}
+
+/**
+ * Starts the configured process with the demo arguments.
+ *
+ * Orchestrator takes `inputArguments` as a JSON *string*, not an object — a
+ * plain object silently starts the job with no arguments at all, which looks
+ * like success and produces a case with nothing in it.
+ */
+export async function startNewCase(
+  sdk: UiPath,
+  input: NewCaseInput,
+): Promise<{ jobId?: number; jobKey?: string }> {
+  const processKey = caseConfig.newCaseProcessKey;
+  if (!processKey) {
+    throw new Error("No process configured — set VITE_NEW_CASE_PROCESS_KEY or VITE_CASE_PROCESS_KEY");
+  }
+  if (!caseConfig.newCaseFolderKey) {
+    throw new Error("No folder configured — set VITE_NEW_CASE_FOLDER_KEY or VITE_CASE_FOLDER_KEY");
+  }
+
+  const jobs = await new Processes(sdk).start(
+    { processKey, inputArguments: JSON.stringify(input) },
+    { folderKey: caseConfig.newCaseFolderKey },
+  );
+
+  const first = jobs?.[0] as { id?: number; key?: string } | undefined;
+  return { jobId: first?.id, jobKey: first?.key };
 }
 
 // ── Evidence documents (Data Fabric) ────────────────────────────────────────

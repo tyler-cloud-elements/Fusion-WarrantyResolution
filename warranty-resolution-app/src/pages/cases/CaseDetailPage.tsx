@@ -61,7 +61,7 @@ export function CaseDetailPage() {
 
   const openActions = actions.filter((a) => a.status === "Open");
   const primaryAction = openActions[0];
-  const instanceUrl = maestroInstanceUrl(warrantyCase.instanceId);
+  const instanceUrl = maestroInstanceUrl(warrantyCase.instanceId, warrantyCase.folderKey);
   // Inline editing on the Details tab belongs to whoever owns the case.
   const editable = profile.name === warrantyCase.owner;
 
@@ -80,7 +80,7 @@ export function CaseDetailPage() {
               {instanceUrl && (
                 <Button variant="outline" size="sm" asChild>
                   <a href={instanceUrl} target="_blank" rel="noreferrer">
-                    Instance in Maestro
+                    Open case run
                     <ExternalLink className="size-4" />
                   </a>
                 </Button>

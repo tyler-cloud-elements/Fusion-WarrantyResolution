@@ -9,6 +9,15 @@ import { useSyncExternalStore } from "react";
 
 export interface FeatureFlags {
   /**
+   * Run on the bundled demo dataset instead of the live tenant.
+   *
+   * Off by default: the app is pointed at a real Maestro case, and the demo
+   * dataset is the fallback for when there is no tenant, no sign-in, or the
+   * read fails. Turn it on to rehearse offline, or to get the storyboard's exact
+   * numbers back when the live case has drifted from them.
+   */
+  useMocks: boolean;
+  /**
    * Show the second, opposing cause on the decision console.
    *
    * On, the finding reads as a genuine combined cause — two established causes
@@ -51,6 +60,7 @@ export interface FeatureFlags {
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
+  useMocks: false,
   showOpposingCause: true,
   showAgentConfidence: true,
   showReasoningCapture: true,
@@ -60,6 +70,10 @@ export const DEFAULT_FLAGS: FeatureFlags = {
 };
 
 export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: string }> = {
+  useMocks: {
+    label: "Use demo data",
+    hint: "Ignore the live tenant and run on the bundled dataset. Off by default.",
+  },
   showOpposingCause: {
     label: "Opposing cause tile",
     hint: "The second cause, on the customer. Off, the case reads as a clean approval.",

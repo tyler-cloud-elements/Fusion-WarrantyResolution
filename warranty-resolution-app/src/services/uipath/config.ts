@@ -24,6 +24,16 @@ export const caseConfig = {
   /** processKey of the published Maestro case. Blank ⇒ demo dataset only. */
   processKey: env("VITE_CASE_PROCESS_KEY"),
   folderKey: env("VITE_CASE_FOLDER_KEY"),
+  /**
+   * The process the "New case" button starts.
+   *
+   * Falls back to the case process itself, which is the common setup. Point it
+   * at a separate seeding process when one exists — the demo arguments
+   * (`demoScenario`, `demoRunId`, `ownerEmail`) suggest a launcher rather than
+   * the case's own intake contract, so this is deliberately its own setting.
+   */
+  newCaseProcessKey: env("VITE_NEW_CASE_PROCESS_KEY") || env("VITE_CASE_PROCESS_KEY"),
+  newCaseFolderKey: env("VITE_NEW_CASE_FOLDER_KEY") || env("VITE_CASE_FOLDER_KEY"),
 } as const;
 
 export const integrationConfig = {
@@ -84,8 +94,29 @@ export function actionCenterUrl(taskId: number | string): string | null {
   return `${uipathConfig.baseUrl}/${uipathConfig.orgName}/${uipathConfig.tenantName}/actions_/tasks/${taskId}`;
 }
 
-/** Deep link to a case instance in Maestro — the storyboard's instance-management view. */
-export function maestroInstanceUrl(instanceId: string): string | null {
-  if (!instanceId || !uipathConfig.baseUrl || !uipathConfig.orgName) return null;
-  return `${uipathConfig.baseUrl}/${uipathConfig.orgName}/${uipathConfig.tenantName}/maestro_/cases/instances/${instanceId}`;
+/**
+ * Deep link to a case instance run in Maestro.
+ *
+ * The shape is the one the product actually uses — the case processKey is part
+ * of the path and the folder rides as a query param, both of which the page
+ * needs to resolve the run:
+ *   /{org}/{tenant}/maestro_/cases/{processKey}/instances/{instanceId}?folderKey=…
+ */
+export function maestroInstanceUrl(
+  instanceId: string,
+  folderKey?: string,
+  processKey?: string,
+): string | null {
+  const key = processKey || caseConfig.processKey;
+  if (!instanceId || !key) return null;
+  if (!uipathConfig.baseUrl || !uipathConfig.orgName || !uipathConfig.tenantName) return null;
+
+  const folder = folderKey || caseConfig.folderKey;
+  const query = folder ? `?folderKey=${encodeURIComponent(folder)}` : "";
+  return `${uipathConfig.baseUrl}/${uipathConfig.orgName}/${uipathConfig.tenantName}/maestro_/cases/${key}/instances/${instanceId}${query}`;
+}
+
+/** True once the "New case" button has somewhere to send a job. */
+export function isNewCaseConfigured(): boolean {
+  return isUiPathConfigured() && Boolean(caseConfig.newCaseProcessKey);
 }

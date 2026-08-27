@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageContainer } from "@/components/PageContainer";
 import { MetricTile } from "@/components/dashboard/MetricTile";
 import { HomepageSplash } from "@/components/warranty/HomepageSplash";
+import { NewCaseDialog } from "@/components/warranty/NewCaseDialog";
 import {
   CaseStatusBadge,
   IllustrativeTag,
@@ -21,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { relativeTime } from "@/lib/warranty/format";
 import { useAgentSummary, useCases, useInsights } from "@/lib/warranty/useCases";
 import { useRole } from "@/lib/role/useRole";
-import { isCaseConfigured, isUiPathConfigured } from "@/services/uipath/config";
+import { isUiPathConfigured } from "@/services/uipath/config";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
 import type { WarrantyCase } from "@/lib/warranty/types";
 
@@ -140,10 +141,13 @@ export function CasesListPage() {
               {profile.name} · {profile.title}
             </p>
           </div>
-          <Button variant="outline" onClick={refresh} disabled={isLoading}>
-            <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={refresh} disabled={isLoading}>
+              <RefreshCw className={cn("size-4", isLoading && "animate-spin")} />
+              Refresh
+            </Button>
+            <NewCaseDialog onStarted={refresh} />
+          </div>
         </div>
 
         {/*
@@ -156,14 +160,11 @@ export function CasesListPage() {
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
             <div className="min-w-0 flex-1 text-sm">
               <span className="font-medium">Demo data.</span>{" "}
+              {/* The reason comes from the data layer rather than being worked
+                  out again here — two copies of this logic would eventually
+                  disagree about why the queue is not live. */}
               <span className="text-muted-foreground">
-                {!isUiPathConfigured()
-                  ? "No UiPath tenant is configured — fill in the VITE_UIPATH_* block in .env."
-                  : !isCaseConfigured()
-                    ? "No case process key is configured — set VITE_CASE_PROCESS_KEY to the published Maestro case."
-                    : !isAuthenticated
-                      ? "Sign in to read live case instances from Maestro."
-                      : (reason ?? "No live Maestro case instances were read.")}
+                {reason ?? "No live Maestro case instances were read."}
               </span>
               {authError && <span className="block text-destructive">{authError}</span>}
             </div>

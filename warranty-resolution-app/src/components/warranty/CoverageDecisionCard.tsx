@@ -290,24 +290,42 @@ export function CoverageDecisionCard({
   warrantyCase,
   onCompleted,
   onReopen,
+  position,
+  onPositionChange,
 }: {
   action: CaseAction;
   warrantyCase: WarrantyCase;
   onCompleted?: (outcome: string) => void;
   onReopen?: () => void;
+  /**
+   * The coverage position, when the host owns it.
+   *
+   * The assessment rail answers the position — it says something different when
+   * you move to a denial than when you move to full coverage — so the two have
+   * to be looking at the same value. The host holds it and hands it to both.
+   * Left out, the card keeps its own, which is what the plain form wants.
+   */
+  position?: string;
+  onPositionChange?: (outcome: string) => void;
 }) {
   const { profile } = useRole();
   const { sdk, isAuthenticated } = useUiPath();
   const { showReasoningCapture } = useFlags();
 
-  const [selected, setSelected] = useState(action.recommendation.recommendedOutcome);
+  const [ownSelected, setOwnSelected] = useState(action.recommendation.recommendedOutcome);
+  const controlled = position !== undefined;
+  const selected = controlled ? position : ownSelected;
+  const setSelected = (outcome: string) => {
+    if (!controlled) setOwnSelected(outcome);
+    onPositionChange?.(outcome);
+  };
   const [rationale, setRationale] = useState(action.rationale ?? "");
   const [reasoning, setReasoning] = useState<ReasoningVerdict | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setSelected(action.recommendation.recommendedOutcome);
+    setOwnSelected(action.recommendation.recommendedOutcome);
     setReasoning(null);
     setError(null);
   }, [action.id, action.recommendation.recommendedOutcome]);

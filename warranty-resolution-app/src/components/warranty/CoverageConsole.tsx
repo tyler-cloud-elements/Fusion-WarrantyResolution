@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { PolicyCheckRows, PolicyTally } from "@/components/warranty/PolicyTest";
 import { recommendedSplit } from "@/lib/warranty/costSplit";
 import { useFlags } from "@/lib/flags";
 import { cn } from "@/lib/utils";
@@ -293,6 +294,7 @@ function Fold({ fold }: { fold: DetailFold }) {
         <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
           {fold.summary}
         </span>
+        {fold.checks?.length ? <PolicyTally checks={fold.checks} /> : null}
         {fold.marked ? (
           <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-primary">
             {fold.marked} marked
@@ -305,6 +307,11 @@ function Fold({ fold }: { fold: DetailFold }) {
           )}
         />
       </button>
+      {open && fold.checks?.length ? (
+        <div className="px-4 pb-3">
+          <PolicyCheckRows checks={fold.checks} />
+        </div>
+      ) : null}
       {open && fold.body && (
         <p className="px-4 pb-3 text-[12.5px] leading-relaxed text-muted-foreground">
           {fold.body}

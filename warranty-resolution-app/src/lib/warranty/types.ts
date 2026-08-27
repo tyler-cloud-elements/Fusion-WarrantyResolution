@@ -80,6 +80,14 @@ export interface CaseAsset {
   description: string;
   inServiceMonths: number;
   warrantyStatus: string;
+  /**
+   * The serial was matched against the installed base.
+   *
+   * Worth stating on the decision header rather than assuming: everything the
+   * coverage argument says about term and subsystem rests on this being the
+   * asset the agreement covers.
+   */
+  identityConfirmed?: boolean;
 }
 
 /**
@@ -222,6 +230,24 @@ export interface DecisionAuthority {
   approver: string;
 }
 
+/**
+ * One clause of the agreement, tested against this claim.
+ *
+ * `open` is its own verdict rather than a failed pass: a check nobody could run
+ * is not a check that came back clean, and the difference is the whole argument
+ * about operator error — it is unestablished, so it has not been charged to
+ * anyone.
+ */
+export interface PolicyCheck {
+  id: string;
+  verdict: "pass" | "fail" | "open";
+  name: string;
+  /** What was tested and what came back, in one line. */
+  detail: string;
+  /** The system that answered — Helios, WT-9, Vault-PLM, Case. */
+  source?: string;
+}
+
 /** A collapsible detail row — present so it is on the record, folded so it is not noise. */
 export interface DetailFold {
   id: string;
@@ -230,6 +256,55 @@ export interface DetailFold {
   /** Count of items a reviewer flagged inside, shown as a chip. */
   marked?: number;
   body?: string;
+  /** Renders as the policy-test table rather than prose. */
+  checks?: PolicyCheck[];
+}
+
+/**
+ * One thing the agent leaned on, and what it bought.
+ *
+ * The assessment rail lists these under the recommendation so the reasoning is
+ * inspectable line by line rather than as one paragraph to take or leave — and
+ * each carries a thumb, because which signal was misread is more useful
+ * feedback than whether the conclusion felt right.
+ */
+export interface AgentSignal {
+  id: string;
+  importance: "high" | "medium" | "low";
+  /** The one-line name in the list. */
+  short: string;
+  /** What this signal supports, in money where it maps to money. */
+  backs: string;
+  /** The full argument, shown when the signal is opened. */
+  detail: string;
+  sources: string[];
+}
+
+/** How comparable cases went — one bar segment and one row. */
+export interface PrecedentSlice {
+  /** The option's outcome code, so the reader's own position can be marked. */
+  outcome: string;
+  label: string;
+  cases: number;
+}
+
+/**
+ * A reply the rail offers rather than making the reader type it.
+ *
+ * `forOptions` is what makes them feel answered rather than generic: the
+ * objections worth raising against a denial are not the ones worth raising
+ * against full coverage, so a chip only appears where it would actually be said.
+ */
+export interface SuggestedReply {
+  id: string;
+  kind: "disagree" | "missing-context" | "ask-back" | "agree";
+  label: string;
+  /** What the reader is taken to have said, in full, when they pick it. */
+  body: string;
+  /** The agent's answer. */
+  answer: string;
+  /** Positions this reply belongs to. Absent ⇒ every position. */
+  forOptions?: string[];
 }
 
 /** Something that happens downstream when the decision is submitted. */
@@ -301,6 +376,14 @@ export interface CaseAction {
   confidencePercent?: number;
   /** How often peers agreed with this recommendation. */
   precedent?: string;
+  /** The same figure broken out, for the rail's distribution bar. */
+  precedentBreakdown?: PrecedentSlice[];
+  /** The population the breakdown is drawn from — "Last 18 months · combined cause". */
+  precedentBasis?: string;
+  /** What the agent leaned on, listed under the recommendation. */
+  signals?: AgentSignal[];
+  /** Replies the rail offers, filtered by the position currently selected. */
+  replies?: SuggestedReply[];
   /** Two header tiles: what is burning, and when this is due. */
   tiles?: { label: string; value: string; note: string; tone: "alarm" | "clock" }[];
   /** The agent's draft rationale, restorable after the signer edits it. */
@@ -366,6 +449,8 @@ export interface CaseSlaEntry {
 export interface WarrantyCase {
   /** Business identifier, e.g. WR-2026-0417. */
   id: string;
+  /** Commercial standing — "Strategic". Sits beside the customer's name. */
+  customerSegment?: string;
   /** Maestro case instance GUID. Empty for demo rows that have no live counterpart. */
   instanceId: string;
   folderKey: string;

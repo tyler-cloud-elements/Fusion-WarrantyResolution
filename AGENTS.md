@@ -226,6 +226,45 @@ each other. Those are the case:
 
 ---
 
+## The decision screens
+
+Two screens render the same decision: `/actions` (queue beside it) and
+`/cases/:id/tasks/:taskId` (full width). They share their parts, so a change lands in both.
+
+**The header states the case before anything argues about it.** Customer, standing, asset with
+its identity confirmation, the agreement and its expiry, then the sentence about why a person
+is looking at it. This replaced a "Why this reached you" card that asked the reader to take
+the escalation on trust. The console mock also puts a claim-total and an agent-recommendation
+tile here; both are deliberately left out, because the decision card states the total, the
+split and the recommendation, and saying them twice invites them to disagree the moment a
+position changes.
+
+**The policy test is the argument, not supporting material.** Seven clauses, each with a
+verdict and the system that answered. Three verdicts, not two: a check nobody could run is not
+a check that came back clean. Operator-error contribution is **open** — the site never provided
+its maintenance history — which is why the rationale calls it unestablished and why no third
+cause is charged to anyone. Collapsing open into fail would charge the customer for a missing
+document; collapsing it into pass would clear them of something nobody looked at.
+
+**The assessment rail answers the position.** It is not a static summary:
+
+- Evidence opens into five signals, each naming what it bought (`Parts — $8,450.00 to us`) and
+  taking a thumb. The thumb is on the signal, not the conclusion — which input was misread is
+  feedback an agent can act on, "I disagree" is not.
+- Precedent opens into the distribution, including the forty percent who did something else.
+- Moving off the recommendation draws a challenge that **prices the departure**: "puts the
+  whole $16,272.50 on the customer". That clause is derived from the cost split, so it cannot
+  drift from the table beside it. It is the agent's standing stance rather than a thread entry,
+  so moving again replaces it; anything the reader said stays.
+- The reply chips are filtered by position. Moving to denial and moving to full coverage are
+  opposite mistakes, and what an agent should offer to hear about each differs — against a
+  denial, that the change was causal; against full coverage, that operator error was never
+  established. A chip that fits every position fits none of them.
+
+The coverage position lives in the host page, not the decision card, because the rail answers
+it as well as the card setting it. `CoverageDecisionCard` takes an optional `position` /
+`onPositionChange` and keeps its own state when they are absent.
+
 ## Feature flags
 
 Presenter switches, in the sidebar footer under **Feature flags**. They persist to

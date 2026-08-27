@@ -13,11 +13,15 @@
 
 import { PRIMARY_STAGES } from "./casePlan";
 import type {
+  AgentSignal,
   CaseAction,
   OperationalInsights,
+  PolicyCheck,
+  PrecedentSlice,
   Priority,
   ReasoningOption,
   StageState,
+  SuggestedReply,
   WarrantyCase,
 } from "./types";
 
@@ -45,6 +49,192 @@ function minutesFromNow(m: number): string {
   return new Date(DEMO_NOW.getTime() + m * 60_000).toISOString();
 }
 
+/**
+ * The agreement, tested clause by clause against this claim.
+ *
+ * Seven checks, and the two that are not passes are the case: §4.2 fails on the
+ * unapproved configuration change, and operator-error contribution is *open* —
+ * nobody could run it, because the site never provided its maintenance history.
+ * That distinction is load-bearing. An open check has not been decided against
+ * the customer, which is why the rationale says the contribution is unestablished
+ * rather than absent, and why no third cause is charged to anyone.
+ */
+const POLICY_CHECKS_0417: PolicyCheck[] = [
+  {
+    id: "pc-term",
+    verdict: "pass",
+    name: "Asset within agreement term",
+    detail: "Failure 2026-03-09, agreement runs to 2027-09-02",
+    source: "Helios",
+  },
+  {
+    id: "pc-subsystem",
+    verdict: "pass",
+    name: "Failure within a covered subsystem",
+    detail: "Induction conveyor drive, component 8400-DRV-GBX",
+    source: "WT-9",
+  },
+  {
+    id: "pc-rated-life",
+    verdict: "pass",
+    name: "Component within rated service life",
+    detail: "30 of 60 months",
+    source: "Vault-PLM",
+  },
+  {
+    id: "pc-config",
+    verdict: "fail",
+    name: "Approved-configuration clause §4.2",
+    detail: "Control parameters changed 2026-02-14. No written approval on record.",
+    source: "Vault-PLM",
+  },
+  {
+    id: "pc-parts",
+    verdict: "pass",
+    name: "Original-parts clause §6.1",
+    detail: "Alternate 8400-DRV-GBX-45B fitted — form, fit and function validated",
+    source: "Vault-PLM",
+  },
+  {
+    id: "pc-evidence",
+    verdict: "pass",
+    name: "Evidence completeness",
+    detail: "6 of 6 required items present",
+    source: "Case",
+  },
+  {
+    id: "pc-operator",
+    verdict: "open",
+    name: "Operator-error contribution",
+    detail:
+      "Not established — site maintenance history was not provided. This remains open at the point of decision.",
+  },
+];
+
+/**
+ * What the agent leaned on, in the order it matters.
+ *
+ * Five, not fifty: the rail is an argument, and an argument that lists
+ * everything it touched is not one. Three carry the split itself, one prices
+ * the goodwill, and the last is the one that says what is *not* being charged —
+ * which is the signal a reviewer is most likely to disagree with, and so the
+ * one most worth having on the list.
+ */
+const SIGNALS_0417: AgentSignal[] = [
+  {
+    id: "sig-combined-cause",
+    importance: "high",
+    short: "Two causes, neither sole",
+    backs: "A split, not all-or-nothing",
+    detail:
+      "The policy test comes back 5 pass, 1 fail, 1 open — a defect inside its term and an unapproved configuration change, each proven, neither excluding the other. No coverage rule in the case plan resolves a combined cause, which is why the case escalated to a person rather than closing itself. A split by cause attribution is the only position that answers the finding as found: denial and full coverage each require treating one established cause as if it were not there.",
+    sources: ["Case", "Helios"],
+  },
+  {
+    id: "sig-defect-in-term",
+    importance: "high",
+    short: "Defect inside its rated term",
+    backs: "Parts — $8,450.00 to us",
+    detail:
+      "The gearbox failed 30 months into a 60-month rated service life, with bearing race spalling consistent with a manufacturing defect and not with overload, contamination or missed lubrication. Established on site on 03-20, first-time fix confirmed. The component sits in a covered subsystem under an agreement that runs to 2027-09-02 with a $0 deductible, so nothing about the term or the scope stands in the way.",
+    sources: ["FieldLink", "WT-9", "Vault-PLM"],
+  },
+  {
+    id: "sig-unapproved-change",
+    importance: "high",
+    short: "§4.2 change never approved",
+    backs: "Labour + freight — $6,582.50",
+    detail:
+      "Drive control parameters — acceleration ramp and current limit — were raised above the commissioned envelope on 2026-02-14 with no approval record, and ESA §4.2 requires configuration changes to be approved in writing before they take effect. The labour and the expedited freight are downstream of that change, which is what makes them separable: the original part carried a six-week lead time, so the $3,900 air freight is the cost of recovering from the change rather than of the defect.",
+    sources: ["Vault-PLM", "Sentinel", "SAP"],
+  },
+  {
+    id: "sig-goodwill-headroom",
+    importance: "medium",
+    short: "Goodwill has room and a reason",
+    backs: "Travel — $1,240.00 absorbed",
+    detail:
+      "A strategic account at $184,000 a year, 96 hours down with no divert, and $312,000 of credits already issued this year against a budget that still has headroom. Travel and per diem is the smallest line on the claim and the one least attributable to either cause, which makes it the right one to absorb: it reads as a gesture rather than as a concession on the coverage argument.",
+    sources: ["SAP", "Case"],
+  },
+  {
+    id: "sig-operator-error-open",
+    importance: "low",
+    short: "Operator error left open",
+    backs: "No third cause charged",
+    detail:
+      "Site maintenance history was never provided, so operator-error contribution could not be tested and stays open at the point of decision. It is on the record as unestablished rather than dismissed — nothing has been charged to the customer on account of it, and if the history arrives later this is the check that would reopen the split.",
+    sources: ["—"],
+  },
+];
+
+/**
+ * How comparable cases went. Sixty percent agree is not an endorsement — it is
+ * also forty percent who did something else, which is why the two dissenting
+ * positions are listed with their counts rather than rolled into "other".
+ */
+const PRECEDENT_0417: PrecedentSlice[] = [
+  { outcome: "PartialPlusGoodwill", label: "Partial coverage", cases: 24 },
+  { outcome: "Approved", label: "Full coverage", cases: 10 },
+  { outcome: "Denied", label: "Denial", cases: 6 },
+];
+
+/**
+ * The objections worth raising, per position.
+ *
+ * `forOptions` is what stops these reading as a generic feedback widget. Moving
+ * to denial and moving to full coverage are opposite mistakes, and the thing an
+ * agent should offer to hear about each is different: against a denial, that the
+ * change was causal; against full coverage, that operator error was never
+ * established. A chip that fits every position fits none of them.
+ */
+const REPLIES_0417: SuggestedReply[] = [
+  {
+    id: "cr-which-rule-freight",
+    kind: "ask-back",
+    label: "Which rule moves the freight?",
+    body: "Which rule puts freight on the customer? The policy test cites the configuration change, but I cannot see the rule that moves freight specifically — and I have to name it in the rationale.",
+    answer:
+      "ESA §4.2 itself — it voids cover for what an unapproved change causes, and the expedite is downstream of the change: the approved part carried a six-week lead time, so the $3,900 air freight only exists because the failure happened when it did. There is no freight-specific rule, and if you need one named in the rationale, §4.2 is the one to cite.",
+  },
+  {
+    id: "cr-prior-goodwill",
+    kind: "missing-context",
+    label: "Prior goodwill on this site",
+    body: "Travel has been absorbed at this site before and was never recorded as a concession, so this is not a first gesture.",
+    answer:
+      "The headroom I tested against was wrong, then. If travel has already been absorbed here and never recorded, this is not a first goodwill gesture and I should not have priced it as one.",
+    forOptions: ["Denied", "PartialPlusGoodwill"],
+  },
+  {
+    id: "cr-change-was-causal",
+    kind: "disagree",
+    label: "The change caused it, not a defect",
+    body: "Raising the acceleration ramp and the current limit above the commissioned envelope is what broke this gearbox. Bearing race spalling is what an over-driven drive does. Thirty months into a sixty-month life is not evidence of a defect when the duty it was run at was changed four weeks earlier.",
+    answer:
+      "Taken as causal rather than contributing, the defect finding does not hold up on its own — a rated life means the duty it was rated for, and that changed in February.",
+    forOptions: ["Denied"],
+  },
+  {
+    id: "cr-site-knew",
+    kind: "disagree",
+    label: "The site made the change knowingly",
+    body: "The site changed the drive parameters without asking, and knew the approval requirement. That is not a shared cause — it is the customer's cause.",
+    answer:
+      "If the requirement was known and the change was made anyway, that reads as acceptance of the risk rather than an oversight, and it weakens the case for absorbing the travel as goodwill.",
+    forOptions: ["Denied"],
+  },
+  {
+    id: "cr-operator-error-open",
+    kind: "disagree",
+    label: "Operator error isn't established",
+    body: "The unapproved configuration change is on the record, but nobody has established that it caused the failure — there is no maintenance history for the period and no engineering finding. Moving labour and freight to the customer on a contribution that is still open puts the whole split on something we have not proved.",
+    answer:
+      "You're right that the contribution is still open. §4.2 does not require the change to be proven causal, only unapproved — but if you want the split to rest on cause rather than clause, that is a different argument and the labour is the line it turns on.",
+    forOptions: ["Approved"],
+  },
+];
+
 // ── The hero case: WR-2026-0417 ─────────────────────────────────────────────
 
 const CASE_0417: WarrantyCase = {
@@ -52,6 +242,7 @@ const CASE_0417: WarrantyCase = {
   instanceId: "",
   folderKey: "",
   customer: "Northstar Retail Distribution",
+  customerSegment: "Strategic",
   site: "Joliet DC · Line 3 / Induct",
   asset: {
     model: "SR-440",
@@ -60,6 +251,7 @@ const CASE_0417: WarrantyCase = {
     inServiceMonths: 30,
     warrantyStatus:
       "Extended Service Agreement NRD-ESA-2024-0219 · active to 2027-09-02 · deductible $0.00",
+    identityConfirmed: true,
   },
   priority: "P1",
   status: "Action required",
@@ -1054,6 +1246,10 @@ export const DEMO_ACTIONS: CaseAction[] = [
     },
     confidencePercent: 87,
     precedent: "60% agree",
+    precedentBreakdown: PRECEDENT_0417,
+    precedentBasis: "Last 18 months · combined cause, strategic account",
+    signals: SIGNALS_0417,
+    replies: REPLIES_0417,
     peerContext:
       "Across similar combined-cause claims, 78% ended in partial plus goodwill.",
     claimTotal: 16272.5,
@@ -1111,7 +1307,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
         label: "Policy test — ESA NRD-ESA-2024-0219",
         summary: "7 checks · 5 pass, 1 fail, 1 open",
         marked: 3,
-        body: "Five checks pass on term, registration, deductible, service history and parts eligibility. The configuration-approval check fails under ESA §4.2. The operator-error contribution check is open and has not been weighed against the customer.",
+        checks: POLICY_CHECKS_0417,
       },
       {
         id: "claim-as-filed",

@@ -20,6 +20,8 @@ import { AssessmentPanel } from "@/components/warranty/AssessmentPanel";
 import { CaseTabs } from "@/components/warranty/CaseTabs";
 import { FindingCauses } from "@/components/warranty/CoverageConsole";
 import { CoverageDecisionCard } from "@/components/warranty/CoverageDecisionCard";
+import { DecisionHeader } from "@/components/warranty/DecisionHeader";
+import { PolicyTestCard } from "@/components/warranty/PolicyTest";
 import { DecisionForm } from "@/components/warranty/DecisionForm";
 import { PriorityBadge, SlaBadge } from "@/components/warranty/badges";
 import { appOrigin } from "@/lib/app-base";
@@ -138,6 +140,19 @@ export function TaskDetail({
   // so with either open the pane stacks — which is what the flag's hint promises.
   const sideBySide = actionSideBySide && rich && rightPanel === null;
 
+  // The policy test travels as a fold on the action; the Actions pane has no
+  // fold stack, so it is pulled out and shown as its own card.
+  // Only the departure is state; the recommendation is the resting value. Held
+  // here rather than in the decision card because the assessment rail answers
+  // the position too — see CoverageDecisionCard's `position` prop.
+  const [chosen, setChosen] = useState<string | null>(null);
+  useEffect(() => setChosen(null), [action.id]);
+  const position = chosen ?? action.recommendation.recommendedOutcome;
+  const setPosition = setChosen;
+
+  const policyTest = action.folds?.find((f) => f.id === "policy-test");
+  const agreementName = policyTest?.label.replace(/^Policy test\s*—\s*/, "") ?? "";
+
   return (
     <div className="flex h-full flex-1 overflow-x-auto">
       <AnimatePresence mode="wait">
@@ -234,16 +249,23 @@ export function TaskDetail({
             >
               {warrantyCase && rich ? (
                 <>
-                  {/* Reading column: why it came here, and the finding. */}
+                  {/* Reading column: what is being decided, then the finding. */}
                   <div className="flex min-w-0 flex-col gap-4">
-                    <Card className="gap-2 p-4">
-                      <span className="text-sm font-semibold">Why this reached you</span>
-                      <p className="text-[13px] leading-relaxed text-muted-foreground">
-                        {action.whyThisReachedYou}
-                      </p>
-                    </Card>
+                    <DecisionHeader action={action} warrantyCase={warrantyCase} />
 
                     <FindingCauses action={action} columns={sideBySide ? 2 : 1} />
+
+                    {/* The clauses the finding is tested against. It sits under
+                        the causes because it is what turns two established facts
+                        into a coverage position — and because the one failing
+                        clause is the reason the split falls where it does. */}
+                    {policyTest?.checks?.length ? (
+                      <PolicyTestCard
+                        checks={policyTest.checks}
+                        agreement={agreementName}
+                        marked={policyTest.marked}
+                      />
+                    ) : null}
 
                     {!sideBySide && (
                       <CoverageDecisionCard
@@ -251,6 +273,8 @@ export function TaskDetail({
                         warrantyCase={warrantyCase}
                         onCompleted={onCompleted}
                         onReopen={() => reopenDecision(action.id)}
+                        position={position}
+                        onPositionChange={setPosition}
                       />
                     )}
 
@@ -273,6 +297,8 @@ export function TaskDetail({
                         warrantyCase={warrantyCase}
                         onCompleted={onCompleted}
                         onReopen={() => reopenDecision(action.id)}
+                        position={position}
+                        onPositionChange={setPosition}
                       />
                     </div>
                   )}
@@ -350,6 +376,7 @@ export function TaskDetail({
                 warrantyCase={warrantyCase}
                 onClose={() => setRightPanel(null)}
                 onShowCase={() => setRightPanel("case")}
+                position={position}
               />
             )}
 

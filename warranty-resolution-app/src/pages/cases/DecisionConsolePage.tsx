@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { ChevronLeft, CircleAlert, Clock } from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
@@ -218,6 +218,12 @@ export function DecisionConsolePage() {
   const { warrantyCase, isLoading: caseLoading } = useCase(caseId);
   const navigate = useNavigate();
 
+  // Only the departure is state; the recommendation is the resting value. Held
+  // here because the assessment rail answers the position as well as the
+  // decision card setting it — see CoverageDecisionCard's `position` prop.
+  const [chosen, setChosen] = useState<string | null>(null);
+  useEffect(() => setChosen(null), [taskId]);
+
   // Same distinction as the case page: still arriving, versus not there.
   if ((actionLoading || caseLoading) && (!action || !warrantyCase)) {
     return <DecisionConsoleSkeleton />;
@@ -240,6 +246,9 @@ export function DecisionConsolePage() {
       </PageContainer>
     );
   }
+
+  const position = chosen ?? action.recommendation.recommendedOutcome;
+  const setPosition = setChosen;
 
   const back = () => void navigate({ to: "/cases/$caseId", params: { caseId: warrantyCase.id } });
   const rich = Boolean(action.causes?.length);
@@ -309,13 +318,15 @@ export function DecisionConsolePage() {
                 warrantyCase={warrantyCase}
                 onCompleted={back}
                 onReopen={() => reopenDecision(action.id)}
+                position={position}
+                onPositionChange={setPosition}
               />
             </div>
           </div>
         </div>
       </div>
 
-      <AssessmentPanel action={action} warrantyCase={warrantyCase} />
+      <AssessmentPanel action={action} warrantyCase={warrantyCase} position={position} />
     </div>
   );
 }

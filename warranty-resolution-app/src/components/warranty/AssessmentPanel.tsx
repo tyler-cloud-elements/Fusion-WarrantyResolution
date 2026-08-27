@@ -1,16 +1,22 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, PanelRightClose, PanelRightOpen, PanelRight } from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/warranty/CoverageConsole";
+import {
+  EvidenceSection,
+  PrecedentSection,
+  type SignalVerdict,
+} from "@/components/warranty/AssessmentSignals";
+import { splitFor } from "@/lib/warranty/costSplit";
 import { REASONING_OPTIONS } from "@/lib/warranty/demoData";
-import { initialsOf, timeOnly } from "@/lib/warranty/format";
+import { initialsOf, moneyExact, timeOnly } from "@/lib/warranty/format";
 import { useRole } from "@/lib/role/useRole";
 import { askAgent, localAnswer } from "@/services/uipath/assistantService";
 import { isAssistantConfigured } from "@/services/uipath/config";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
-import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
+import type { CaseAction, SuggestedReply, WarrantyCase } from "@/lib/warranty/types";
 
 // The Assessment rail.
 //
@@ -26,6 +32,37 @@ interface Message {
   from: "agent" | "user";
   text: string;
   time: string;
+  /** Tints the bubble amber — the agent flagging a departure, not answering. */
+  tone?: "warning";
+}
+
+const REPLY_KIND_LABEL: Record<SuggestedReply["kind"], string> = {
+  disagree: "Disagree",
+  "missing-context": "Missing context",
+  "ask-back": "Ask back",
+  agree: "Agree",
+};
+
+/**
+ * What moving off the recommendation costs, in one clause.
+ *
+ * Derived from the split rather than authored per option, so it stays true if
+ * the claim's lines change: a position that leaves nothing with us is described
+ * as putting the whole claim on the customer, and the reverse, and anything in
+ * between reads as the two totals it actually produces.
+ */
+function departureClause(action: CaseAction, outcome: string): string {
+  const option = action.options.find((o) => o.outcome === outcome);
+  const split = splitFor(action, option);
+  if (split.vendorTotal === 0) {
+    return `puts the whole ${moneyExact(split.customerTotal)} on the customer`;
+  }
+  if (split.customerTotal === 0) {
+    return `puts the whole ${moneyExact(split.vendorTotal)} on us`;
+  }
+  return `moves us to ${moneyExact(split.vendorTotal)} and the customer to ${moneyExact(
+    split.customerTotal,
+  )}`;
 }
 
 /** The recommendation, with a segmented confidence meter. */
@@ -97,6 +134,8 @@ function Bubble({
             fromAgent
               ? "rounded-tl-sm bg-muted text-foreground"
               : "rounded-tr-sm border border-border bg-card",
+            message.tone === "warning" &&
+              "border border-warning/40 bg-warning/10 text-foreground",
           )}
         >
           {children}
@@ -113,6 +152,7 @@ export function AssessmentPanel({
   warrantyCase,
   onClose,
   onShowCase,
+  position,
 }: {
   action: CaseAction;
   warrantyCase: WarrantyCase;
@@ -120,6 +160,15 @@ export function AssessmentPanel({
   onClose?: () => void;
   /** Swap this panel for the case details — they share one column. */
   onShowCase?: () => void;
+  /**
+   * The coverage position currently selected in the decision card.
+   *
+   * The rail is a conversation about a specific call, so it has to know which
+   * one is on the table: moving off the recommendation is the moment worth
+   * saying something about, and what is worth saying differs by where you moved
+   * to. Absent, the rail stays a plain assessment.
+   */
+  position?: string;
 }) {
   const { sdk, isAuthenticated } = useUiPath();
   const canUseAgent = isAssistantConfigured() && isAuthenticated && Boolean(sdk);
@@ -129,6 +178,77 @@ export function AssessmentPanel({
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
   const [replies, setReplies] = useState<Message[]>([]);
+  const [verdicts, setVerdicts] = useState<Record<string, SignalVerdict>>({});
+  const [usedReplies, setUsedReplies] = useState<string[]>([]);
+
+  const recommended = action.recommendation.recommendedOutcome;
+  const departed = Boolean(position) && position !== recommended;
+
+  /**
+   * The agent's standing line about the position on the table.
+   *
+   * Not appended to the thread: it is the agent's current stance, so moving the
+   * position again replaces it rather than stacking another paragraph. Anything
+   * the reader actually said stays in the thread above it.
+   */
+  const stance = useMemo<Message | null>(() => {
+    if (!position) return null;
+    if (!departed) {
+      return {
+        id: "stance-agreed",
+        from: "agent",
+        text: "I've preselected it — review and submit, or change the position.",
+        time: "Now",
+      };
+    }
+    // The option's label, not its outcome code: the rail is talking, and
+    // "you've moved to denied" is not a sentence anyone says.
+    const option = action.options.find((o) => o.outcome === position);
+    const title = option?.label ?? option?.outcome ?? "another position";
+    return {
+      id: `stance-${position}`,
+      from: "agent",
+      tone: "warning",
+      text: `You've moved to ${title.toLowerCase()}, which ${departureClause(
+        action,
+        position,
+      )}. That's a different call from mine, and the reason matters more than the change does — it's what I'd learn from. What did I get wrong?`,
+      time: "Now",
+    };
+  }, [action, position, departed]);
+
+  /**
+   * Replies worth offering here. Filtered by position — an objection to a denial
+   * is not an objection to full coverage — and spent once used, so the rail does
+   * not keep offering something already said.
+   */
+  const offered = useMemo(
+    () =>
+      (action.replies ?? []).filter(
+        (r) =>
+          !usedReplies.includes(r.id) &&
+          (!r.forOptions || (position ? r.forOptions.includes(position) : false)),
+      ),
+    [action.replies, usedReplies, position],
+  );
+
+  // The agent's answer to a moved position is the point of moving it, and it
+  // lands at the bottom of a thread that is usually already taller than the
+  // rail. Without this the reader changes the position and sees nothing happen.
+  const threadRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = threadRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [replies.length, stance?.id]);
+
+  function pickReply(reply: SuggestedReply) {
+    setUsedReplies((used) => [...used, reply.id]);
+    setReplies((r) => [
+      ...r,
+      { id: `q-${reply.id}`, from: "user", text: reply.body, time: "Just now" },
+      { id: `a-${reply.id}`, from: "agent", text: reply.answer, time: "Now" },
+    ]);
+  }
 
   // The opening turn is the assessment itself, so the rail reads as the agent
   // having already said its piece before the person arrived.
@@ -226,29 +346,38 @@ export function AssessmentPanel({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-2.5">
+      <div ref={threadRef} className="min-h-0 flex-1 overflow-y-auto p-2.5">
         <div className="flex flex-col gap-2">
           <Bubble message={opening}>
             <RecommendationCard action={action} />
           </Bubble>
 
-          {/* Two rollups the agent leans on, stated rather than buried. */}
-          <div className="ml-6 flex flex-col text-[11.5px]">
-            <div className="flex items-center gap-1.5 py-1">
-              <span className="font-semibold text-foreground">Evidence</span>
-              <span className="ml-auto shrink-0 text-[10.5px] text-muted-foreground tabular-nums">
-                {warrantyCase.evidence.length} signals ·{" "}
-                {warrantyCase.evidence.filter((e) => e.helpful).length} marked useful
-              </span>
-            </div>
-            {action.precedent && (
-              <div className="flex items-center gap-1.5 py-1">
-                <span className="font-semibold text-foreground">Precedent</span>
-                <span className="ml-auto shrink-0 text-[10.5px] text-muted-foreground tabular-nums">
-                  {action.precedent}
-                </span>
-              </div>
-            )}
+          {/* The two rollups, opened. Each was a one-line count before, which
+              told the reader a number existed without giving them anything they
+              could take issue with. */}
+          <div className="ml-6 flex flex-col">
+            {action.signals?.length ? (
+              <EvidenceSection
+                signals={action.signals}
+                verdicts={verdicts}
+                onVerdict={(id, v) =>
+                  setVerdicts((prev) =>
+                    // Clicking the same thumb again clears it — a verdict you
+                    // cannot take back is one people stop giving honestly.
+                    prev[id] === v
+                      ? Object.fromEntries(Object.entries(prev).filter(([k]) => k !== id))
+                      : { ...prev, [id]: v },
+                  )
+                }
+              />
+            ) : null}
+            {action.precedentBreakdown?.length ? (
+              <PrecedentSection
+                slices={action.precedentBreakdown}
+                basis={action.precedentBasis}
+                recommended={recommended}
+              />
+            ) : null}
           </div>
 
           {verdictMessages.map((message) => (
@@ -257,11 +386,34 @@ export function AssessmentPanel({
           {replies.map((message) => (
             <Bubble key={message.id} message={message} />
           ))}
+          {/* The agent's current stance sits last: it answers the position on
+              the table now, so it is replaced when that moves, not stacked. */}
+          {stance && <Bubble message={stance} />}
           {pending && (
             <div className="ml-6 text-[12.5px] text-muted-foreground">Thinking…</div>
           )}
         </div>
       </div>
+
+      {offered.length > 0 && (
+        <div className="shrink-0 border-t border-border px-2.5 pt-2">
+          <div className="flex flex-wrap gap-1">
+            {offered.map((reply) => (
+              <button
+                key={reply.id}
+                type="button"
+                onClick={() => pickReply(reply)}
+                className="flex max-w-full items-baseline gap-1.5 rounded-md border border-border px-1.5 py-1 text-left text-[11px] transition-colors hover:bg-muted"
+              >
+                <span className="shrink-0 text-[8.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {REPLY_KIND_LABEL[reply.kind]}
+                </span>
+                <span className="min-w-0 truncate">{reply.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="shrink-0 border-t border-border p-2.5">
         {!canUseAgent && (

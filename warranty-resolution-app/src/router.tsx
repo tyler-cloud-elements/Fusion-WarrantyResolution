@@ -1,0 +1,184 @@
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  redirect,
+} from "@tanstack/react-router";
+import { BarChart3, FileText, Inbox, Workflow } from "lucide-react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ApolloShell, type ShellNavItem } from "@/components/ui/shell";
+import { ThemeProvider } from "@/components/ui/shell-theme-provider";
+import { FeatureFlagsPanel } from "@/components/warranty/FeatureFlagsPanel";
+import { PersonaSwitcher } from "@/components/warranty/PersonaSwitcher";
+import { getAppBase } from "@/lib/app-base";
+import { RoleProvider } from "@/lib/role/RoleProvider";
+import { useFlags } from "@/lib/flags";
+import { useActions, useCases } from "@/lib/warranty/useCases";
+import { UiPathProvider } from "@/services/uipath/UiPathProvider";
+import { ActionsPage } from "@/pages/actions/ActionsPage";
+import { CasesListPage } from "@/pages/cases/CasesListPage";
+import { CaseDetailPage } from "@/pages/cases/CaseDetailPage";
+import { DecisionConsolePage } from "@/pages/cases/DecisionConsolePage";
+import { PerformancePage } from "@/pages/PerformancePage";
+import { CasePlansPage } from "@/pages/CasePlansPage";
+
+// Information architecture follows the storyboard's three tabs — Cases,
+// Performance, Case plans — rendered in the Apollo Vertex shell's left nav.
+// Labels are i18n keys and must exist in src/locales/en.json.
+const NAV_ITEMS: ShellNavItem[] = [
+  { path: "/cases", label: "cases", icon: FileText },
+  { path: "/actions", label: "actions", icon: Inbox },
+  { path: "/performance", label: "performance", icon: BarChart3 },
+  { path: "/case-plans", label: "case_plans", icon: Workflow },
+];
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    // Case state changes while a demo is running; a refetch on focus is the
+    // cheapest way to keep a projected screen honest after an alt-tab.
+    queries: { refetchOnWindowFocus: true, retry: 1 },
+  },
+});
+
+const rootRoute = createRootRoute({
+  component: () => (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider storageKey="warranty-app-theme">
+        <UiPathProvider>
+          <RoleProvider>
+            <Outlet />
+          </RoleProvider>
+        </UiPathProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  ),
+});
+
+function NavBadge({ count }: { count: number }) {
+  return (
+    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-primary/15 px-1.5 text-xs font-semibold tabular-nums text-primary">
+      {count}
+    </span>
+  );
+}
+
+function ShellLayout() {
+  const { cases } = useCases();
+  const actions = useActions();
+  const { showCasePlans } = useFlags();
+  // Two different counts on purpose: Cases badges how many need a person at all
+  // ("3 of 41"), Actions badges the individual decisions waiting inside them.
+  const needsPerson = cases.filter((c) => c.status === "Action required").length;
+  const openActions = actions.filter((a) => a.status === "Open").length;
+
+  const counts: Record<string, number> = {
+    "/cases": needsPerson,
+    "/actions": openActions,
+  };
+
+  const navItems = NAV_ITEMS
+    // Case plans is design-time material and hidden unless a presenter asks for
+    // it. The route stays registered, so a deep link still resolves.
+    .filter((item) => item.path !== "/case-plans" || showCasePlans)
+    .map((item) =>
+      counts[item.path] > 0 ? { ...item, badge: <NavBadge count={counts[item.path]} /> } : item,
+    );
+
+  return (
+    <ApolloShell
+      companyName="Cobalt Ridge Automation"
+      productName="Warranty Resolution"
+      navItems={navItems}
+      appSwitcher={<PersonaSwitcher />}
+      sidebarFooter={<FeatureFlagsPanel />}
+    >
+      <div className="h-full min-h-0">
+        <Outlet />
+      </div>
+    </ApolloShell>
+  );
+}
+
+const shellRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "shell",
+  component: ShellLayout,
+});
+
+// The queue is the landing screen — the demo opens on the work, not a dashboard.
+const indexRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/",
+  beforeLoad: () => {
+    throw redirect({ to: "/cases" });
+  },
+});
+
+const casesRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/cases",
+  component: CasesListPage,
+});
+
+const caseDetailRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/cases/$caseId",
+  component: CaseDetailPage,
+});
+
+// Mirrors the storyboard's console URL: /cases/WR-2026-0417/tasks/coverage-decision
+const decisionConsoleRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/cases/$caseId/tasks/$taskId",
+  component: DecisionConsolePage,
+});
+
+const actionsRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/actions",
+  component: ActionsPage,
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { task?: string; case?: string; tf?: string } => ({
+    task: typeof search.task === "string" ? search.task : undefined,
+    case: typeof search.case === "string" ? search.case : undefined,
+    tf: typeof search.tf === "string" ? search.tf : undefined,
+  }),
+});
+
+const performanceRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/performance",
+  component: PerformancePage,
+});
+
+const casePlansRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: "/case-plans",
+  component: CasePlansPage,
+});
+
+const routeTree = rootRoute.addChildren([
+  shellRoute.addChildren([
+    indexRoute,
+    casesRoute,
+    caseDetailRoute,
+    decisionConsoleRoute,
+    actionsRoute,
+    performanceRoute,
+    casePlansRoute,
+  ]),
+]);
+
+// `basepath` lets one build serve from the domain root (local dev) and from a
+// sub-path (UiPath Coded Apps at /<routing-name>). TanStack applies it as a
+// location rewrite — stripped on the way in, re-added on the way out — so every
+// literal route path and `Link to=` in the app stays unprefixed.
+export const router = createRouter({ routeTree, basepath: getAppBase() });
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}

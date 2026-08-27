@@ -1,0 +1,372 @@
+# Industrial Equipment Warranty Resolution — Case App
+
+A UiPath Coded Web App for the FUSION 2026 Keynote 2 demo. It is the **Maestro Case App**
+in Act II of the storyboard: the warranty resolution lead's work queue, her decision
+console, the case agent's mid-case reassessment, and the execution trail.
+
+The app lives in [`warranty-resolution-app/`](./warranty-resolution-app). Its own
+[README](./warranty-resolution-app/README.md) covers running, configuring, and deploying it.
+
+---
+
+## Sources of truth
+
+Three documents define this build. When they disagree, the order below wins.
+
+| Source | What it settles | File |
+|---|---|---|
+| **FUSION 2026 storyboard (26 Aug)**, Act III scenes 18–22 | What appears on stage: screens, copy, numbers, the beats in order | `docs/FUSION 2026 Storyboards-0826.html` |
+| **Coverage decision mock** | The decision console in detail: the two causes, the cost split, the authority meter, the settled state | `docs/coverage-decision-wiith-signals.html` |
+| **Case design** (Use Case Explorer reference implementation) | The case shape: 6 primary stages, 4 conditional lanes, per-task actor (AG/PR/HT/API), illustrative SLAs | `docs/Industrial Equipment Warranty Resolution _ Use Case Explorer_files/…Case Design.png` |
+| **IXP document set** | The seven real evidence documents behind the case, and what a model can and cannot read off them | `docs/ixp-warranty-documents/` |
+| **SDD** | Production rigour: case variables, decision vocabularies, entry/exit conditions, personas, integrations, 4 extra terminal lanes | `docs/warranty-resolution-sdd.md` |
+
+The storyboard outranks the others **for anything on screen** — it is the script. The SDD
+outranks them for anything about how the case actually runs. The console mock outranks both
+for the coverage decision's own layout and figures, since it is the most specific artefact
+for that one screen.
+
+> `docs/FUSION 2026 Storyboards.html` is the superseded 25 Aug cut, kept for reference. It has
+> three acts and numbers the case-app scenes 12–16; the 26 Aug cut has four and numbers them
+> 18–22. Build against the 0826 file.
+
+### Where the sources diverge, and what the app does
+
+- **Secondary stages.** The case design draws 4 conditional lanes; the SDD defines 8
+  (adding Coverage denial, Withdrawal, Commercial/legal handoff, Reopen and reassess).
+  The app carries all of them: the 4 demo-visible lanes are always listed on the stage
+  rail, the 4 terminal lanes appear only once entered, since they end a case rather than
+  sitting dormant.
+- **Agents.** The case design types several tasks `AG` (agent). The SDD states the
+  opposite — BR-003 reserves every judgement for a named human, so it types no task
+  `agent`. The app follows the case design, because that is what the storyboard shows.
+  **If the real case plan follows the SDD, flip the `actor` fields in
+  `src/lib/warranty/casePlan.ts` and nothing else changes.**
+- **SLA targets.** The app uses the case design's illustrative targets (the console header
+  reads `SLA 4 HR`, which is what scene 20 shows). The SDD's more conservative production
+  set is recorded in a comment on each stage.
+- **Which stage the coverage decision sits in.** The 26 Aug storyboard puts WR-2026-0417 in
+  **Resolution decision** — the queue row (19), the case detail (21), the stage rail's "now"
+  marker (21), and scene 22's Global variables, which source `Coverage.Position` from
+  Resolution decision. The console mock still labels the stage "Coverage and evidence
+  review", and the case design still lists the coverage task under that stage. **The app
+  follows the storyboard**; the case plan is unchanged. If the real case plan keeps the
+  coverage decision in Coverage and evidence review, change `stage` on the action in
+  `demoData.ts` and `currentStage` on the case — nothing else depends on it.
+
+---
+
+## The demo, in the app
+
+Scene numbers below are the **26 Aug** cut.
+
+| Scene | Screen | Route |
+|---|---|---|
+| 18 · 93 out of 100 need nobody | Operational insights | `/performance` |
+| 19 · The seven that need a person | Work queue | `/cases` |
+| 20 · One decision, in a console | Decision console | `/cases/WR-2026-0417/tasks/coverage-decision` |
+| 21 · New evidence, reassessed on its own | Case detail | `/cases/WR-2026-0417` |
+| 22 · The execution trail | Case detail → Trail tab | `/cases/WR-2026-0417` |
+| 15–17 · Case plan and rules | Case plans | `/case-plans` |
+
+There is also an **Actions** page at `/actions` — the maestro-case-app queue
+pattern: every open decision in one list, with the selected one beside it and the
+case in a right rail. It is not a storyboard scene; it is how a coordinator
+actually works a day. The same decision appears in three places on purpose:
+
+| Surface | What it is for |
+|---|---|
+| `/cases/$id/tasks/$taskId` | The storyboard's scene-14 console — full screen, signal-capture rail |
+| `/actions` | Working the whole queue, with case context alongside |
+| Case detail → Actions tab | What is outstanding *on this case*, and where to go next |
+
+**The Actions pane is the decision, and only the decision** — why it reached you, the finding,
+and the decision card. It carries no documents, no asset record, no claim breakdown and no
+folded supporting record, because all of that is one panel to the right in the case drawer and
+a second copy would just be a second copy. A dashed line at the bottom names what is over
+there and opens it.
+
+The finding stays, because it is not context: it is the judgement being made.
+
+The full-screen console keeps everything, since it has two columns to put it in.
+
+The plain surfaces render the same `DecisionForm`, so they cannot drift.
+
+### Two consoles, chosen by the action
+
+`DecisionConsolePage` renders one of two shapes, switched on whether the action carries
+`causes`:
+
+- **The combined-cause console** (WR-2026-0417 only) — the 26 Aug design. The finding stays
+  open because it is the judgement; the supporting record is present but folded to one line
+  each; the money is split by cause attribution; and the authority meter answers whether the
+  signer can sign it alone ($9,690 of $10,000 — the beat scene 20 says to point at).
+- **The plain console** — everything else. Why it reached you, the evidence, the decision
+  form, and the signal-capture rail.
+
+Adding `causes`, `costLines` and `authority` to any other action promotes it to the rich
+console; no code change is needed.
+
+**The reasoning tri-state is the point of the screen.** Asked separately from the outcome —
+*I agree · I agree, but keep asking me · Stop asking for cases like this* — because agreeing
+with a recommendation and wanting to stop being asked are different statements, and only the
+second one proposes a rule. Scene 20 calls it out as a beat to read aloud. It is recorded
+alongside the outcome and echoed into the Assessment rail as the signer's own reply.
+
+**The Assessment rail** (right) is a conversation, not a widget: it opens with the
+recommendation, its confidence meter, and the reasoning behind it. It never decides —
+decision controls live in the decision card only, which is a director's note in the
+storyboard, not a preference.
+
+### The case tab set
+
+The case detail carries the maestro-case-app tab set, with warranty content:
+
+**Overview · Details · Actions · Stages · SLAs · Documents · Activity · Trail · Comments**
+
+The Actions page's right rail renders the same component in its `rail` variant,
+which drops Actions, Stages and SLAs — you are already looking at the action, and
+the queue shows its own clock. Everything else is identical.
+
+A few things worth knowing about the data behind them:
+
+- **SLAs** are computed in `lib/warranty/caseSlas.ts` at three levels — the case
+  clock (the SDD §1 P1 override included), one per stage, one per open decision.
+  Every pill and countdown in the app reads that one function.
+- **Activity** is authored for the three hero cases and *derived* from stage
+  states for the other 38 (`lib/warranty/activity.ts`), so the tab is never empty
+  and nobody maintains 38 feeds.
+- **Stages** derives task state from the stage plus its open decisions, because
+  the case row carries no per-task status. A live instance should replace that
+  with real task statuses.
+- **Trail** is the execution record; **Activity** is the business history. They
+  are deliberately separate tabs.
+
+**Scene 15 is fired by hand.** The case detail has a *Simulate customer evidence upload*
+button. With `VITE_EVIDENCE_WEBHOOK_URL` set it fires the real webhook and the platform
+delivers the event; without one it simulates the same arrival locally so the beat lands
+either way.
+
+### The cast is settled
+
+Six names, from the storyboard. Do not invent a seventh — there is no second Priya and no
+duplicated engineer.
+
+| Name | Role | Sign-in persona? |
+|---|---|---|
+| Sarah Chen | Warranty Resolution Lead | yes (default) |
+| Miguel Alvarez | Reliability and Controls Engineer | yes |
+| Ryan Ochoa | Product Quality Lead | yes |
+| Kelsey Nordstrom | Parts and Logistics Lead | yes |
+| Priya Raghunathan | Warranty Process Owner | no — appears in rules/data |
+| Tom Beckerman | Claims Administrator | no — appears in rules/data |
+
+Note: `J. Alvarez (Northstar, site controls)` in the controls-change audit evidence is the
+**customer's** technician, not Miguel Alvarez. That collision is in the storyboard; it is
+deliberate and should stay.
+
+### Numbers the talk track quotes
+
+These must stay consistent, because they are said out loud:
+
+- **41** open cases, **3** need a person today, **38** progressing on their own
+- **93%** progressing autonomously, **7%** human-intervention rate
+- WR-2026-0417: claim **$16,272.50** over **4 lines**, line **down 96 hrs**, decision due in
+  **2h 13m** against a **4 hr** SLA
+- The gearbox failed **30 months** into a **60-month** rated life; control parameters raised
+  **19%** above the commissioned envelope on **2026-02-14**, no written approval (ESA §4.2)
+- The split: **$9,690.00** Cobalt Ridge, **$6,582.50** customer — against a **$10,000** limit
+- Agent confidence **87%**; precedent **60% agree**; **78%** of similar combined-cause claims
+  ended in partial plus goodwill
+
+> These changed wholesale in the 26 Aug cut. The old figures ($18,400, 11 hr down, bearing at
+> 4,100 of 20,000 hours) are from the 25 Aug storyboard and should not reappear.
+
+The background cases are generated from a seeded hash, so the counts hold without anyone
+maintaining 38 rows by hand. If you change the count, change `AGENT_SUMMARY` too.
+
+**`DEMO_NOW` is captured at module load, not pinned to a fixed date** — deliberately.
+A fixed instant looks tidier but rots: the figures stored on each row ("3 hr 12 min
+elapsed") stay put while anything computed against real time drifts, so after a week
+on the shelf the SLA rows and the activity feed contradict the header. Anchoring to
+load keeps every relative figure saying the same thing on any day.
+
+Everything on screen is illustrative — the storyboard says so explicitly, and the app
+marks the figures that most look like measurements with an `ILLUSTRATIVE` tag.
+
+---
+
+## The documents
+
+The seven PDFs in `docs/ixp-warranty-documents/` are copied into
+`warranty-resolution-app/public/documents/` and are the case's actual evidence. Clicking one
+opens it in a full-window viewer: the page on the left in the browser's own PDF viewer, what
+IXP read off it on the right.
+
+Each extracted field carries a confidence, and the ones that matter are marked **inferred** —
+values stated nowhere in the document that had to be derived by reading two things against
+each other. Those are the case:
+
+| Inferred value | Derived from |
+|---|---|
+| Is the installed drive an approved part? **No** | The work order calls it an "equivalent unit"; terms clause 3.2 excludes exactly that word. Neither document answers it alone. |
+| Was the third-party work authorised? **No** | No authorisation field exists anywhere. The service history records that no request was received; clause 4.1 requires one. |
+| Warranty expiry **14 Sep 2026** | Commissioning date plus the 24-month term in clause 1.1 — and stated outright, so the derived value can be cross-checked. |
+| Did the thermal condition predate the third-party work? **Yes, by 78 days** | Finding SF-2026-0114 (18 Jan) against the third-party service (6 Apr). **This is what makes the answer partial coverage rather than a clean denial.** |
+| Duration at the raised thermal threshold | **Nothing.** The inspection report says it is not established. A model returning a value here is hallucinating — the viewer renders the empty field explicitly rather than hiding it. |
+
+> **These documents tell a different version of the case than the console does.** The IXP set
+> puts the outage on 17 April 2026 with a $13,307.50 third-party invoice, a gearbox swapped
+> for an Altek AD-5500-HD, and controls changed on 6 April. The console mock and the
+> storyboard use $16,272.50, a 2026-02-14 config change, and a +19% torque figure. Both are
+> in the app as they were given: the console keeps the storyboard's headline numbers because
+> that is what is said out loud, and the documents keep theirs because they are the artefacts.
+> The IXP README flags the same class of drift in its own material. **Worth reconciling before
+> anything ships.**
+
+---
+
+## Feature flags
+
+Presenter switches, in the sidebar footer under **Feature flags**. They persist to
+localStorage — unlike case session state, which resets on reload, because someone setting a
+room up should not have to set them twice.
+
+| Flag | Default | What turning it off does |
+|---|---|---|
+| Opposing cause tile | on | Drops the second cause, on the customer. The heading, the "both established" stamp and the verdict box all change with it — with one cause the case is a clean approval, and claiming a combined cause would be a lie. |
+| Agent confidence | on | Hides the percentage and the precedent rollup. |
+| Reasoning capture | on | Hides the agree / keep asking / stop asking tri-state. |
+| Case plans tab | **off** | The only flag that is off by default. The case plan is design-time material and Act III is about running work, so the nav entry is hidden. `/case-plans` still resolves by URL either way, so a presenter can deep-link to it without turning the nav on. |
+| Side-by-side action | off | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the assessment take the same width; two columns squeezed into a third of the window is worse than one. |
+| Morning brief | on | The overnight summary above the work queue — greeting, narrative, four trend tiles, and three pulse cards (cases by stage, SLA posture, autonomy rate). Every figure is computed from the same case list the queue renders, so it cannot disagree with the table underneath it. **When on it also hides two things that would otherwise say the same thing twice:** the standalone "Agent summary" card (the brief opens with that exact line) and the personal KPI row. Turn it off and both come back. |
+
+> The KPI row it hides — avg. coverage decision time, restoration adherence, critical cases at
+> SLA risk, repeat-failure candidates — is storyboard scene 19 content. With the brief on by
+> default those four figures are not on screen. If the talk track needs them, turn the brief
+> off for that beat, or move them into the brief.
+
+Note that turning the opposing cause off does **not** rewrite the case narrative — the banner
+still describes a combined cause, because that is what the case is. The flag hides the tile,
+which is what it is for.
+
+### The cost split is computed, not authored
+
+Picking a coverage position re-attributes every claim line, and the table, the totals and the
+authority meter move with it. That is the point of the screen: you can see what a position
+costs before you sign it.
+
+| Position | Cobalt Ridge | Customer | Authority |
+|---|---|---|---|
+| Approve partial + goodwill | $9,690.00 | $6,582.50 | ✓ within the $10,000 limit — sign alone |
+| Approve full coverage | $16,272.50 | $0.00 | ▲ exceeds the limit — routes for co-approval |
+| Deny coverage | $0.00 | $16,272.50 | ▲ $0, but a denial is a customer commitment — routes for sign-off |
+
+**A denial is its own state, not "$0 and therefore fine."** Committing the customer to fund
+the repair still routes for sign-off. Reading the meter as "under the limit" there would be
+exactly the wrong conclusion, so `authorityFor` returns three states rather than a boolean.
+
+Each position also carries its own rationale draft and downstream effects. The two that
+depart from the recommendation ship an **empty** draft plus an override note — the signer
+writes the reason rather than editing the agent's — and their effects include held items
+(denial letter held, dispatch held) rendered as pauses rather than ticks.
+
+`lib/warranty/costSplit.ts` owns all of it. The claim's lines carry amounts only; who pays
+each one belongs to the position, so a claim does not change shape when the decision does.
+
+### Two panels, one column
+
+The Actions pane's right column holds **either** the case drawer **or** the assessment, never
+both — they share the space, so the state is one value (`"case" | "assessment" | null`) rather
+than two booleans that could represent an impossible state. Both sit under the action header,
+so the action's identity stays put whichever is showing, and each header carries a control to
+swap to the other.
+
+---
+
+## Wiring it to the real case
+
+The app runs on a bundled demo dataset out of the box and needs no UiPath tenant. Live data
+is an overlay, not a replacement: a live instance whose business id matches a demo case
+merges over it, keeping the demo's presentation fields where Maestro carries none. Pointing
+the app at a half-built case improves it rather than emptying it.
+
+To go live:
+
+1. Publish the case in Maestro and copy its **processKey**.
+2. Fill in `warranty-resolution-app/.env` — see `.env.example`. At minimum:
+   `VITE_UIPATH_BASE_URL`, `VITE_UIPATH_ORG_NAME`, `VITE_UIPATH_TENANT_NAME`,
+   `VITE_UIPATH_CLIENT_ID`, `VITE_CASE_PROCESS_KEY`.
+3. Reconcile `src/lib/warranty/casePlan.ts` against the published plan. The service layer
+   matches live stage and task names against those definitions by **normalised name**
+   (lowercased, non-alphanumerics stripped), so keeping the names identical is the whole
+   of the wiring.
+4. Reconcile the decision `actionType` codes against the deployed Action App schema —
+   SDD §4 SME review item 10. Each human task declares its dispatch code in `casePlan.ts`.
+5. Sign in from the banner on the work queue.
+
+### External App scopes
+
+```
+OR.Execution OR.Folders OR.Tasks OR.Jobs OR.Users PIMS
+ConversationalAgents
+DataFabric.Data.Read DataFabric.Data.Write DataFabric.Schema.Read
+```
+
+`OR.Jobs` and `ConversationalAgents` are only needed for the Ask AI panel. `DataFabric.*`
+only for evidence documents. The redirect URI must be the app's own origin + path — for a
+Coded App that is `https://<org>.uipath.host/<routing-name>`.
+
+---
+
+## What is NOT built
+
+Called out so nobody assumes otherwise:
+
+- **No Maestro writes beyond task completion.** Pause, cancel, reopen and instance
+  migration (scene 16's *Migrate* dialog) are not implemented — the SDK exposes
+  `pause`/`close`/`reopen` on `CaseInstances` if they are wanted.
+- **No real evidence storage.** `VITE_EVIDENCE_ENTITY_ID` reads documents from a Data
+  Fabric entity, but uploading is not wired.
+- **The Ask AI panel answers locally by default.** Set `VITE_ASSISTANT_AGENT_ID` and
+  `VITE_ASSISTANT_FOLDER_ID` to route it to a Conversational Agent. The SDK's
+  conversational surface is resolved at run time, so verify it against your installed SDK
+  version before relying on it.
+- **Session state is in memory.** Decisions and fired events reset on reload, on purpose —
+  a rehearsal should start clean without anyone clearing localStorage.
+
+---
+
+## Deploying
+
+```bash
+./deploy-app.sh warranty-resolution-app          # bumps the patch version
+./deploy-app.sh warranty-resolution-app 1.0.0    # or pin one
+```
+
+The script builds with `UIPATH_BUILD=1` (relative asset base), **fails** if the bundle came
+out with absolute `/assets` paths, then packs, publishes and deploys. Pass `--path-name` by
+hand on the **first** deploy only — see the comment at the top of the script.
+
+---
+
+## Repo layout
+
+```
+AGENTS.md                    this file — the build brief
+README.md                    repo overview
+deploy-app.sh                build → pack → publish → deploy
+docs/                        every reference this build was made from
+  warranty-resolution-sdd.md                       the solution design
+  FUSION 2026 Storyboards-0826.html                the demo script (26 Aug — build against this)
+  FUSION 2026 Storyboards.html                     the superseded 25 Aug cut
+  coverage-decision-wiith-signals.html             the decision console mock
+  Industrial Equipment Warranty Resolution _ …     the Use Case Explorer page + case design PNG
+  ixp-warranty-documents/                          the seven evidence PDFs + their generator
+warranty-resolution-app/     the app
+```
+
+Each saved `.html` has a matching `_files/` directory holding its assets — open the HTML and
+it renders offline. The pair must keep the same base name or the page loses its own assets, so
+do not rename one without the other. The storyboard's readable content is the `saved_resource.html`
+*inside* its `_files/` directory; the top-level HTML is just the frame around it.

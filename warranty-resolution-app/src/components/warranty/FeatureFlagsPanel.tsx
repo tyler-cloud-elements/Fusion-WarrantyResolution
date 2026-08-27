@@ -1,0 +1,120 @@
+import { useState } from "react";
+import { ChevronDown, FlaskConical, RotateCcw } from "lucide-react";
+import { useSidebar } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
+import {
+  FLAG_LABELS,
+  isModified,
+  resetFlags,
+  setFlag,
+  useFlags,
+  type FeatureFlags,
+} from "@/lib/flags";
+
+// Presenter switches, in the sidebar footer.
+//
+// Collapsed by default so it does not compete with the nav, and it sits below
+// the nav rather than in it because these are not places to go — they change how
+// the screen you are already on behaves.
+
+function FlagRow({
+  flagKey,
+  value,
+  onChange,
+}: {
+  flagKey: keyof FeatureFlags;
+  value: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  const { label, hint } = FLAG_LABELS[flagKey];
+  return (
+    <label
+      className="flex cursor-pointer items-start gap-2 rounded-md px-1.5 py-1.5 transition-colors hover:bg-sidebar-accent"
+      title={hint}
+    >
+      {/* A switch rather than a checkbox: these are on/off states of the running
+          demo, not items being selected. */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={value}
+        aria-label={label}
+        onClick={() => onChange(!value)}
+        className={cn(
+          "mt-0.5 inline-flex h-4 w-7 shrink-0 items-center rounded-full p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+          value ? "bg-primary" : "bg-muted-foreground/30",
+        )}
+      >
+        <span
+          className={cn(
+            "size-3 rounded-full bg-white shadow-sm transition-transform",
+            value && "translate-x-3",
+          )}
+        />
+      </button>
+      <span className="min-w-0 flex-1">
+        <span className="block text-xs font-medium leading-tight">{label}</span>
+        <span className="block text-[10.5px] leading-snug text-muted-foreground">{hint}</span>
+      </span>
+    </label>
+  );
+}
+
+export function FeatureFlagsPanel() {
+  const flags = useFlags();
+  // Read collapse state from the sidebar rather than taking it as a prop — the
+  // footer slot renders children directly, so there is nothing to pass it down.
+  const { state, isMobile } = useSidebar();
+  const [open, setOpen] = useState(false);
+  const modified = isModified(flags);
+
+  // The collapsed rail has no room for labels, and the icon alone would be a
+  // mystery, so the section hides until the sidebar is expanded.
+  if (state === "collapsed" && !isMobile) return null;
+
+  return (
+    <div className="flex flex-col border-t border-sidebar-border pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex items-center gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-sidebar-accent"
+      >
+        <FlaskConical className="size-3.5 shrink-0 text-muted-foreground" />
+        <span className="text-xs font-medium">Feature flags</span>
+        {modified && (
+          <span className="size-1.5 rounded-full bg-primary" title="Changed from defaults" />
+        )}
+        <ChevronDown
+          className={cn(
+            "ml-auto size-3.5 shrink-0 text-muted-foreground transition-transform",
+            !open && "-rotate-90",
+          )}
+        />
+      </button>
+
+      {open && (
+        <div className="flex flex-col gap-0.5 pb-1">
+          {(Object.keys(FLAG_LABELS) as (keyof FeatureFlags)[]).map((key) => (
+            <FlagRow
+              key={key}
+              flagKey={key}
+              value={flags[key]}
+              onChange={(next) => setFlag(key, next)}
+            />
+          ))}
+          {modified && (
+            <button
+              type="button"
+              onClick={resetFlags}
+              className="mt-1 flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
+            >
+              <RotateCcw className="size-3" />
+              Reset to defaults
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

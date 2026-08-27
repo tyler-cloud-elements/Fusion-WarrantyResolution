@@ -1,0 +1,8 @@
+{
+  "scope": "OR.Execution OR.Folders OR.Tasks OR.Jobs OR.Users PIMS ConversationalAgents DataFabric.Data.Read DataFabric.Data.Write DataFabric.Schema.Read",
+  "clientId": "",
+  "orgName": "",
+  "tenantName": "",
+  "baseUrl": "",
+  "redirectUri": ""
+}

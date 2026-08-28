@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { CustomerStandingRows } from "@/components/warranty/CustomerStandingCard";
 import { PolicyCheckRows, PolicyTally } from "@/components/warranty/PolicyTest";
 import { recommendedSplit } from "@/lib/warranty/costSplit";
 import { useFlags } from "@/lib/flags";
@@ -383,7 +384,14 @@ export function FindingCauses({
   );
 }
 
-function Fold({ fold }: { fold: DetailFold }) {
+function Fold({
+  fold,
+  warrantyCase,
+}: {
+  fold: DetailFold;
+  /** Lets a fold render live case data instead of an authored paraphrase. */
+  warrantyCase?: WarrantyCase;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-b border-border last:border-0">
@@ -410,12 +418,17 @@ function Fold({ fold }: { fold: DetailFold }) {
           )}
         />
       </button>
+      {open && fold.id === "customer-standing" && warrantyCase ? (
+        <div className="px-4 pb-3">
+          <CustomerStandingRows warrantyCase={warrantyCase} />
+        </div>
+      ) : null}
       {open && fold.checks?.length ? (
         <div className="px-4 pb-3">
           <PolicyCheckRows checks={fold.checks} />
         </div>
       ) : null}
-      {open && fold.body && (
+      {open && fold.body && fold.id !== "customer-standing" && (
         <p className="px-4 pb-3 text-[12.5px] leading-relaxed text-muted-foreground">
           {fold.body}
         </p>
@@ -428,12 +441,18 @@ function Fold({ fold }: { fold: DetailFold }) {
  * Everything that supports the finding without being it. Present so the record
  * is complete; folded so the screen stays a decision.
  */
-export function DetailFolds({ action }: { action: CaseAction }) {
+export function DetailFolds({
+  action,
+  warrantyCase,
+}: {
+  action: CaseAction;
+  warrantyCase?: WarrantyCase;
+}) {
   if (!action.folds?.length) return null;
   return (
     <Card className="gap-0 overflow-hidden p-0">
       {action.folds.map((fold) => (
-        <Fold key={fold.id} fold={fold} />
+        <Fold key={fold.id} fold={fold} warrantyCase={warrantyCase} />
       ))}
     </Card>
   );

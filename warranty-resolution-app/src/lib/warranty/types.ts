@@ -454,11 +454,44 @@ export interface CaseSlaEntry {
   condition?: string;
 }
 
+/**
+ * What the account is worth and what it has already cost — the commercial frame
+ * a goodwill decision is made inside.
+ *
+ * Read-only, and from Helios rather than the case: a warranty lead does not set
+ * an account's tier or its credit balance, they weigh them. It sits with the
+ * case because the goodwill line on the decision is unarguable without it —
+ * absorbing $1,240 of travel reads differently against $312,000 of credits
+ * already issued than it does against none.
+ */
+export interface CustomerStanding {
+  /** Service revenue per year. */
+  annualValue: number;
+  /** When the agreement comes up for renewal. */
+  renewalDate: string;
+  /** SLA credits issued this year, before this outage. */
+  slaCreditsYtd: number;
+  /** This outage has crossed the threshold that owes the customer a credit. */
+  creditTriggered: boolean;
+  /** Goodwill granted in the last twelve months. */
+  goodwill12mo: number;
+  contactName: string;
+  contactRole: string;
+  /** ISO date of the last conversation. */
+  lastSpokenAt: string;
+  /** Which channel it went through. */
+  lastSpokenVia: string;
+  /** System of record, named because this is not the case's own data. */
+  source: string;
+}
+
 export interface WarrantyCase {
   /** Business identifier, e.g. WR-2026-0417. */
   id: string;
   /** Commercial standing — "Strategic". Sits beside the customer's name. */
   customerSegment?: string;
+  /** The account's commercial position. Absent ⇒ the card is not shown. */
+  standing?: CustomerStanding;
   /** Maestro case instance GUID. Empty for demo rows that have no live counterpart. */
   instanceId: string;
   folderKey: string;

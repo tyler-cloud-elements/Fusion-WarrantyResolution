@@ -243,6 +243,19 @@ const CASE_0417: WarrantyCase = {
   folderKey: "",
   customer: "Northstar Retail Distribution",
   customerSegment: "Strategic",
+  standing: {
+    annualValue: 184_000,
+    renewalDate: "2027-09-02",
+    slaCreditsYtd: 312_000,
+    creditTriggered: true,
+    goodwill12mo: 0,
+    contactName: "M. Okafor-Reyes",
+    contactRole: "Maintenance Supervisor",
+    // The outage began four days ago; support spoke to the site as it started.
+    lastSpokenAt: daysAgo(4),
+    lastSpokenVia: "Customer support",
+    source: "Helios",
+  },
   site: "Joliet DC · Line 3 / Induct",
   asset: {
     model: "SR-440",

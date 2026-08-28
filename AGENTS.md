@@ -226,6 +226,20 @@ each other. Those are the case:
 
 ---
 
+### Customer standing
+
+The account's commercial position — tier, agreement value, renewal, SLA credits year to date,
+whether this outage triggered another, goodwill in twelve months, and the site contact — is on
+the case's **Details** tab and inside the console's *Customer standing* fold. Both render
+`CustomerStandingRows` from `warrantyCase.standing`, so the two cannot drift; the fold used to
+carry a prose paraphrase of the same figures.
+
+It is read-only and stamped `Helios`, because a warranty lead weighs an account's tier and
+credit balance rather than setting them. It sits with the case because the goodwill line on
+the decision is unarguable without it: absorbing $1,240 of travel reads differently against
+$312,000 of credits already issued than against none — and `Goodwill, 12 mo: $0` is the row
+that makes it defensible, so it renders a real zero rather than an em dash.
+
 ### Clocks on WR-2026-0417
 
 One clock needs attention, and it is the one the header shows: **Resolution decision SLA, at

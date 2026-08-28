@@ -288,7 +288,7 @@ export function DecisionConsolePage() {
             <div className="flex min-w-0 flex-col gap-3 pb-10">
               <CaseBanner action={action} warrantyCase={warrantyCase} />
               <FindingCauses action={action} />
-              <DetailFolds action={action} />
+              <DetailFolds action={action} warrantyCase={warrantyCase} />
 
               {/* The documents the finding rests on. The folds above summarise
                   what they say; this is where you open one and check. */}

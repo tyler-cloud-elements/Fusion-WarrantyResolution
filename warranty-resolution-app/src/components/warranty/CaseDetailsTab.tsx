@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { CustomerStandingCard } from "@/components/warranty/CustomerStandingCard";
 import { PriorityBadge, SlaBadge } from "@/components/warranty/badges";
 import { dateTime, money } from "@/lib/warranty/format";
 import { ROLE_PROFILES } from "@/lib/role/RoleProvider";
@@ -193,6 +194,11 @@ export function CaseDetailsTab({
 
   return (
     <div className={rail ? "flex flex-col gap-4" : "grid gap-4 lg:grid-cols-2"}>
+      {/* Its own card rather than fields on "Customer and site": these are read
+          from Helios and weighed, not case fields to be maintained, and the
+          block only makes its point read together. */}
+      <CustomerStandingCard warrantyCase={warrantyCase} />
+
       {CARDS.map((card) => (
         <Card key={card.id} className="gap-4 p-5">
           <span className="text-base font-semibold">{card.title}</span>

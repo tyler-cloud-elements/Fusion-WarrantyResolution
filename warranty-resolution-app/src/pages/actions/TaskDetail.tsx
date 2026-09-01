@@ -267,7 +267,7 @@ export function TaskDetail({
                   onClick={() => setRightPanel("assessment")}
                 >
                   <AiMark className="size-4" />
-                  {rich ? "Assessment" : "Ask AI"}
+                  {rich ? "Ask about this case" : "Ask AI"}
                 </Button>
               )}
             </div>
@@ -444,8 +444,8 @@ export function TaskDetail({
                   <button
                     type="button"
                     onClick={() => setRightPanel("assessment")}
-                    aria-label="Show assessment"
-                    title="Show assessment"
+                    aria-label="Ask about this case"
+                    title="Ask about this case"
                     className="grid size-11 place-items-center text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
                   >
                     <Sparkles className="size-4" />
@@ -508,8 +508,8 @@ export function TaskDetail({
                       <button
                         type="button"
                         onClick={() => setRightPanel("assessment")}
-                        aria-label="Show assessment"
-                        title="Show assessment"
+                        aria-label="Ask about this case"
+                        title="Ask about this case"
                         className="grid size-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
                         <Sparkles className="size-4" />

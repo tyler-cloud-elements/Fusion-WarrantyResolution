@@ -18,7 +18,11 @@ import { isAssistantConfigured } from "@/services/uipath/config";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
 import type { CaseAction, SuggestedReply, WarrantyCase } from "@/lib/warranty/types";
 
-// The Assessment rail.
+// The "Ask about this case" rail.
+//
+// The component keeps its Assessment name — as does the `rightPanel` state and
+// the localStorage key behind it, which would strand everyone's saved panel
+// choice if renamed. Only what a reader sees has changed.
 //
 // A conversation, not a widget: it opens with the agent's recommendation and the
 // reasoning behind it, and the signer's verdict on that reasoning lands in the
@@ -309,8 +313,8 @@ export function AssessmentPanel({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          aria-label="Show assessment"
-          title="Show assessment"
+          aria-label="Ask about this case"
+          title="Ask about this case"
           className="flex h-full w-11 flex-col items-center py-4 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <PanelRightOpen className="size-4" />
@@ -320,9 +324,14 @@ export function AssessmentPanel({
   }
 
   return (
-    <aside className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-l border-border bg-background sm:w-[330px]">
+    // Labelled as a region, so the controls inside it can say what they do
+    // ("Hide") without repeating the panel's name to reach an accessible one.
+    <aside
+      aria-label="Ask about this case"
+      className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-l border-border bg-background sm:w-[330px]"
+    >
       <div className="flex h-10 shrink-0 items-center gap-1 border-b border-border px-3">
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">Assessment</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">Ask about this case</span>
         {/* The two panels share this column, so switching between them is one
             click rather than close-then-open. */}
         {onShowCase && (
@@ -339,7 +348,7 @@ export function AssessmentPanel({
         <button
           type="button"
           onClick={() => (onClose ? onClose() : setOpen(false))}
-          aria-label="Hide assessment"
+          aria-label="Hide"
           className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <PanelRightClose className="size-4" />
@@ -427,7 +436,7 @@ export function AssessmentPanel({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && void send(draft)}
-            placeholder="Ask about this assessment…"
+            placeholder="Ask about this case…"
             className="h-10 rounded-lg pr-11 text-sm"
           />
           <button

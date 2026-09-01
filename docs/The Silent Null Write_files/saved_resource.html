@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<!-- saved from url=(0253)https://94b65661-9271-4ae2-b76a-bcba8c183d8e.frame.claudeusercontent.com/_f/1787952762-c3ea/?__frame_t=wpnZimbqI_b8aLH4F5redMaX.4e3f85e1-3262-41cf-b776-613f51b1e08b.3ceba664-e069-44c1-8ecf-7a73d2666119.1788199910&__frame_v=manifest.155e997702a4b8fc.json -->
+<html data-vanguard-login-mode="monitor"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!-- frame-runtime --><!--<base href="/_f/1787952762-c3ea/">--><base href="."><script>window.__FRAME_PREAMBLE={"v":1,"capabilities":{"artifact":"artifact.D_F1mx8d.js","assets":"assets.8Gk803W0.js","comments":"comments.GLuHR3zP.js","db":"db.h-3sndFg.js","downloads":"downloads.C3GSvEDP.js","embed":"embed.CxGAyc-v.js","mcp":"mcp.Bvma3qD7.js","network":"network.B5UA9Su4.js","notifications":"notifications.ssU4jy7G.js","permissions":"permissions.BNySkLV5.js","room":"room.BMMoe2BY.js","sample":"sample.BW2Uysoh.js","self":"artifact.D_F1mx8d.js","user":"user.BpKav-Rf.js"},"transforms":"_transforms.DSB5x63f.js","comments":"_comments.BoakUwmM.js","translate":"_translate.5HCW4BJh.js"}</script><script>(function(){"use strict";var te=["light","dark","system"],re=/^[A-Za-z0-9_-]{1,64}$/,$=/^[a-zA-Z_:][a-zA-Z0-9_:.-]{0,127}$/,ne=new Set(["class","hidden","value","checked","style","title","alt","placeholder","lang","dir","role","tabindex","disabled","readonly","contenteditable","open","colspan","rowspan"]);function oe(e){const t=e.toLowerCase();return t.startsWith("data-")||t.startsWith("aria-")||ne.has(t)}var Be="http://www.w3.org/1999/xhtml",se="http://www.w3.org/2000/svg",ae=new Set(["script","style","iframe","noscript","noframes","noembed","xmp","plaintext","template","title","textarea","object","embed"]),ie=new Set(["script","style"]);function ce(e){const t=e.localName.toLowerCase();return e.namespaceURI==="http://www.w3.org/1999/xhtml"?!ae.has(t):e.namespaceURI===se?!ie.has(t):!1}function M(e,t){return e===t||(e===160||e===32)&&(t===160||t===32)}function le(e,t){const r=e.length,n=t.length;let s=0;for(;s<r&&s<n&&M(e.charCodeAt(s),t.charCodeAt(s));)s++;let o=0;for(;o<r-s&&o<n-s&&M(e.charCodeAt(r-1-o),t.charCodeAt(n-1-o));)o++;return{p:s,s:o}}function ue(e,t){const r=e.firstChild;if(e.childNodes.length!==1||r===null||r.nodeType!==Node.TEXT_NODE){e.textContent=t;return}const n=r.data,s=n.length,o=t.length,{p:i,s:c}=le(n,t);i===s&&c===0&&s===o||r.replaceData(i,s-i-c,t.slice(i,o-c));const h=r.data,p=e.ownerDocument.getSelection?.()??null,w=p!==null&&p.rangeCount>0&&(p.anchorNode===r||p.focusNode===r)?{anchor:p.anchorNode,anchorOffset:p.anchorOffset,focus:p.focusNode,focusOffset:p.focusOffset}:null;let m=-1,g=-1;for(let f=0;f<h.length&&f<t.length;f++){const v=h.charCodeAt(f),b=t.charCodeAt(f);v!==b&&M(v,b)&&(m<0&&(m=f),g=f)}const a=m>=0;if(a&&r.replaceData(m,g-m+1,t.slice(m,g+1)),a&&w!==null&&w.anchor!==null&&w.focus!==null)try{p.setBaseAndExtent(w.anchor,w.anchorOffset,w.focus,w.focusOffset)}catch{}}var fe=new Set(["html","head","body","frameset"]);function de(e){return e.namespaceURI==="http://www.w3.org/1999/xhtml"&&fe.has(e.localName)}function pe(e){if(e===null||typeof e!="object")return!1;const t=e;if(typeof t.target!="string"||!re.test(t.target)||t.text!==void 0&&typeof t.text!="string")return!1;if(t.attrsSet!==void 0){if(t.attrsSet===null||typeof t.attrsSet!="object")return!1;for(const[r,n]of Object.entries(t.attrsSet))if(!$.test(r)||typeof n!="string")return!1}if(t.attrsRemoved!==void 0){if(!Array.isArray(t.attrsRemoved))return!1;for(const r of t.attrsRemoved)if(typeof r!="string"||!$.test(r))return!1}return!0}function me(e,t){if(e===null||typeof e!="object")return!1;const{seq:r,elements:n}=e;if(typeof r!="number"||!Number.isSafeInteger(r)||!Array.isArray(n)||n.length===0||n.length>64)return!1;for(let s=0;s<n.length;s++)if(!t(n[s]))return!1;return!0}function he(e){return e===null||typeof e!="object"?!1:me(e.__frame_patch,pe)}function _e(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_init;return t!==null&&typeof t=="object"}function ve(e){return e!==null&&typeof e=="object"&&e.__frame_size_poke===!0}function ye(e){if(e===null||typeof e!="object")return!1;const t=e.__frame_theme;if(t===null||typeof t!="object")return!1;const r=t.theme;return typeof r=="string"&&te.includes(r)}var A=/^[\w.-]+\.js$/;function we(e,t,r){return r?"inert":typeof t=="string"&&A.test(t)?e?[t]:"inert":e?"inert":"framed"}function ge(){return{post(e,t){parent.postMessage(e,t)},on(e){const t=r=>{r.source===parent&&e(r.data,r.origin,r.isTrusted)};return addEventListener("message",t),()=>removeEventListener("message",t)}}}function be(){return{post:()=>{},on:()=>()=>{}}}var j="__frame_scroll",Ee=150,Ae=310,Se=160,Te=3e4;function ke(){let e=0,t=!1,r=!1,n=!1,s=0,o=null;const i=l=>{try{sessionStorage.setItem(j,JSON.stringify({y:l}))}catch{}},c=()=>{if(clearTimeout(e),o===null)return;const l=o;o=null,i(l)},h=()=>{if(t){t=!1;return}r=!0,o=scrollY,clearTimeout(e),e=setTimeout(c,Ee)};try{addEventListener("scroll",h,{passive:!0}),addEventListener("pagehide",c)}catch{}const p=()=>{let l;try{l=sessionStorage.getItem(j)}catch{return null}if(l===null)return null;let _;try{_=JSON.parse(l)}catch{_=null}const d=_?.y;if(!(typeof d=="number"&&Number.isFinite(d)&&d>=0)){try{sessionStorage.removeItem(j)}catch{}return null}return d};let w=!1;const m=l=>{try{const _=scrollY;scrollTo({top:l,left:0,behavior:"instant"}),s=l,n=!0,clearTimeout(e),o=null,i(l);const d=scrollY;d!==_&&(t=!0),d!==l&&!w&&(w=!0,addEventListener("load",()=>{try{if(scrollY===d){const T=p();m(T!==null?T:s)}}catch{}},{once:!0}))}catch{}},g=()=>{try{return!!location.hash}catch{return!0}};let a=!1;const f=()=>{try{if(a||innerWidth>Ae||innerHeight>Se)return;a=!0;const l=Date.now(),_=()=>{try{removeEventListener("resize",_)}catch{}if(Date.now()-l>Te||r||g())return;const d=p();m(d!==null?d:s)};addEventListener("resize",_)}catch{}};let v=!1,b=!1;return{restore(){if(v||(v=!0,g()))return;const l=p();l!==null&&(m(l),f())},promoted(){if(b||(b=!0,g()))return;const l=p();l!==null?(m(l),f()):n&&m(s)}}}function Re(e,t,r,n){let s=null;try{s=window.trustedTypes?.createPolicy("frame-runtime",{createScriptURL:h=>h})??null}catch{}const o=window.Worker,i=o?.prototype,c=Object.freeze({Worker:o,workerOn:i?.addEventListener,workerPost:i?.postMessage,workerTerminate:i?.terminate,fetch:window.fetch.bind(window),preventDefault:Event.prototype.preventDefault,policy:s,origins:t});r(e).then(h=>h?.bootTopLevel?h.bootTopLevel(c,n):n.settle()).catch(()=>n.settle())}var De="modulepreload",Ie=function(e){return"/"+e},Ue={},Le=function(t,r,n){let s=Promise.resolve();function o(i){const c=new Event("vite:preloadError",{cancelable:!0});if(c.payload=i,window.dispatchEvent(c),!c.defaultPrevented)throw i}return s.then(i=>{for(const c of i||[])c.status==="rejected"&&o(c.reason);return t().catch(o)})},Oe=window===top,q=Object.getOwnPropertyDescriptor(window,"claude"),k=we(Oe,window.__FRAME_PREAMBLE?.topLevel,q?.writable===!1),N=typeof k=="object"&&k[0],y=N?be():ge();(function(){const e=Object.defineProperty,t=globalThis,r=["RTCPeerConnection","webkitRTCPeerConnection","RTCDataChannel","RTCIceCandidate","RTCSessionDescription","RTCRtpSender","RTCRtpReceiver"];let n=0;for(let s=0;s<r.length;s++){const o=r[s];try{e(t,o,{value:void 0,writable:!1,configurable:!1})}catch{try{delete t[o]}catch{}try{e(t,o,{value:void 0,writable:!1,configurable:!0})}catch{}}typeof t[o]=="function"&&n++}if(n&&k==="framed")try{y.post({__frame_rtc_lockdown_failed:n},"*")}catch{}})();var Pe=1e4,Y=Object.freeze([...window.__FRAME_PREAMBLE?.origins??["https://claude.ai","https://preview.claude.ai"]]);function X(e){for(const t of Y)if(t.endsWith(":*"))try{const r=new URL(e);if(`${r.protocol}//${r.hostname}:*`===t)return!0}catch{}else if(e===t)return!0;return!1}var R=Object.freeze({...window.__FRAME_PREAMBLE?.capabilities}),B=window.__FRAME_PREAMBLE?.transforms,D=window.__FRAME_PREAMBLE?.comments,I=window.__FRAME_PREAMBLE?.translate;function S(e){return Le(()=>import("/_runtime/"+e),void 0)}function G(e,t){return{contract:e.contract,changes:new Set(e.changes??[]),flags:new Set(e.flags??[]),capabilities:e.capabilities??{},capBudgets:e.capBudgets??{},transforms:new Map,shellOrigin:t,mount:x,hooks:O,pipe:()=>({wrap:(r,n)=>(...s)=>{try{return n(...s)}catch(o){return Promise.reject(o)}}})}}var L=null,E=null;function V(e,t,r){try{Object.defineProperty(e,t,{value:r,writable:!1,configurable:!1,enumerable:!0})}catch{try{Object.defineProperty(e,t,{value:r,writable:!1,configurable:!0,enumerable:!0})}catch{}}}var U=!1,O={editBefore:null,edit:null};function Ce(e,t,r=!1){const n=[];let s;if(r)try{O.editBefore?.(e)}catch{}for(const o of e.elements){const i=document.querySelector(`[data-id="${o.target}"]`);if(!i){s=o.target;break}if([...Object.keys(o.attrsSet??{}),...o.attrsRemoved??[]].some(c=>!oe(c))){s=o.target;break}if(o.text!==void 0&&(!ce(i)||de(i))){s=o.target;break}for(const[c,h]of Object.entries(o.attrsSet??{}))if(!J(i,c)){try{i.setAttribute(c,h)}catch{}Z(i,c,h)}for(const c of o.attrsRemoved??[])J(i,c)||(i.removeAttribute(c),Z(i,c,null));typeof o.text=="string"&&ue(i,o.text),n.push(o.target)}if(r)try{O.edit?.(e.seq,n,s)}catch{}if(s!==void 0){y.post({__frame_patch_miss:{seq:e.seq}},t);return}try{document.dispatchEvent(new CustomEvent("claude:edit",{detail:{seq:e.seq,targets:n}}))}catch{}}function Z(e,t,r){if(!(e instanceof HTMLInputElement))return;const n=t.toLowerCase();n==="checked"?e.checked=r!==null:n==="value"&&e.type!=="file"&&(e.value=r??"")}function J(e,t){const r=t.toLowerCase(),n=e;return r==="data-id"||(r==="value"||r==="checked")&&(n.__artifactSecret===!0||/^(password|hidden|file)$/.test(n.type??"")||/(^|\s)(cc-|one-time-code|current-password|new-password)/i.test(`${e.getAttribute("autocomplete")??""} ${n.autocomplete??""}`))}function Q(e){const t=document.documentElement;e==="light"||e==="dark"?(t.dataset.theme=e,t.style.colorScheme=e,U=!0):U&&(delete t.dataset.theme,t.style.colorScheme="",U=!1)}var P=new Map;function Me(){let e;const t={u:new Promise(r=>{e=r}),r:r=>{t.done=!0,e(r)},done:!1,nulled:!1};return t}function F(){for(const e of P.values())e.done||(e.nulled=!0,e.r(null))}var je=Object.freeze(Object.assign(Object.create(null),{call:Function.prototype.call,apply:Function.prototype.apply,bind:Function.prototype.bind})),x=(e,t)=>{const r=P.get(e);if(!r||r.done){r?.nulled&&E&&y.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:e}},E);return}const n=typeof t=="function"?Object.setPrototypeOf(t,je):Object.assign(Object.create(null),t);typeof n.then=="function"&&delete n.then,r.r(Object.freeze(n))};function ee(){const e=q?.value??{};V(window,"claude",e);for(const t of Object.keys(R)){if(e[t]!==void 0){V(e,t,e[t]);continue}P.set(t,Me())}if(e.use===void 0){const t=r=>{if(typeof r!="string"||!Object.hasOwn(R,r))return Promise.resolve(null);const n=P.get(r);return n?n.u:Promise.resolve(e[r]??null)};try{Object.defineProperty(e,"use",{value:t,writable:!0,configurable:!0,enumerable:!1})}catch{}}}if(k==="framed"){const e=B&&A.test(B)?S(B).catch(()=>{}):Promise.resolve(void 0),t=a=>{if(a.type==="auxclick"&&a.button!==1)return;const f=a.target,v=f&&f.closest?f.closest("a[href],area[href]"):null;if(!v)return;const b=v.getAttribute("href");if(!b)return;let l;try{l=new URL(b,document.baseURI)}catch{return}if((l.protocol==="http:"||l.protocol==="https:")&&l.origin!==location.origin){a.preventDefault();const _=(v.getAttribute("target")??"").toLowerCase(),d=a.type==="auxclick"||a.metaKey||a.ctrlKey||a.shiftKey||a.altKey||!["","_self","_top","_parent"].includes(_);y.post({__frame_nav:!0,url:l.href,newTab:d},"*")}};addEventListener("click",t,!0),addEventListener("auxclick",t,!0);const r={},n=a=>{a.isTrusted&&(r.pointer=!0)},s=a=>{a.isTrusted&&(r.click=!0)};addEventListener("pointermove",n,{capture:!0,passive:!0}),addEventListener("click",s,{capture:!0,passive:!0}),e.then(a=>{a?.wireNav&&(a.wireNav(),removeEventListener("click",t,!0),removeEventListener("auxclick",t,!0),removeEventListener("pointermove",n,!0),removeEventListener("click",s,!0),a.wireEngagement?.(r))});let o=null;try{o=ke()}catch{}ee();let i=null,c=null,h=0;const p=y.on((a,f)=>{X(f)&&_e(a)&&(i=a.__frame_init,E=f,p(),clearTimeout(h),c?.())});y.post({__frame_connect:!0},"*");const w=new Promise(a=>{c=a,h=setTimeout(()=>{p(),a()},Pe)}),m=document.readyState==="loading"?new Promise(a=>document.addEventListener("DOMContentLoaded",()=>a(),{once:!0})):Promise.resolve();m.then(()=>{try{o?.restore()}catch{}});const g={cb:null};y.on((a,f)=>{if(X(f)&&ve(a)){try{o?.promoted()}catch{}g.cb?.()}}),w.then(async()=>{if(!i||!E){F();return}Q(i.theme);const a=E;let f=!1,v=!1;y.on((u,z,C)=>{if(z!==a)return;ye(u)&&Q(u.__frame_theme.theme),he(u)&&Ce(u.__frame_patch,a,C);const H=u?.__fc_mode;H&&typeof H=="object"&&!f&&D&&A.test(D)&&(f=!0,S(D).then(K=>K.install?.(a,H.on===!0)).catch(()=>{}));const W=u?.__ft_cmd;W&&typeof W=="object"&&!v&&I&&A.test(I)&&(v=!0,S(I).then(K=>K.install?.(a,W)).catch(()=>{}))});const b=Object.keys(i.capabilities??{}).filter(u=>Object.hasOwn(R,u)).map(u=>[u,R[u]]).filter(u=>typeof u[1]=="string"&&A.test(u[1])),l=await Promise.allSettled(b.map(([,u])=>S(u))),_=await e,d=E;if(_?.buildBoot||y.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},d),_?.buildBoot)try{L=_.buildBoot(i,_.TRANSFORMS??{},{shellOrigin:d,mount:x,hooks:O},u=>y.post({__frame_cap_telemetry:u},d))}catch{y.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:"_transforms"}},d),L=G(i,d)}else L=G(i,d);const T=u=>y.post({__frame_cap_telemetry:{kind:"cap-load-error",cap:u}},d),Ne=L;l.forEach((u,z)=>{const C=b[z][0];if(u.status!=="fulfilled"){T(C);return}try{u.value?.install?.(Ne)}catch{T(C)}}),F(),await m,y.post({__frame_ready:!0},E),e.then(u=>u?.installSizeReporter?.(d,g))})}else N&&(ee(),Re(N,Y,S,{settle:F,mount:x}))})();</script><!-- /frame-runtime --><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}</style><!--UIPATH_EXTENSION_ID: conkfbpnllelocpogdmbilgmnkabjfmf--></head><body>
+<title>The Silent Null Write</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link rel="stylesheet" href="./css2">
+
+<style>
+  :root {
+    --ground:       #f3f5f7;
+    --surface:      #ffffff;
+    --surface-sunk: #e9edf1;
+    --ink:          #101720;
+    --ink-soft:     #38434f;
+    --slate:        #5b6773;
+    --rule:         #d3dae1;
+    --rule-soft:    #e3e8ed;
+
+    --signal:       #0f6e78;
+    --signal-soft:  #e2f0f1;
+    --signal-ink:   #0b545c;
+
+    --ok:           #2f6b47;
+    --ok-soft:      #e4efe8;
+    --ext:          #a8571b;
+    --ext-soft:     #f8ece0;
+    --bug:          #9d2235;
+    --bug-soft:     #f9e6e8;
+
+    --measure: 68ch;
+
+    --f-display: "Bitter", "Georgia", serif;
+    --f-body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    --f-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+
+    --s1: 0.35rem;
+    --s2: 0.7rem;
+    --s3: 1.1rem;
+    --s4: 1.75rem;
+    --s5: 2.75rem;
+    --s6: 4.25rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:       #0e141a;
+      --surface:      #161e26;
+      --surface-sunk: #1c262f;
+      --ink:          #e8edf2;
+      --ink-soft:     #bcc7d1;
+      --slate:        #8998a5;
+      --rule:         #2c3945;
+      --rule-soft:    #222d37;
+
+      --signal:       #4fb8c2;
+      --signal-soft:  #16323a;
+      --signal-ink:   #7fd2da;
+
+      --ok:           #6cbb8a;
+      --ok-soft:      #162a20;
+      --ext:          #e0954f;
+      --ext-soft:     #2e2117;
+      --bug:          #ea7382;
+      --bug-soft:     #2e1a1e;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:       #0e141a;
+    --surface:      #161e26;
+    --surface-sunk: #1c262f;
+    --ink:          #e8edf2;
+    --ink-soft:     #bcc7d1;
+    --slate:        #8998a5;
+    --rule:         #2c3945;
+    --rule-soft:    #222d37;
+
+    --signal:       #4fb8c2;
+    --signal-soft:  #16323a;
+    --signal-ink:   #7fd2da;
+
+    --ok:           #6cbb8a;
+    --ok-soft:      #162a20;
+    --ext:          #e0954f;
+    --ext-soft:     #2e2117;
+    --bug:          #ea7382;
+    --bug-soft:     #2e1a1e;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: var(--s5) var(--s4) var(--s6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s5);
+  }
+
+  .measure { max-width: var(--measure); }
+
+  .masthead {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s3);
+    padding-bottom: var(--s4);
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .kicker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s2) var(--s3);
+    font-family: var(--f-mono);
+    font-size: 0.73rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+
+  .kicker a { color: var(--signal); text-decoration: none; border-bottom: 1px solid currentColor; }
+  .kicker a:hover { color: var(--signal-ink); }
+
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 5.4vw, 3.1rem);
+    line-height: 1.08;
+    letter-spacing: -0.021em;
+    margin: 0;
+    text-wrap: balance;
+    max-width: 30ch;
+  }
+
+  .standfirst {
+    font-size: 1.14rem;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 62ch;
+    text-wrap: pretty;
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .fact {
+    background: var(--surface);
+    padding: var(--s2) var(--s3);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .fact dt {
+    font-family: var(--f-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.085em;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+  .fact dd {
+    margin: 0;
+    font-family: var(--f-mono);
+    font-size: 0.86rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    word-break: break-word;
+  }
+
+  section { display: flex; flex-direction: column; gap: var(--s3); }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s3);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: var(--s2);
+  }
+  .sec-num {
+    font-family: var(--f-mono);
+    font-size: 0.73rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--signal);
+    flex: none;
+    padding-top: 0.3em;
+  }
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: clamp(1.36rem, 2.9vw, 1.72rem);
+    line-height: 1.2;
+    letter-spacing: -0.014em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 1.06rem;
+    line-height: 1.3;
+    margin: 0;
+    letter-spacing: -0.008em;
+  }
+
+  p { margin: 0; text-wrap: pretty; }
+  section > p, section > ul, section > ol { max-width: var(--measure); }
+
+  ul, ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: var(--s2); }
+  li { padding-left: 0.15em; }
+  li::marker { color: var(--slate); }
+
+  code {
+    font-family: var(--f-mono);
+    font-size: 0.855em;
+    background: var(--surface-sunk);
+    padding: 0.1em 0.34em;
+    border-radius: 2px;
+    word-break: break-word;
+  }
+
+  strong { font-weight: 600; }
+
+  a.ref { color: var(--signal); text-decoration: none; border-bottom: 1px solid currentColor; }
+  a.ref:hover { color: var(--signal-ink); }
+
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+  .verdict {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--signal);
+    padding: var(--s4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s3);
+  }
+  .verdict p { max-width: 66ch; }
+  .verdict .lede {
+    font-family: var(--f-display);
+    font-size: 1.2rem;
+    font-weight: 500;
+    line-height: 1.42;
+    letter-spacing: -0.008em;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--f-mono);
+    font-size: 0.69rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.24em 0.55em;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .chip.ok  { color: var(--ok);  background: var(--ok-soft); }
+  .chip.ext { color: var(--ext); background: var(--ext-soft); }
+  .chip.bug { color: var(--bug); background: var(--bug-soft); }
+  .chip.sig { color: var(--signal-ink); background: var(--signal-soft); }
+  .chip.mut { color: var(--slate); background: var(--surface-sunk); }
+
+  .modes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(288px, 1fr));
+    gap: var(--s3);
+  }
+  .mode {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--tone);
+    padding: var(--s3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s2);
+  }
+  .mode.is-ext { --tone: var(--ext); }
+  .mode.is-bug { --tone: var(--bug); }
+
+  .mode-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s2);
+  }
+  .mode-code {
+    font-family: var(--f-mono);
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--tone);
+    font-variant-numeric: tabular-nums;
+  }
+  .mode h3 { color: var(--tone); }
+  .mode dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(76px, auto) 1fr;
+    gap: var(--s1) var(--s2);
+    font-size: 0.885rem;
+  }
+  .mode dt {
+    font-family: var(--f-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slate);
+    padding-top: 0.32em;
+  }
+  .mode dd { margin: 0; color: var(--ink-soft); }
+  .mode dd code { background: transparent; padding: 0; }
+  .mode .tail { font-size: 0.885rem; color: var(--ink-soft); }
+
+  .trace {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    overflow-x: auto;
+  }
+  .trace-cap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s2) var(--s3);
+    padding: var(--s2) var(--s3);
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface-sunk);
+    font-family: var(--f-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    color: var(--slate);
+    text-transform: uppercase;
+  }
+  .trace-cap b { color: var(--ink); font-weight: 600; letter-spacing: 0.02em; text-transform: none; font-size: 0.8rem; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 8.9rem 1.4rem 1fr;
+    align-items: start;
+    gap: 0 var(--s2);
+    padding: var(--s2) var(--s3);
+    border-bottom: 1px solid var(--rule-soft);
+    min-width: 33rem;
+  }
+  .step:last-child { border-bottom: 0; }
+
+  .step .t {
+    font-family: var(--f-mono);
+    font-size: 0.775rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--slate);
+    padding-top: 0.15em;
+    white-space: nowrap;
+  }
+  .step .rail {
+    position: relative;
+    align-self: stretch;
+    display: flex;
+    justify-content: center;
+  }
+  .step .rail::before {
+    content: "";
+    position: absolute;
+    top: 0.55em; bottom: -0.9em;
+    width: 1px;
+    background: var(--rule);
+  }
+  .step:last-child .rail::before { display: none; }
+  .step .dot {
+    position: relative;
+    width: 9px; height: 9px;
+    margin-top: 0.42em;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--slate);
+  }
+  .step.ok  .dot { border-color: var(--ok); }
+  .step.ext .dot { border-color: var(--ext); background: var(--ext); }
+  .step.bug .dot { border-color: var(--bug); background: var(--bug); }
+  .step.key .dot { border-color: var(--signal); background: var(--signal); box-shadow: 0 0 0 3px var(--signal-soft); }
+
+  .step .body { display: flex; flex-direction: column; gap: var(--s1); min-width: 0; }
+  .step .line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s2);
+  }
+  .step .el {
+    font-family: var(--f-mono);
+    font-size: 0.84rem;
+    font-weight: 500;
+  }
+  .step .kind { color: var(--slate); font-size: 0.855rem; }
+  .step .note { font-size: 0.885rem; color: var(--ink-soft); max-width: 60ch; }
+  .step.rep { opacity: 0.72; }
+
+  .payload {
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--tone, var(--slate));
+    padding: var(--s3);
+    overflow-x: auto;
+  }
+  .payload.is-ext { --tone: var(--ext); }
+  .payload.is-bug { --tone: var(--bug); }
+  .payload.is-sig { --tone: var(--signal); }
+  .payload pre {
+    margin: 0;
+    font-family: var(--f-mono);
+    font-size: 0.795rem;
+    line-height: 1.62;
+    white-space: pre;
+  }
+  .payload figcaption {
+    font-family: var(--f-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin-bottom: var(--s2);
+  }
+
+  .chain {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .link {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: var(--s3);
+    padding: var(--s3);
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .link:last-child { border-bottom: 0; }
+  .link .n {
+    font-family: var(--f-mono);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--signal);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+  }
+  .link .c { display: flex; flex-direction: column; gap: var(--s1); min-width: 0; }
+  .link .loc {
+    font-family: var(--f-mono);
+    font-size: 0.775rem;
+    color: var(--slate);
+  }
+  .link p { font-size: 0.925rem; color: var(--ink-soft); max-width: 62ch; }
+
+  .tw { overflow-x: auto; border: 1px solid var(--rule); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; font-size: 0.885rem; }
+  caption {
+    caption-side: top;
+    text-align: left;
+    padding: var(--s2) var(--s3);
+    background: var(--surface-sunk);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--f-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+  th, td {
+    text-align: left;
+    padding: 0.52em var(--s3);
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+  }
+  thead th {
+    font-family: var(--f-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--slate);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.mono, th.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+  td.num { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.el { font-family: var(--f-mono); font-size: 0.82rem; white-space: nowrap; }
+  tr.hi td { background: var(--bug-soft); }
+  .bar {
+    display: inline-block;
+    height: 7px;
+    background: var(--ok);
+    vertical-align: middle;
+    margin-right: 0.4em;
+    min-width: 2px;
+  }
+  .bar.f { background: var(--bug); }
+
+  /* instance roster */
+  .roster {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+    gap: var(--s3);
+  }
+  .flavour {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: var(--s3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s2);
+  }
+  .flavour.is-prod { border-left: 4px solid var(--bug); }
+  .flavour.is-dbg  { border-left: 4px solid var(--slate); }
+  .flavour .hd { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
+  .flavour .n {
+    font-family: var(--f-mono);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .flavour.is-prod .n { color: var(--bug); }
+  .flavour .idlist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.18em;
+    font-family: var(--f-mono);
+    font-size: 0.755rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+  }
+  .flavour .idlist li { padding-left: 0; }
+  .flavour .idlist .d { color: var(--slate); }
+  .flavour .cond { font-size: 0.855rem; color: var(--ink-soft); }
+
+  /* temporal links */
+  .links { display: flex; flex-direction: column; gap: var(--s3); }
+  .linkcard {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--tone, var(--slate));
+    padding: var(--s3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s2);
+  }
+  .linkcard.is-bug { --tone: var(--bug); }
+  .linkcard.is-ext { --tone: var(--ext); }
+  .linkcard .hd { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+  .linkcard .hd .id { font-family: var(--f-mono); font-size: 0.9rem; font-weight: 600; }
+  .linkcard .why { font-size: 0.9rem; color: var(--ink-soft); max-width: 62ch; }
+  .urlbox {
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule);
+    padding: var(--s2);
+    overflow-x: auto;
+  }
+  .urlbox a {
+    font-family: var(--f-mono);
+    font-size: 0.735rem;
+    color: var(--signal);
+    text-decoration: none;
+    white-space: nowrap;
+    display: block;
+  }
+  .urlbox a:hover { color: var(--signal-ink); text-decoration: underline; }
+
+  .steps { display: flex; flex-direction: column; gap: var(--s3); }
+  .todo {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--s3);
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: var(--s3);
+  }
+  .todo .own {
+    font-family: var(--f-mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--signal-ink);
+    background: var(--signal-soft);
+    border: 1px solid var(--signal);
+    padding: 0.28em 0.5em;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .todo .c { display: flex; flex-direction: column; gap: var(--s1); }
+  .todo p { font-size: 0.925rem; color: var(--ink-soft); max-width: 62ch; }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+  }
+  summary {
+    cursor: pointer;
+    padding: var(--s2) var(--s3);
+    font-family: var(--f-mono);
+    font-size: 0.775rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    background: var(--surface-sunk);
+  }
+  summary:hover { color: var(--signal-ink); }
+  .kql { padding: var(--s3); display: flex; flex-direction: column; gap: var(--s3); }
+  .kql h3 { font-family: var(--f-body); font-size: 0.82rem; font-weight: 600; color: var(--slate); }
+  .kql pre {
+    margin: 0;
+    font-family: var(--f-mono);
+    font-size: 0.755rem;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--surface-sunk);
+    padding: var(--s2) var(--s3);
+    border-left: 2px solid var(--rule);
+  }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: var(--s3);
+    font-family: var(--f-mono);
+    font-size: 0.735rem;
+    color: var(--slate);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s1);
+  }
+
+  @media (max-width: 620px) {
+    .step { grid-template-columns: 1fr; min-width: 0; }
+    .step .rail { display: none; }
+    .step .t { padding-top: 0; }
+    .link { grid-template-columns: 1fr; gap: var(--s1); }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <div class="kicker">
+      <span><a href="https://uipath.atlassian.net/browse/SRE-648831">SRE-648831</a></span>
+      <span>Maestro · prd Switzerland North</span>
+      <span>Investigated 2026-08-26 · rev. 08-28 (BPMN in hand)</span>
+    </div>
+    <h1>The Silent Null Write</h1>
+    <p class="standfirst">Two different bugs are wearing the same costume in this ticket. One was fixed by the customer eight days before the ticket was filed — and nothing in the platform could tell them so.</p>
+
+    <dl class="facts">
+      <div class="fact"><dt>Org</dt><dd>primeoholdingag<br>693a7412…</dd></div>
+      <div class="fact"><dt>Tenant</dt><dd>5eb36e28…</dd></div>
+      <div class="fact"><dt>Region</dt><dd>szn-01-g<br><span style="color:var(--slate)">uni-prd</span></dd></div>
+      <div class="fact"><dt>Null-id bug</dt><dd>fixed 08-18</dd></div>
+      <div class="fact"><dt>404 bug</dt><dd>still live</dd></div>
+    </dl>
+  </header>
+
+  <div class="verdict">
+    <p class="lede">The reported “variable stays null” bug stopped on 18&nbsp;August. The ticket was filed on the 26th.</p>
+    <p>Every one of the 17 affected instances ran <strong>before</strong> a package change on 18&nbsp;August. Since the 19th the affected path has run 21 times with zero failures. The customer corrected their own BPMN and, because the engine never logged anything, <strong>had no way to know it had worked</strong> — so they raised a ticket for a symptom that was already gone.</p>
+    <p>What is still live is a different failure on the same element: a 404 from Microsoft Graph because the email was no longer in the mailbox. That is the one the instance attached to this ticket shows, and it ran through 25&nbsp;August.</p>
+    <p><strong>Correction to my earlier read:</strong> I flagged <a class="ref" href="https://uipath.atlassian.net/browse/MST-9979">MST-9979</a> (mappings persisted with blank <code>name</code>/<code>type</code>) as prime suspect. The BPMN rules that out — every mapping in this process is well-formed. The real cause was a wrong variable reference on one of three converging paths (§5).</p>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h2>Two failure modes, one element</h2>
+    </div>
+    <p>Element <code>Activity_AkTBVx</code> (“Move Email to ‘in Process’”) is an Outlook <code>POST /MoveEmail/{id}</code> call. Over 30 days it ran 704 times for this tenant and failed in two unrelated ways that look identical from the process view.</p>
+
+    <div class="modes">
+      <div class="mode is-ext">
+        <div class="mode-top">
+          <h3>The mail is gone</h3>
+          <span class="mode-code">404</span>
+        </div>
+        <dl>
+          <dt>Incident</dt><dd><code>IntSvcResourceNotFound</code></dd>
+          <dt>Count</dt><dd>20 instances</dd>
+          <dt>Window</dt><dd>Aug 14 → <strong>Aug 25</strong></dd>
+          <dt>Cause</dt><dd>Graph returns <code>ErrorItemNotFound</code>. The id resolved; the item was no longer in the store.</dd>
+          <dt>Status</dt><dd><strong>Live</strong></dd>
+        </dl>
+        <p class="tail"><strong>This is the instance in the ticket.</strong></p>
+      </div>
+
+      <div class="mode is-bug">
+        <div class="mode-top">
+          <h3>The id was never there</h3>
+          <span class="mode-code">400</span>
+        </div>
+        <dl>
+          <dt>Incident</dt><dd><code>SendIntSvcTaskInvalidInputError</code></dd>
+          <dt>Count</dt><dd>17 instances</dd>
+          <dt>Window</dt><dd>Aug 10 → <strong>Aug 18</strong></dd>
+          <dt>Cause</dt><dd><code>Parameter 'id' has null or empty value</code> — wrong variable referenced on two of three start paths.</dd>
+          <dt>Status</dt><dd><strong>Fixed 08-18</strong></dd>
+        </dl>
+        <p class="tail"><strong>This is what the customer reported.</strong></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h2>The instance in the ticket</h2>
+    </div>
+    <p><code>df497399-44d5-4484-8997-746530dc7a1a</code> was a <strong>Studio Web debug run</strong> — <code>DebugMode: Default</code>, <code>ProcessKey: Unknown</code>. It ran for ten seconds and faulted on the 404, not the null.</p>
+
+    <div class="trace">
+      <div class="trace-cap">
+        <b>df497399</b>
+        <span>2026-08-25 · po-worker-prd-szn-01</span>
+        <span class="chip ext">Faulted</span>
+      </div>
+      <div class="step ok">
+        <span class="t">06:54:32.238</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">Event_3ootny</span><span class="chip ok">200</span></span><span class="kind">StartEvent · Orchestrator.QueueItemAdded</span></span>
+      </div>
+      <div class="step ok">
+        <span class="t">06:54:32.613</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">Activity_fS8EiX</span><span class="chip ok">200</span></span><span class="kind">ScriptTask “Save mail ID”</span></span>
+      </div>
+      <div class="step ext rep">
+        <span class="t">06:54:33.401</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">SendIntSvcTaskAsync</span><span class="chip ext">404</span></span><span class="note">Attempt 1 of 3.</span></span>
+      </div>
+      <div class="step ext">
+        <span class="t">06:54:37.409</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">SendIntSvcTaskAsync</span><span class="chip ext">404</span></span><span class="note">Attempt 3 — terminal.</span></span>
+      </div>
+      <div class="step ext">
+        <span class="t">06:54:37.898</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">Instance → Faulted</span></span><span class="note">Incident <code>IntSvcResourceNotFound</code> at .38.019.</span></span>
+      </div>
+    </div>
+
+    <figure class="payload is-ext">
+      <figcaption>Integration Service response, relayed from Microsoft Graph</figcaption>
+      <pre>{"providerErrorCode":404,
+ "message":"Not Found",
+ "providerMessage":"error - {code=ErrorItemNotFound,
+   message=The specified object was not found in the store.}"}</pre>
+    </figure>
+
+    <p>The id was present and well-formed — the mail had been moved or deleted. Note the process moves messages between folders four separate times (<code>Activity_AkTBVx</code>, <code>ck3KGu</code>, <code>MAflmk</code>, <code>hQfCec</code>, <code>znaPnf</code>), and <strong>Graph message ids change on a folder move</strong>. That is a design hazard worth raising with the customer independently.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h2>The instance that shows the reported bug</h2>
+    </div>
+    <p><code>aef11db1-8036-44b2-aac8-7e7d228e8c48</code>, 17 August — a <strong>deployed unattended run</strong> that received a <strong>real</strong> Integration Service event payload.</p>
+
+    <div class="trace">
+      <div class="trace-cap">
+        <b>aef11db1</b>
+        <span>2026-08-17 · DebugMode: None</span>
+        <span class="chip bug">Faulted</span>
+      </div>
+      <div class="step key">
+        <span class="t">12:21:21.733</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">Getting event payload</span><span class="chip sig">real id</span></span><span class="note"><code>v2::pp::1786969273308::447::aaeaa224de10551f</code> — a live IS event, not a debug sample.</span></span>
+      </div>
+      <div class="step ok key">
+        <span class="t">12:21:22.587</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">Event_W68xBg</span><span class="chip ok">200 Completed</span></span><span class="kind">StartEvent · Intsvc.EventTrigger</span><span class="note">The producer of <code>str_EmailID</code> reports success.</span></span>
+      </div>
+      <div class="step bug key">
+        <span class="t">12:21:23.179</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">Parameter 'id' has null or empty value</span><span class="chip bug">400</span></span><span class="note">592&nbsp;ms after the trigger succeeded.</span></span>
+      </div>
+      <div class="step bug rep">
+        <span class="t">12:21:24.368</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">Parameter 'id' has null or empty value</span><span class="chip bug">400</span></span><span class="note">Retrying cannot help — see §7 on why the retries also see null.</span></span>
+      </div>
+      <div class="step bug">
+        <span class="t">12:21:27.133</span><span class="rail"><span class="dot"></span></span>
+        <span class="body"><span class="line"><span class="el">Activity_AkTBVx</span><span class="chip bug">Failed</span></span><span class="note">Incident <code>SendIntSvcTaskInvalidInputError</code> at .27.498.</span></span>
+      </div>
+    </div>
+
+    <p>The trigger logged <code>resultCode:200 status:Completed</code>, so the payload arrived and Integration Service did its job. The variable was still null 592&nbsp;ms later. That rules out Integration Service, the mailbox and the network, and leaves the output mapping.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h2>It reached production</h2>
+    </div>
+    <p>All 17 null-<code>id</code> instances, split by how they were launched. <code>DebugMode: None</code> with a real <code>ProcessKey</code> and an all-zeros <code>UserId</code> is the signature of a deployed process running unattended.</p>
+
+    <div class="roster">
+      <div class="flavour is-prod">
+        <div class="hd"><h3>Deployed · unattended</h3><span class="n">9</span></div>
+        <p class="cond"><code>DebugMode: None</code> · <code>ProcessKey 41e18f06…</code></p>
+        <ul class="idlist">
+          <li>aef11db1-8036-44b2… <span class="d">08-17 12:21</span></li>
+          <li>82e3feb7-8438-4cfe… <span class="d">08-17 07:36</span></li>
+          <li>6cbca748-f9d6-4626… <span class="d">08-17 06:56</span></li>
+          <li>9d56512e-2a49-4998… <span class="d">08-17 06:26</span></li>
+          <li>795e7dd7-cf85-4265… <span class="d">08-17 06:06</span></li>
+          <li>2a6dcf62-ef70-4181… <span class="d">08-14 15:31</span></li>
+          <li>4c1f1f0b-bc57-4439… <span class="d">08-14 13:26</span></li>
+          <li>5aee552d-c4ef-4552… <span class="d">08-14 10:50</span></li>
+          <li>0a041f3c-875c-4a5f… <span class="d">08-14 08:51</span></li>
+        </ul>
+      </div>
+      <div class="flavour is-dbg">
+        <div class="hd"><h3>Studio Web debug</h3><span class="n">8</span></div>
+        <p class="cond"><code>DebugMode: Default</code> · <code>ProcessKey: Unknown</code></p>
+        <ul class="idlist">
+          <li>7aa19455-8ca1-431b… <span class="d">08-18 06:13</span></li>
+          <li>38a185a3-6789-4232… <span class="d">08-17 15:20</span></li>
+          <li>043dda81-2816-4db9… <span class="d">08-17 11:41</span></li>
+          <li>824d4d65-3caa-4e88… <span class="d">08-14 12:40</span></li>
+          <li>f334ed35-d4db-403d… <span class="d">08-14 12:37</span></li>
+          <li>a0c7aa8f-627f-4a09… <span class="d">08-14 09:02</span></li>
+          <li>8d860ac8-6672-4619… <span class="d">08-14 08:57</span></li>
+          <li>63d00792-d8a6-4808… <span class="d">08-10 12:06</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">05</span>
+      <h2>What the BPMN shows</h2>
+    </div>
+    <p>Three separate start paths converge on <code>Activity_AkTBVx</code>, and <strong>each writes the same shared variable</strong> <code>strEmailId</code> (<code>str_EmailID</code>, scoped to <code>Collaboration_1</code>). The consumer interpolates it into the path: <code>pathParameters = {"id":"=js:(vars.strEmailId)"}</code>.</p>
+
+    <div class="tw">
+      <table>
+        <caption>Every writer of <code>strEmailId</code>, and which produced null</caption>
+        <thead>
+          <tr><th>Path</th><th>Element</th><th>Source expression</th><th class="mono">Null-id</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A</td><td class="el">Event_start</td>
+            <td class="el">=vars.<strong>response</strong>.id</td>
+            <td class="num" style="color:var(--ok)">0 / 470</td>
+          </tr>
+          <tr class="hi">
+            <td>B</td><td class="el">Event_W68xBg</td>
+            <td class="el">=vars.<strong>response9</strong>?.id</td>
+            <td class="num">14</td>
+          </tr>
+          <tr class="hi">
+            <td>C</td><td class="el">Activity_fS8EiX</td>
+            <td class="el">=js:vars.transactionItem<br>&nbsp;&nbsp;.SpecificContent["MessageID"]</td>
+            <td class="num">3</td>
+          </tr>
+          <tr>
+            <td>—</td><td class="el">Activity_AkTBVx</td>
+            <td class="el">=vars.response4.id <span style="color:var(--slate)">(writes back to itself)</span></td>
+            <td class="num">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><strong>Path A never failed once in 470 runs.</strong> Paths B and C account for all 17. Each start event owns its <em>own</em> response variable — <code>Event_start</code> writes <code>response</code>, <code>Event_W68xBg</code> writes <code>response9</code> — so a mapping on path B that reads <code>vars.response</code> resolves against a variable that is never set on that path. Null, silently.</p>
+
+    <p>The mapping in the BPMN <em>today</em> reads <code>=vars.response9?.id</code>, which is correct, and it works: 21 consecutive successes since 19&nbsp;August (§6). The version that was live during the failures is not recoverable from the current package, but the cutover in §6 dates the change precisely.</p>
+
+    <figure class="payload is-sig">
+      <figcaption>Event_W68xBg — note the duplicate mapping, the fingerprint of an edit</figcaption>
+      <pre>&lt;uipath:output name="response"    source="=response"           var="response9" /&gt;
+&lt;uipath:output name="Error"       source="=Error"              var="error7"    /&gt;
+&lt;uipath:output name="str_EmailID" source="=vars.response9?.id" var="strEmailId"  custom="true" target="" /&gt;
+&lt;uipath:output name="str_EmailID" source="=vars.response9?.id" var="strEmailId3" custom="true" /&gt;</pre>
+    </figure>
+
+    <p>Two outputs share the name <code>str_EmailID</code>; the second writes an element-scoped variable <code>strEmailId3</code> that nothing reads. That is leftover from someone editing this exact mapping.</p>
+
+    <p><strong>MST-9979 is ruled out.</strong> That defect persisted mappings with blank <code>name</code> and <code>type</code>. Every mapping in this package carries both. A related note: <code>=vars.response9?.id</code> has no <code>=js:</code> prefix, so it routes to DynamicExpresso rather than JavaScript (<code>StringExtensions.cs:316</code>) — I expected the JS-style <code>?.</code> to fail there, and the 21 clean runs since the 19th show it does not. Worth knowing.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">06</span>
+      <h2>The cutover, to the day</h2>
+    </div>
+    <p>Every run that entered through <code>Event_W68xBg</code>, by day, against what <code>Activity_AkTBVx</code> then returned. This is the single strongest piece of evidence in the investigation.</p>
+
+    <div class="tw">
+      <table>
+        <caption>Event_W68xBg → Activity_AkTBVx outcome, per day</caption>
+        <thead><tr><th class="mono">Day</th><th class="mono">Runs</th><th>Outcome</th><th>&nbsp;</th></tr></thead>
+        <tbody>
+          <tr class="hi"><td class="mono">08-14</td><td class="num">6</td><td><span class="chip bug">all 400</span></td><td>&nbsp;</td></tr>
+          <tr class="hi"><td class="mono">08-17</td><td class="num">7</td><td><span class="chip bug">all 400</span></td><td>&nbsp;</td></tr>
+          <tr><td class="mono">08-18</td><td class="num">6</td><td><span class="chip bug">400</span> <span class="chip ok">200</span></td><td><strong>package changed</strong></td></tr>
+          <tr><td class="mono">08-19</td><td class="num">6</td><td><span class="chip ok">all 200</span></td><td>&nbsp;</td></tr>
+          <tr><td class="mono">08-20</td><td class="num">1</td><td><span class="chip ok">all 200</span></td><td>&nbsp;</td></tr>
+          <tr><td class="mono">08-21</td><td class="num">3</td><td><span class="chip ok">all 200</span></td><td>&nbsp;</td></tr>
+          <tr><td class="mono">08-24</td><td class="num">6</td><td><span class="chip ok">all 200</span></td><td>&nbsp;</td></tr>
+          <tr><td class="mono">08-25</td><td class="num">1</td><td><span class="chip ok">all 200</span></td><td>&nbsp;</td></tr>
+          <tr><td class="mono">08-26</td><td class="num">1</td><td><span class="chip ok">all 200</span></td><td>ticket filed</td></tr>
+          <tr><td class="mono">08-27</td><td class="num">3</td><td><span class="chip ok">all 200</span></td><td>&nbsp;</td></tr>
+          <tr><td class="mono">08-28</td><td class="num">1</td><td><span class="chip ok">all 200</span></td><td>&nbsp;</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Thirteen consecutive failures, one mixed day, then twenty-one consecutive successes. A data-dependent bug does not produce that shape — a package change does. The customer fixed their own mapping on <strong>18 August</strong>, and filed this ticket on the <strong>26th</strong>.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">07</span>
+      <h2>Why nobody could tell</h2>
+    </div>
+    <p>The customer's mapping was wrong, but the platform's handling of that mistake is the real finding. Verified against <code>main</code>.</p>
+
+    <div class="chain">
+      <div class="link">
+        <span class="n">1</span>
+        <span class="c">
+          <h3>A failed expression becomes null</h3>
+          <span class="loc">BpmnDataManager.cs:63-64 · EvaluateStringValue</span>
+          <p><code>UnwrapOrIfFail((UnsafeThirdPartyValue?)null)</code>. The doc comment states it: <em>“If the expression throws, return null.”</em> The <code>Fin</code> knows the difference between <em>evaluated to null</em> and <em>failed to evaluate</em> — and discards it.</p>
+        </span>
+      </div>
+      <div class="link">
+        <span class="n">2</span>
+        <span class="c">
+          <h3>The null is written unconditionally</h3>
+          <span class="loc">BpmnDataManager.cs:1072 · EvaluateActivityOutputs (:1023)</span>
+          <p><code>_variablesScope.SetDatum(…)</code> with no null or failed-eval guard, so a mapping that cannot resolve <strong>overwrites its target with null</strong>. Because <code>Activity_AkTBVx</code> also writes <code>strEmailId</code> from its own result, the fault-time writeback re-nulls it — which is why retries 2 and 3 fail identically instead of recovering.</p>
+        </span>
+      </div>
+      <div class="link">
+        <span class="n">3</span>
+        <span class="c">
+          <h3>Nothing is logged</h3>
+          <span class="loc">no log · no incident · no ErrorCode</span>
+          <p>A non-swallowing variant exists and is used elsewhere — <code>EvaluateStringValueWithError</code>, raising <code>ErrorCode.ExpressionEvaluationError</code> — but not on this path.</p>
+        </span>
+      </div>
+    </div>
+
+    <p>So the customer got no signal when they broke it, and no signal when they fixed it. They spent days on a mapping typo with nothing to guide them, then filed a ticket about a symptom that had already stopped. <strong>That is the cost of the swallow</strong>, and it is worth fixing even though this particular customer is now unblocked.</p>
+
+    <p>The failure only became visible at all because <code>strEmailId</code> happens to feed an IS <em>path parameter</em>, which throws at <code>IntSvcSendTaskActivities.GetInterpolatedPath</code> (<code>:533-562</code>). Had that null landed in a body field, a script input or a gateway condition, there would be no 400 and no telemetry whatsoever.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">08</span>
+      <h2>Temporal</h2>
+    </div>
+    <p>Region <code>szn</code> is on the <strong>unified/gov</strong> cluster (<code>uni-prd-svc-szn-01-g</code>), not <code>prd-shr</code>. WorkflowId == Maestro InstanceId.</p>
+
+    <div class="links">
+      <div class="linkcard is-bug">
+        <div class="hd"><span class="id">aef11db1</span><span class="chip bug">400 · null id</span><span class="chip mut">deployed</span></div>
+        <p class="why">The deployed run that exhibits the reported bug. Its <code>GetBpmnFileFromProjectArchiveAsync</code> result payload holds the BPMN.</p>
+        <div class="urlbox"><a href="https://taas.uni-prd-svc-szn-01-g.prd.kubefabric.uipath.systems/namespaces/processorchestration/workflows?query=%60WorkflowId%60+STARTS_WITH+%22aef11db1-8036-44b2-aac8-7e7d228e8c48%22">https://taas.uni-prd-svc-szn-01-g.prd.kubefabric.uipath.systems/namespaces/processorchestration/workflows?query=%60WorkflowId%60+STARTS_WITH+%22aef11db1-8036-44b2-aac8-7e7d228e8c48%22</a></div>
+      </div>
+      <div class="linkcard is-ext">
+        <div class="hd"><span class="id">df497399</span><span class="chip ext">404 · mail gone</span><span class="chip mut">debug</span></div>
+        <p class="why">The instance on the ticket. Confirms the Graph 404.</p>
+        <div class="urlbox"><a href="https://taas.uni-prd-svc-szn-01-g.prd.kubefabric.uipath.systems/namespaces/processorchestration/workflows?query=%60WorkflowId%60+STARTS_WITH+%22df497399-44d5-4484-8997-746530dc7a1a%22">https://taas.uni-prd-svc-szn-01-g.prd.kubefabric.uipath.systems/namespaces/processorchestration/workflows?query=%60WorkflowId%60+STARTS_WITH+%22df497399-44d5-4484-8997-746530dc7a1a%22</a></div>
+      </div>
+    </div>
+
+    <p>Pulling a <strong>pre-18 August</strong> run's history would recover the broken expression verbatim and close the last inference in §5. Candidates: <code>82e3feb7</code>, <code>6cbca748</code>, <code>9d56512e</code> (all 08-17, all deployed).</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">09</span>
+      <h2>What else is failing in this process</h2>
+    </div>
+    <p>Independent of the reported bug, and none of it fixed by the 18 August change.</p>
+
+    <div class="tw">
+      <table>
+        <caption>Tenant 5eb36e28 · 30 days · element outcomes and incidents</caption>
+        <thead><tr><th>Element</th><th>Type</th><th class="mono">OK</th><th class="mono">Fail</th><th>Incidents raised</th></tr></thead>
+        <tbody>
+          <tr class="hi">
+            <td class="el">Activity_AkTBVx</td><td>SendTask · Intsvc.ActivityExecution</td>
+            <td class="num"><span class="bar" style="width:38px"></span>667</td>
+            <td class="num"><span class="bar f" style="width:11px"></span>37</td>
+            <td>20 <code>IntSvcResourceNotFound</code>, 17 <code>SendIntSvcTaskInvalidInputError</code></td>
+          </tr>
+          <tr>
+            <td class="el">Activity_7CzS2h</td><td>ServiceTask · Orchestrator.StartJob</td>
+            <td class="num"><span class="bar" style="width:26px"></span>308</td>
+            <td class="num"><span class="bar f" style="width:14px"></span>59</td>
+            <td>35 <code>OrchestratorJobFailed</code></td>
+          </tr>
+          <tr class="hi">
+            <td class="el">Activity_Geo83c</td><td>ServiceTask · CreateAndWaitForQueueItem</td>
+            <td class="num"><span class="bar" style="width:18px"></span>122</td>
+            <td class="num"><span class="bar f" style="width:9px"></span>18</td>
+            <td>8 <code>OrchestratorQueueItemFailed</code>, 2 <code>InputVariablesEvaluationError</code>, 1 <code>OrchestratorQueueArgumentsError</code></td>
+          </tr>
+          <tr>
+            <td class="el">Event_start</td><td>StartEvent · Intsvc.EventTrigger</td>
+            <td class="num"><span class="bar" style="width:30px"></span>470</td>
+            <td class="num"><span class="bar f" style="width:4px"></span>8</td>
+            <td>5 <code>IntSvcArgumentsError</code>, 3 <code>DebugTriggerEventNoDataError</code></td>
+          </tr>
+          <tr>
+            <td class="el">Event_3ootny</td><td>StartEvent · Orchestrator.QueueItemAdded</td>
+            <td class="num"><span class="bar" style="width:24px"></span>293</td>
+            <td class="num"><span class="bar f" style="width:5px"></span>11</td>
+            <td>11 <code>OrchestratorStartTransactionFailed</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>The customer's second reported scenario — <em>“Add to queue item and wait, where I save the transaction status to a variable”</em> — is <code>Activity_Geo83c</code>. Its output <code>str_EFProcessingStatus</code> maps <code>=js:vars.response2.Status</code>, and the downstream gateway hedges with <code>vars.strEfProcessingStatus=="Successful" || vars.response2.Status=="Successful"</code>. That hedge is itself a symptom of the same class of problem, and the 2 <code>InputVariablesEvaluationError</code> incidents are worth a separate look. Integration Service also returned <code>429 Too Many Requests</code> nine times in the window.</p>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">10</span>
+      <h2>Next steps</h2>
+    </div>
+
+    <div class="steps">
+      <div class="todo">
+        <span class="own">DRI</span>
+        <span class="c">
+          <h3>Tell the customer the null-<code>id</code> bug is already fixed</h3>
+          <p>Their 18 August package change resolved it; 21 clean runs since. Ask them to confirm they have seen no null <code>str_EmailID</code> since — and explain the platform gave them no confirmation, which is why they raised it. Close that half of the ticket.</p>
+        </span>
+      </div>
+
+      <div class="todo">
+        <span class="own">DRI</span>
+        <span class="c">
+          <h3>Reframe the ticket around the 404</h3>
+          <p>That is the live failure and the one <code>df497399</code> actually shows. Raise the folder-move hazard: the process moves messages five times and Graph message ids change on move, so a stale <code>str_EmailID</code> will 404. Recommend re-reading the id from each move's response rather than carrying the trigger's.</p>
+        </span>
+      </div>
+
+      <div class="todo">
+        <span class="own">Engine</span>
+        <span class="c">
+          <h3>File the silent-null-write bug</h3>
+          <p>This case is the argument for it: a customer lost days to a mapping typo with zero diagnostics, and got no signal when they fixed it. Skip the scope write when evaluation <em>failed</em> as distinct from evaluating to null — the <code>Fin</code> already carries that and discards it. At minimum log at the swallow point. V1 <code>[Workflow]</code>-reachable and changes evaluated variable state on replay, so it needs <code>/nde-check</code> and likely a <code>Workflow.Patched</code> gate.</p>
+        </span>
+      </div>
+
+      <div class="todo">
+        <span class="own">Design</span>
+        <span class="c">
+          <h3>Warn on cross-element variable references</h3>
+          <p>Three start paths writing one shared variable, each from its own element-scoped response, is a trap the designer could catch statically: a mapping on element X whose source reads <code>vars.&lt;var owned by element Y&gt;</code> is almost always a copy-paste error. Cheaper than any runtime fix.</p>
+        </span>
+      </div>
+
+      <div class="todo">
+        <span class="own">Triage</span>
+        <span class="c">
+          <h3>Fold in the existing reports</h3>
+          <p><a class="ref" href="https://uipath.atlassian.net/browse/MST-12996">MST-12996</a> / <a class="ref" href="https://uipath.atlassian.net/browse/MST-12995">MST-12995</a> (“Global variable becomes null”) and <a class="ref" href="https://uipath.atlassian.net/browse/MST-12934">MST-12934</a> are plausibly the same sink. One owner, not one ticket per customer.</p>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="sec-num">11</span>
+      <h2>Reproducing the queries</h2>
+    </div>
+    <p>Cluster <code>argus-prd-shared-adx.westeurope</code>, database <code>telemetry</code>, subscription <code>ac48534c-8b8d-4bdf-b523-a09d0fb1b77d</code>. Time columns differ: <code>_raw_Log</code> uses <code>Timestamp</code>, <code>_raw_Trace</code> uses <code>StartTime</code>.</p>
+
+    <details>
+      <summary>KQL used for this investigation</summary>
+      <div class="kql">
+        <div>
+          <h3>Find the clobbered variable — the entry point for this bug class</h3>
+          <pre>_raw_Log
+| where Timestamp &gt; ago(30d)
+| where Body has "&lt;tenantId&gt;" and Body has "has null or empty value"
+| extend Inst  = extract(@"InstanceId: ([a-f0-9-]{36})", 1, Body),
+         Param = extract(@"Parameter .([A-Za-z0-9_]+). has null", 1, Body)
+| summarize Hits=count(), First=min(Timestamp), Last=max(Timestamp) by Inst, Param
+| order by First desc</pre>
+        </div>
+        <div>
+          <h3>Attribute failures to a start path — the decisive query</h3>
+          <pre>_raw_Log
+| where Timestamp between (datetime(2026-08-10) .. datetime(2026-08-19))
+| where Body has "Element completed or failed"
+| extend Inst = extract(@"processInstanceId:([a-f0-9-]{36})", 1, Body),
+         Elem = extract(@"elementId:([A-Za-z0-9_]+)", 1, Body),
+         RC   = extract(@"resultCode:([0-9]+)", 1, Body)
+| where Inst in (&lt;the null-id instance ids&gt;)
+| summarize Elems=make_set(strcat(Elem,":",RC)) by Inst</pre>
+        </div>
+        <div>
+          <h3>Date the package change — per-day outcome on one path</h3>
+          <pre>let w68 = _raw_Log | where Timestamp &gt; ago(30d)
+| where Body has "Element completed or failed" and Body has "elementId:Event_W68xBg"
+| extend Inst = extract(@"processInstanceId:([a-f0-9-]{36})", 1, Body)
+| summarize Started=min(Timestamp) by Inst;
+let ak = _raw_Log | where Timestamp &gt; ago(30d)
+| where Body has "Element completed or failed" and Body has "elementId:Activity_AkTBVx"
+| extend Inst = extract(@"processInstanceId:([a-f0-9-]{36})", 1, Body),
+         RC   = extract(@"resultCode:([0-9]+)", 1, Body)
+| summarize AkRC=make_set(RC) by Inst;
+w68 | join kind=leftouter ak on Inst
+| extend Day=format_datetime(Started,"MM-dd")
+| summarize Runs=count(), Outcomes=make_set(AkRC) by Day | order by Day asc</pre>
+        </div>
+        <div>
+          <h3>Incidents by error code</h3>
+          <pre>_raw_Log
+| where Timestamp &gt; ago(30d)
+| where Body has "&lt;tenantId&gt;" and Body has "has been created for the element"
+| extend Elem = extract(@"for the element ([A-Za-z0-9_]+)", 1, Body),
+         EC   = extract(@"ErrorCode: ([A-Za-z0-9_]+)", 1, Body)
+| summarize Cnt=count(), First=min(Timestamp), Last=max(Timestamp) by Elem, EC
+| order by Cnt desc</pre>
+        </div>
+      </div>
+    </details>
+
+    <p><strong>On Temporal access.</strong> prd TaaS authenticates through app registration <code>dd34bcf2-c6df-4148-b659-59b878da4498</code>, scope <code>api://dd34bcf2…/default</code>, via interactive SSO. The Azure CLI is not an authorised client on that registration (<code>AADSTS650057</code>), so no CLI or service token can be minted — a browser session is the only way in. The BPMN payload is the one thing ADX cannot supply.</p>
+  </section>
+
+  <footer>
+    <span>Evidence: prd ADX <code>_raw_Log</code>, 30-day window ending 2026-08-28. Services <code>po-worker-prd-szn-01</code>, <code>po-pims-prd-szn-01</code>. BPMN from the published package.</span>
+    <span>Code references verified against <code>main</code> at commit e856ca76e.</span>
+  </footer>
+
+</div>
+
+</body></html>

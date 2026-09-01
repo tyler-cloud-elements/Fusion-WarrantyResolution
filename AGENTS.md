@@ -306,9 +306,9 @@ an `@container` and the split turns on at `@min-[736px]`, which is what the two 
 actually need (340 + 16 gap + 380). Both tracks carry real minimums, so neither can be
 squeezed to nothing.
 
-Opening the **assessment** no longer restacks the pane. The two rails are not equivalent: the
+Opening **Ask about this case** no longer restacks the pane. The two rails are not equivalent: the
 case rail is `flex-1` and claims whatever is left, so with it open there is genuinely no room
-for two columns; the assessment is a fixed 330px the pane can usually absorb. Reflowing for it
+for two columns; the ask rail is a fixed 330px the pane can usually absorb. Reflowing for it
 also felt destructive — you open it to ask about the decision and the decision jumps out from
 beside the finding to underneath it. At laptop widths (~1500px) four columns still cannot fit
 in one window, so it stacks there; from ~1800px the layout holds.
@@ -330,7 +330,7 @@ its maintenance history — which is why the rationale calls it unestablished an
 cause is charged to anyone. Collapsing open into fail would charge the customer for a missing
 document; collapsing it into pass would clear them of something nobody looked at.
 
-**The assessment rail answers the position.** It is not a static summary:
+**The "Ask about this case" rail answers the position.** It is not a static summary:
 
 - Evidence opens into five signals, each naming what it bought (`Parts — $8,450.00 to us`) and
   taking a thumb. The thumb is on the signal, not the conclusion — which input was misread is
@@ -374,11 +374,11 @@ room up should not have to set them twice.
 |---|---|---|
 | Opposing cause tile | on | Drops the second cause, on the customer. The heading, the "both established" stamp and the verdict box all change with it — with one cause the case is a clean approval, and claiming a combined cause would be a lie. |
 | Agent confidence | on | Hides the percentage and the precedent rollup. |
-| Reasoning capture | **off** | The agree / keep asking / stop asking tri-state under the decision. Off by default: it asks the signer to grade the agent's reasoning as well as make the call, and the assessment rail already collects that per signal, with a thumb, which is the more useful shape of the same feedback. |
+| Reasoning capture | **off** | The agree / keep asking / stop asking tri-state under the decision. Off by default: it asks the signer to grade the agent's reasoning as well as make the call, and that rail already collects it per signal, with a thumb, which is the more useful shape of the same feedback. |
 | Case plans tab | **off** | The only flag that is off by default. The case plan is design-time material and Act III is about running work, so the nav entry is hidden. `/case-plans` still resolves by URL either way, so a presenter can deep-link to it without turning the nav on. |
 | Decide shortcut | on | The "Decide: …" button on a case header, straight to the console. Off, the Actions queue is the only way in — and the task-count button takes the primary style, since it becomes the way through to the work. |
 | Compact finding | on | Each cause is one row — which side it lands on, what it is, and the clause that establishes it — with the argument, the provenance stamp and the sources an expand away. About a hundred words less on a pane already carrying a decision, and the two sides stay beside each other in the narrow Actions layout where the cards stack. Off, the two full cause cards come back: they land harder on a projector, the rows read better for someone working the queue. |
-| Side-by-side action | on | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the assessment take the same width; two columns squeezed into a third of the window is worse than one. |
+| Side-by-side action | on | Lays the Actions pane out like the console — finding left, decision right. **Falls back to stacked whenever a right panel is open**, because the case drawer and the ask rail take the same width; two columns squeezed into a third of the window is worse than one. |
 | Use demo data | on | Ignore the live tenant and run on the bundled dataset. **On by default**: the app opens in the state it can always be trusted in — the storyboard's exact numbers, no sign-in, nothing that depends on a tenant being up. Turning it off is the single switch that goes live, and it is what arms the overlay. While on it **overrides the overlay** and hides every link out to the tenant (Open case run, New case), because demo rows point at nothing and a dead link reads as a bug. |
 | Overlay mock on live | on | Keeps the demo queue and paints the tenant over it. Off, the two sources never mix — a successful read shows only what the tenant has. On is the demonstrable setting and is why it leads; off is the honest one. **Inert until Use demo data is turned off**, which is the shipped state; the sidebar row says so rather than looking live. |
 | Morning brief | on | The overnight summary above the work queue — greeting, narrative, four trend tiles, and three pulse cards (cases by stage, SLA posture, autonomy rate). Every figure is computed from the same case list the queue renders, so it cannot disagree with the table underneath it. **When on it also hides two things that would otherwise say the same thing twice:** the standalone "Agent summary" card (the brief opens with that exact line) and the personal KPI row. Turn it off and both come back. |
@@ -418,8 +418,9 @@ each one belongs to the position, so a claim does not change shape when the deci
 
 ### Two panels, one column
 
-The Actions pane's right column holds **either** the case drawer **or** the assessment, never
-both — they share the space, so the state is one value (`"case" | "assessment" | null`) rather
+The Actions pane's right column holds **either** the case drawer **or** the ask rail, never
+both — they share the space, so the state is one value (`"case" | "assessment" | null`, the
+internal name kept so saved preferences survive the rename) rather
 than two booleans that could represent an impossible state. Both sit under the action header,
 so the action's identity stays put whichever is showing, and each header carries a control to
 swap to the other.

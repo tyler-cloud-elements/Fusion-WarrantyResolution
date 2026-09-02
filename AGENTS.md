@@ -296,11 +296,18 @@ folderKey: cbf6dec7-939a-4eeb-ab3f-f78065dc9b27
 Case summary: WR-2026-0417 — Northstar Retail Distribution, …
 ```
 
+**They go out on every turn, not just the first.** The agent does not carry them forward, so a
+tool call on the second question had no case to open — which is why a suggested question like
+"How long is left on the clock?" failed while the opening one worked. Three short lines
+repeated is a trivial cost against a failure that only appears on the *second* question, which
+is exactly the kind a demo finds live. The prose summary stays first-turn-only, being bulky and
+genuinely one-time.
+
 `caseIdentifiers()` reads them off the case, falling back to the configured case folder when
 the row carries none, and **drops empty values rather than sending a blank line** — a tool will
-try to use `folderKey:` with nothing after it. `seedBlock()` is exported so the format is
-testable, because a contract that drifts silently is how the panel ends up asking about a case
-the agent cannot open.
+try to use `folderKey:` with nothing after it. `turnPayload()` and `seedBlock()` are exported so
+both the format and the every-turn rule are testable, because a contract that drifts silently is
+how the panel ends up asking about a case the agent cannot open.
 
 Four details are load-bearing, all learned the hard way in
 `~/Workspaces/TT-DevconLoanOrigination/loan-origination-app-0511-maestrolab`, which is the

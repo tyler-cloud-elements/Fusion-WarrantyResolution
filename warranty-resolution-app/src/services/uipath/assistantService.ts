@@ -202,27 +202,58 @@ export interface AskOptions {
 }
 
 /**
- * The first turn's preamble: identifiers first, then the summary.
+ * The identifier lines, as the agent's tools expect to find them.
  *
+ * Sent with **every** turn, not just the first. They were first-turn-only, on
+ * the assumption the agent would carry them forward — and it does not: a tool
+ * call on the second question had no case to open, which is why a suggested
+ * question like "How long is left on the clock?" failed while the opening one
+ * worked. Repeating three short lines is a trivial cost next to a whole class
+ * of failure that only shows up on the second question.
+ *
+ * Empty values are omitted rather than sent blank: a tool will try to use
+ * `folderKey:` with nothing after it.
+ */
+export function identifierLines(identifiers?: CaseIdentifiers): string {
+  const lines: string[] = [];
+  if (identifiers?.caseInstanceId) lines.push(`caseInstanceId: ${identifiers.caseInstanceId}`);
+  if (identifiers?.folderKey) lines.push(`folderKey: ${identifiers.folderKey}`);
+  if (!lines.length) return "";
+  return `Case identifiers (use these for tool calls):\n${lines.join("\n")}`;
+}
+
+/**
+ * What goes in front of one question.
+ *
+ * Identifiers every time; the prose summary only on the first turn of a thread,
+ * because it is bulky and the agent genuinely does keep the conversation.
  * Exported because this is the contract with the agent's tools — labelled lines
  * they lift the GUIDs from — and a format that drifts silently is how the panel
  * ends up asking about a case the agent cannot open.
  */
-export function seedBlock(options: AskOptions): string {
-  const ids: string[] = [];
-  if (options.identifiers?.caseInstanceId) {
-    ids.push(`caseInstanceId: ${options.identifiers.caseInstanceId}`);
-  }
-  if (options.identifiers?.folderKey) {
-    ids.push(`folderKey: ${options.identifiers.folderKey}`);
-  }
-
+export function seedBlock(options: AskOptions, withSummary = true): string {
   return [
-    ids.length ? `Case identifiers (use these for tool calls):\n${ids.join("\n")}` : "",
-    options.seedContext ? `Case summary: ${options.seedContext}` : "",
+    identifierLines(options.identifiers),
+    withSummary && options.seedContext ? `Case summary: ${options.seedContext}` : "",
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+/**
+ * One turn as the agent receives it: the preamble, then the question.
+ *
+ * Exported so the every-turn identifier rule is under test rather than under
+ * assumption — it was first-turn-only, and the failure that caused only appears
+ * on the *second* question, which is exactly the kind of bug a demo finds live.
+ */
+export function turnPayload(
+  question: string,
+  options: AskOptions,
+  withSummary: boolean,
+): string {
+  const seed = seedBlock(options, withSummary);
+  return seed ? `Context:\n${seed}\n\n${question}` : question;
 }
 
 /**
@@ -258,9 +289,12 @@ export async function askAgent(
   // and the service rejects anything else.
   const exchangeId = crypto.randomUUID().toUpperCase();
 
-  const seed = thread.seeded ? "" : seedBlock(options);
-  thread.seeded = true;
-  const payload = seed ? `Context:\n${seed}\n\n${question}` : question;
+  // The summary is a first-turn nicety; the identifiers are not, and are sent
+  // every time. `seeded` only flips once a summary has actually gone out, so a
+  // thread that opened without one is not marked as having sent it.
+  const summaryThisTurn = !thread.seeded && Boolean(options.seedContext);
+  if (summaryThisTurn) thread.seeded = true;
+  const payload = turnPayload(question, options, summaryThisTurn);
 
   return new Promise<string>((resolve, reject) => {
     let settled = false;

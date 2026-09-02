@@ -40,11 +40,14 @@ export function AskAiPanel({
   ]);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
+  /** Why the last question fell back to the local answer, if it did. */
+  const [agentError, setAgentError] = useState<string | null>(null);
 
   async function send(text: string) {
     const question = text.trim();
     if (!question || pending) return;
 
+    setAgentError(null);
     setMessages((m) => [...m, { role: "user", text: question }]);
     setDraft("");
     setPending(true);
@@ -69,7 +72,9 @@ export function AskAiPanel({
       });
       setMessages((m) => [...m, { role: "assistant", text: answer }]);
     } catch (err) {
+      const why = err instanceof Error ? err.message : "the agent was unreachable";
       console.warn("Conversational agent call failed, answering locally:", err);
+      setAgentError(why);
       setMessages((m) => [
         ...m,
         { role: "assistant", text: localAnswer(question, warrantyCase), local: true },
@@ -124,6 +129,12 @@ export function AskAiPanel({
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border p-4">
+        {agentError && (
+          <p className="rounded-md bg-warning/10 px-2 py-1.5 text-[11px] leading-snug text-warning-foreground">
+            <b className="font-semibold">Answered from case context.</b> The agent could not:{" "}
+            {agentError}
+          </p>
+        )}
         {!canUseAgent && (
           <span className="text-[11px] leading-snug text-muted-foreground">
             {/* Says which of the two reasons applies. It used to tell you to

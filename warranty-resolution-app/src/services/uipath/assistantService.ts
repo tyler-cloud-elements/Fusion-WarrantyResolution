@@ -66,8 +66,15 @@ interface Thread {
  */
 const SESSION_ACK_MS = 4_000;
 
-/** How long a question may go unanswered before the local answer takes over. */
-const ANSWER_TIMEOUT_MS = 30_000;
+/**
+ * How long a question may go *silent* before the local answer takes over.
+ *
+ * A deadline on silence, not on the whole answer. A question that needs several
+ * tool calls — "what is blocking closure?" walks stages, tasks and clocks —
+ * can easily run past any sensible total, and killing it at a fixed 30 seconds
+ * threw away an answer that was arriving. Every chunk pushes this out again.
+ */
+const ANSWER_SILENCE_MS = 45_000;
 
 async function openThread(sdk: UiPath): Promise<Thread> {
   const agentId = Number(integrationConfig.assistantAgentId);
@@ -298,10 +305,7 @@ export async function askAgent(
 
   return new Promise<string>((resolve, reject) => {
     let settled = false;
-    const timer = window.setTimeout(
-      () => settle(new Error("The conversational agent did not answer in time")),
-      ANSWER_TIMEOUT_MS,
-    );
+    let timer = 0;
 
     function settle(err?: Error) {
       if (settled) return;
@@ -309,12 +313,41 @@ export async function askAgent(
       window.clearTimeout(timer);
       const answer = thread.pending.get(exchangeId)?.text ?? "";
       thread.pending.delete(exchangeId);
-      if (err) reject(err);
-      else if (answer.trim()) resolve(answer);
-      else reject(new Error("The conversational agent returned an empty answer"));
+
+      // Partial text beats no text. A stream that stalls after saying something
+      // useful has still said it, and discarding it to show the local answer
+      // instead loses work the agent already did.
+      if (answer.trim() && (!err || err.name === "SilenceTimeout")) {
+        resolve(answer);
+        return;
+      }
+      reject(err ?? new Error("The conversational agent returned an empty answer"));
     }
 
-    thread.pending.set(exchangeId, { text: "", onChunk: options.onChunk, settle });
+    function keepAlive() {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        const err = new Error(
+          thread.pending.get(exchangeId)?.text
+            ? "The conversational agent stopped mid-answer"
+            : "The conversational agent did not answer",
+        );
+        err.name = "SilenceTimeout";
+        settle(err);
+      }, ANSWER_SILENCE_MS);
+    }
+
+    keepAlive();
+
+    thread.pending.set(exchangeId, {
+      text: "",
+      // Each chunk is proof it is still working, so the clock starts over.
+      onChunk: (soFar) => {
+        keepAlive();
+        options.onChunk?.(soFar);
+      },
+      settle,
+    });
 
     try {
       const exchange = thread.session.startExchange({ exchangeId });

@@ -329,9 +329,16 @@ back to. The cache holds the *promise*, not the result, so two questions asked i
 succession share one conversation rather than racing to open two.
 
 Every failure — unconfigured, signed out, unreachable, silent, empty, or errored — falls back
-to `localAnswer`, which answers from the case in front of the reader and says it is doing so.
-A demo should never show a dead panel, and a demo that passes off a worse answer as the
-agent's is worse than one that admits where the answer came from.
+to `localAnswer`, which answers from the case in front of the reader and **says why the agent
+did not**: "Answered from case context. The agent could not: Client Authorization Failed." The
+reason used to go only to the console, which meant every failure looked identical from the
+outside and could not be reported as anything but "it didn't work".
+
+The deadline is on **silence, not on the whole answer** — 45 seconds since the last chunk, not
+since the question. A question that walks several tools ("what is blocking closure?" covers
+stages, tasks and clocks) runs past any sensible total, and a fixed cap was throwing away
+answers that were still arriving. Partial text is kept rather than discarded: a stream that
+stalls after saying something useful has still said it.
 
 ## The decision screens
 

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUp, PanelRightClose, PanelRightOpen, PanelRight } from "lucide-react";
+import {
+  ArrowUp,
+  PanelRightClose,
+  PanelRightOpen,
+  PanelRight,
+} from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
 import { AgentMarkdown } from "@/components/warranty/AgentMarkdown";
 import { Input } from "@/components/ui/input";
@@ -18,7 +23,11 @@ import { useRole } from "@/lib/role/useRole";
 import { askAgent, localAnswer } from "@/services/uipath/assistantService";
 import { isAssistantConfigured } from "@/services/uipath/config";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
-import type { CaseAction, SuggestedReply, WarrantyCase } from "@/lib/warranty/types";
+import type {
+  CaseAction,
+  SuggestedReply,
+  WarrantyCase,
+} from "@/lib/warranty/types";
 
 // The "Ask about this case" rail.
 //
@@ -95,7 +104,10 @@ function RecommendationCard({ action }: { action: CaseAction }) {
             {Array.from({ length: 10 }, (_, i) => (
               <i
                 key={i}
-                className={cn("flex-1 rounded-[1.5px]", i < filled ? "bg-primary" : "bg-muted")}
+                className={cn(
+                  "flex-1 rounded-[1.5px]",
+                  i < filled ? "bg-primary" : "bg-muted",
+                )}
               />
             ))}
           </span>
@@ -119,11 +131,18 @@ function Bubble({
   const fromAgent = message.from === "agent";
 
   return (
-    <div className={cn("flex items-start gap-1.5", fromAgent ? "flex-row" : "flex-row-reverse")}>
+    <div
+      className={cn(
+        "flex items-start gap-1.5",
+        fromAgent ? "flex-row" : "flex-row-reverse",
+      )}
+    >
       <span
         className={cn(
           "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[9px] font-semibold",
-          fromAgent ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+          fromAgent
+            ? "bg-primary/15 text-primary"
+            : "bg-muted text-muted-foreground",
         )}
       >
         {fromAgent ? <AiMark className="size-3" /> : initialsOf(profile.name)}
@@ -154,7 +173,9 @@ function Bubble({
             <span className="whitespace-pre-line">{message.text}</span>
           )}
         </div>
-        <span className="px-1 text-[10px] leading-none text-muted-foreground">{message.time}</span>
+        <span className="px-1 text-[10px] leading-none text-muted-foreground">
+          {message.time}
+        </span>
       </div>
     </div>
   );
@@ -184,7 +205,8 @@ export function AssessmentPanel({
   position?: string;
 }) {
   const { sdk, isAuthenticated } = useUiPath();
-  const canUseAgent = isAssistantConfigured() && isAuthenticated && Boolean(sdk);
+  const canUseAgent =
+    isAssistantConfigured() && isAuthenticated && Boolean(sdk);
 
   const hostControlled = Boolean(onClose);
   const [open, setOpen] = useState(true);
@@ -193,6 +215,8 @@ export function AssessmentPanel({
   const [replies, setReplies] = useState<Message[]>([]);
   const [verdicts, setVerdicts] = useState<Record<string, SignalVerdict>>({});
   const [usedReplies, setUsedReplies] = useState<string[]>([]);
+  /** Why the last question fell back to the local answer, if it did. */
+  const [agentError, setAgentError] = useState<string | null>(null);
 
   const recommended = action.recommendation.recommendedOutcome;
   const departed = Boolean(position) && position !== recommended;
@@ -240,7 +264,8 @@ export function AssessmentPanel({
       (action.replies ?? []).filter(
         (r) =>
           !usedReplies.includes(r.id) &&
-          (!r.forOptions || (position ? r.forOptions.includes(position) : false)),
+          (!r.forOptions ||
+            (position ? r.forOptions.includes(position) : false)),
       ),
     [action.replies, usedReplies, position],
   );
@@ -279,7 +304,9 @@ export function AssessmentPanel({
   // followed by what recording it actually did.
   const verdictMessages = useMemo<Message[]>(() => {
     if (!action.completedReasoning) return [];
-    const option = REASONING_OPTIONS.find((o) => o.value === action.completedReasoning);
+    const option = REASONING_OPTIONS.find(
+      (o) => o.value === action.completedReasoning,
+    );
     if (!option) return [];
     return [
       { id: "verdict", from: "user", text: option.label, time: "Just now" },
@@ -312,27 +339,43 @@ export function AssessmentPanel({
           : [...r, { id: replyId, from: "agent", text: soFar, time: "Now" }],
       );
 
-    const answer = canUseAgent
-      ? await askAgent(sdk!, question, {
-          threadKey: `${warrantyCase.id}:${action.actionType}`,
-          identifiers: caseIdentifiers(warrantyCase),
-          seedContext:
-            `${warrantyCase.id} — ${warrantyCase.customer}, ${warrantyCase.site}. ` +
-            `${warrantyCase.description}. In ${warrantyCase.currentStage}, ` +
-            `${money(warrantyCase.claimValue)} claimed. The open decision is ` +
-            `"${action.title}"; the agent recommends ` +
-            `${action.recommendation.recommendedOutcome}.`,
-          onChunk: stream,
-        }).catch((err) => {
-          console.warn("Conversational agent unavailable, answering locally:", err);
-          return localAnswer(question, warrantyCase);
-        })
-      : localAnswer(question, warrantyCase);
+    setAgentError(null);
+    try {
+      const answer = canUseAgent
+        ? await askAgent(sdk!, question, {
+            threadKey: `${warrantyCase.id}:${action.actionType}`,
+            identifiers: caseIdentifiers(warrantyCase),
+            seedContext:
+              `${warrantyCase.id} — ${warrantyCase.customer}, ${warrantyCase.site}. ` +
+              `${warrantyCase.description}. In ${warrantyCase.currentStage}, ` +
+              `${money(warrantyCase.claimValue)} claimed. The open decision is ` +
+              `"${action.title}"; the agent recommends ` +
+              `${action.recommendation.recommendedOutcome}.`,
+            onChunk: stream,
+          }).catch((err: unknown) => {
+            // Surfaced, not swallowed. Every failure used to look identical from
+            // the outside — "it didn't work" — with the reason only in a console
+            // nobody has open during a demo.
+            const why =
+              err instanceof Error ? err.message : "the agent was unreachable";
+            console.warn(
+              "Conversational agent unavailable, answering locally:",
+              err,
+            );
+            setAgentError(why);
+            return localAnswer(question, warrantyCase);
+          })
+        : localAnswer(question, warrantyCase);
 
-    // Settles the bubble on the final text, which also replaces whatever a
-    // half-streamed answer left behind when the agent dropped mid-sentence.
-    stream(answer);
-    setPending(false);
+      // Settles the bubble on the final text, which also replaces whatever a
+      // half-streamed answer left behind when the agent dropped mid-sentence.
+      stream(answer);
+    } finally {
+      // In a finally so a throw anywhere above cannot leave the composer
+      // disabled — a stuck `pending` presents as clicking doing nothing at all,
+      // which is the least diagnosable failure this panel has.
+      setPending(false);
+    }
   }
 
   if (!hostControlled && !open) {
@@ -359,7 +402,9 @@ export function AssessmentPanel({
       className="flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-l border-border bg-background sm:w-[330px]"
     >
       <div className="flex h-10 shrink-0 items-center gap-1 border-b border-border px-3">
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">Ask about this case</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+          Ask about this case
+        </span>
         {/* The two panels share this column, so switching between them is one
             click rather than close-then-open. */}
         {onShowCase && (
@@ -402,7 +447,9 @@ export function AssessmentPanel({
                     // Clicking the same thumb again clears it — a verdict you
                     // cannot take back is one people stop giving honestly.
                     prev[id] === v
-                      ? Object.fromEntries(Object.entries(prev).filter(([k]) => k !== id))
+                      ? Object.fromEntries(
+                          Object.entries(prev).filter(([k]) => k !== id),
+                        )
                       : { ...prev, [id]: v },
                   )
                 }
@@ -427,7 +474,9 @@ export function AssessmentPanel({
               the table now, so it is replaced when that moves, not stacked. */}
           {stance && <Bubble message={stance} />}
           {pending && (
-            <div className="ml-6 text-[12.5px] text-muted-foreground">Thinking…</div>
+            <div className="ml-6 text-[12.5px] text-muted-foreground">
+              Thinking…
+            </div>
           )}
         </div>
       </div>
@@ -453,6 +502,12 @@ export function AssessmentPanel({
       )}
 
       <div className="shrink-0 border-t border-border p-2.5">
+        {agentError && (
+          <p className="mb-2 rounded-md bg-warning/10 px-2 py-1.5 text-[10px] leading-snug text-warning-foreground">
+            <b className="font-semibold">Answered from case context.</b> The
+            agent could not: {agentError}
+          </p>
+        )}
         {!canUseAgent && (
           <p className="mb-2 text-[10px] leading-snug text-muted-foreground">
             {/* Says which of the two reasons applies. It used to tell you to

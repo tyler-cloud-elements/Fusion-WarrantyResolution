@@ -10,8 +10,9 @@ import {
   type SignalVerdict,
 } from "@/components/warranty/AssessmentSignals";
 import { splitFor } from "@/lib/warranty/costSplit";
+import { caseIdentifiers } from "@/services/uipath/assistantService";
 import { REASONING_OPTIONS } from "@/lib/warranty/demoData";
-import { initialsOf, moneyExact, timeOnly } from "@/lib/warranty/format";
+import { initialsOf, money, moneyExact, timeOnly } from "@/lib/warranty/format";
 import { useRole } from "@/lib/role/useRole";
 import { askAgent, localAnswer } from "@/services/uipath/assistantService";
 import { isAssistantConfigured } from "@/services/uipath/config";
@@ -306,14 +307,13 @@ export function AssessmentPanel({
     const answer = canUseAgent
       ? await askAgent(sdk!, question, {
           threadKey: `${warrantyCase.id}:${action.actionType}`,
-          context: {
-            caseId: warrantyCase.id,
-            customer: warrantyCase.customer,
-            stage: warrantyCase.currentStage,
-            actionType: action.actionType,
-            recommendation: action.recommendation.recommendedOutcome,
-            claimValue: warrantyCase.claimValue,
-          },
+          identifiers: caseIdentifiers(warrantyCase),
+          seedContext:
+            `${warrantyCase.id} — ${warrantyCase.customer}, ${warrantyCase.site}. ` +
+            `${warrantyCase.description}. In ${warrantyCase.currentStage}, ` +
+            `${money(warrantyCase.claimValue)} claimed. The open decision is ` +
+            `"${action.title}"; the agent recommends ` +
+            `${action.recommendation.recommendedOutcome}.`,
           onChunk: stream,
         }).catch((err) => {
           console.warn("Conversational agent unavailable, answering locally:", err);

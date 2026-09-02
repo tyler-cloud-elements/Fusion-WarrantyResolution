@@ -15,7 +15,7 @@ import {
 import { money } from "@/lib/warranty/format";
 import { formatRemaining } from "@/lib/warranty/sla";
 import type { WarrantyCase } from "@/lib/warranty/types";
-import { integrationConfig, isAssistantConfigured } from "./config";
+import { caseConfig, integrationConfig, isAssistantConfigured } from "./config";
 
 export interface AssistantMessage {
   role: "assistant" | "user";
@@ -39,58 +39,108 @@ export const SUGGESTED_QUESTIONS = [
  * question would make every follow-up a non-sequitur. Keyed by case (or case +
  * action), so two cases never share a thread.
  */
-const threads = new Map<string, Promise<SessionHandle>>();
+const threads = new Map<string, Promise<Thread>>();
 
-interface SessionHandle {
+/** A question in flight, keyed by the exchange carrying its answer. */
+interface Pending {
+  text: string;
+  onChunk?: (soFar: string) => void;
+  settle: (err?: Error) => void;
+}
+
+interface Thread {
   conversationId: string;
   session: SessionStream;
+  /** Exchange id → the question waiting on it. */
+  pending: Map<string, Pending>;
+  /** The case identifiers go out once, on the first turn. */
+  seeded: boolean;
 }
 
-/** The agent has this long to say something before the local answer takes over. */
-const FIRST_TOKEN_TIMEOUT_MS = 20_000;
+/**
+ * How long to wait for the server to acknowledge a new session.
+ *
+ * Then proceed regardless. The acknowledgement matters — sending an exchange
+ * before it lands is rejected with EXCHANGE_START_PROCESSING_FAILED — but a
+ * server that never acknowledges is not a reason to refuse to try.
+ */
+const SESSION_ACK_MS = 4_000;
 
-function agentIds() {
-  return {
-    agentId: Number(integrationConfig.assistantAgentId),
-    folderId: Number(integrationConfig.assistantFolderId),
-  };
-}
+/** How long a question may go unanswered before the local answer takes over. */
+const ANSWER_TIMEOUT_MS = 30_000;
 
-async function openThread(sdk: UiPath, key: string): Promise<SessionHandle> {
-  const { agentId, folderId } = agentIds();
+async function openThread(sdk: UiPath): Promise<Thread> {
+  const agentId = Number(integrationConfig.assistantAgentId);
+  const folderId = Number(integrationConfig.assistantFolderId);
   const client = new ConversationalAgent(sdk);
-  const conversation = await client.conversations.create(agentId, folderId, {
-    label: `Warranty Resolution · ${key}`,
-  });
 
-  // `echo` off: the panel already renders what the reader typed, and echoing it
-  // back would show every question twice.
-  const session = conversation.startSession({ echo: false });
+  // Resolve the agent rather than trusting the two numbers in .env. A wrong id
+  // otherwise opens a session that simply never answers, which looks like a
+  // hung panel; this way it says which agents the folder actually holds.
+  const inFolder = await client.getAll(folderId);
+  const agent = inFolder.find((a) => a.id === agentId);
+  if (!agent) {
+    const seen = inFolder.map((a) => `${a.id} (${a.name})`).join(", ") || "none";
+    throw new Error(`Agent ${agentId} is not in folder ${folderId}. That folder has: ${seen}.`);
+  }
 
-  await new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error("The conversational agent did not open a session")),
-      FIRST_TOKEN_TIMEOUT_MS,
-    );
-    session.onSessionStarted(() => {
-      clearTimeout(timer);
+  // The agent-bound shorthand, so agentId and folderId cannot drift from the
+  // agent just resolved.
+  const conversation = await agent.conversations.create({ autogenerateLabel: true });
+  const session = await conversation.startSession({ echo: true });
+
+  await new Promise<void>((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
       resolve();
-    });
-    session.onAnyErrorStart((err) => {
-      clearTimeout(timer);
-      reject(new Error(err.message || "The conversational agent refused the session"));
-    });
+    };
+    session.onSessionStarted(finish);
+    window.setTimeout(finish, SESSION_ACK_MS);
   });
 
-  return { conversationId: conversation.id, session };
+  const thread: Thread = {
+    conversationId: conversation.id,
+    session,
+    pending: new Map(),
+    seeded: false,
+  };
+
+  // Wired once per session, not once per question. The answer arrives on the
+  // session's own exchange stream, so each exchange is matched back to the
+  // question waiting on it by id.
+  session.onExchangeStart((exchange) => {
+    const waiting = thread.pending.get(exchange.exchangeId);
+    if (!waiting) return;
+
+    exchange.onMessageStart((message) => {
+      // With echo on, the reader's own turn comes back here too.
+      if (!message.isAssistant) return;
+      message.onContentPartStart((part) => {
+        part.onChunk((chunk) => {
+          if (!chunk.data) return;
+          waiting.text += chunk.data;
+          waiting.onChunk?.(waiting.text);
+        });
+      });
+    });
+
+    exchange.onExchangeEnd(() => waiting.settle());
+    exchange.onErrorStart((err) =>
+      waiting.settle(new Error(err.message || "The conversational agent errored")),
+    );
+  });
+
+  return thread;
 }
 
-function threadFor(sdk: UiPath, key: string): Promise<SessionHandle> {
+function threadFor(sdk: UiPath, key: string): Promise<Thread> {
   const existing = threads.get(key);
   if (existing) return existing;
   // Cached as the promise, not the result, so two questions asked in quick
   // succession share one conversation instead of racing to open two.
-  const opening = openThread(sdk, key).catch((err) => {
+  const opening = openThread(sdk).catch((err) => {
     threads.delete(key);
     throw err;
   });
@@ -105,24 +155,88 @@ export function endThread(key: string): void {
   void handle?.then(({ session }) => session.sendSessionEnd()).catch(() => {});
 }
 
+export interface CaseIdentifiers {
+  /** The Maestro case instance GUID. */
+  caseInstanceId?: string;
+  /** The folder GUID the instance lives in. */
+  folderKey?: string;
+}
+
+/**
+ * The GUIDs off a case, for the agent's tools.
+ *
+ * `instanceId` is empty on a demo row, and on the overlay it is the live
+ * instance the row is painted over — which is exactly the one the agent should
+ * open. The folder falls back to the configured case folder, since a case read
+ * from that folder lives in it whether or not the row says so.
+ *
+ * Empty strings are dropped rather than sent: `folderKey: ` with nothing after
+ * it is worse than an absent line, because a tool will try to use it.
+ */
+export function caseIdentifiers(warrantyCase: {
+  instanceId?: string;
+  folderKey?: string;
+}): CaseIdentifiers {
+  return {
+    caseInstanceId: warrantyCase.instanceId || undefined,
+    folderKey: warrantyCase.folderKey || caseConfig.folderKey || undefined,
+  };
+}
+
 export interface AskOptions {
   /** Groups questions into one conversation. Usually the case id. */
   threadKey: string;
-  /** Case facts sent with the question, so the agent is not guessing. */
-  context?: Record<string, unknown>;
+  /**
+   * The GUIDs the agent's case-lookup tools need.
+   *
+   * Not optional in practice: without them the agent has a question about a
+   * case it cannot open, and its tools fail on the missing arguments. They go
+   * out as their own labelled lines rather than inside the prose or a JSON
+   * blob, so a tool can lift them without parsing English.
+   */
+  identifiers?: CaseIdentifiers;
+  /** A short description of the case, for the agent's first turn. */
+  seedContext?: string;
   /** Called with the answer so far, as it streams. */
   onChunk?: (soFar: string) => void;
 }
 
 /**
+ * The first turn's preamble: identifiers first, then the summary.
+ *
+ * Exported because this is the contract with the agent's tools — labelled lines
+ * they lift the GUIDs from — and a format that drifts silently is how the panel
+ * ends up asking about a case the agent cannot open.
+ */
+export function seedBlock(options: AskOptions): string {
+  const ids: string[] = [];
+  if (options.identifiers?.caseInstanceId) {
+    ids.push(`caseInstanceId: ${options.identifiers.caseInstanceId}`);
+  }
+  if (options.identifiers?.folderKey) {
+    ids.push(`folderKey: ${options.identifiers.folderKey}`);
+  }
+
+  return [
+    ids.length ? `Case identifiers (use these for tool calls):\n${ids.join("\n")}` : "",
+    options.seedContext ? `Case summary: ${options.seedContext}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+/**
  * Asks the configured Conversational Agent, streaming the reply.
  *
- * The transport is a WebSocket, and the shape is nested: a session carries
+ * The transport is a WebSocket and the shape is nested: a session carries
  * exchanges, an exchange carries messages, a message carries content parts, and
- * the text arrives as chunks on those parts. Handlers are attached to the
- * exchange this call starts rather than to the session, because an exchange is
- * one question and its answer — listening at the session level would also catch
- * turns belonging to other questions in flight.
+ * text arrives as chunks on those parts.
+ *
+ * The message is sent through the explicit lifecycle — `startMessage`,
+ * `sendContentPart`, `sendMessageEnd` — rather than the one-shot
+ * `sendMessageWithContentPart`, which the service accepts without ever
+ * answering. The exchange id is a upper-cased UUID for the same reason: the
+ * service rejects other shapes with EXCHANGE_START_PROCESSING_FAILED.
  *
  * Rejects rather than returning something vague when the agent is unreachable,
  * silent, or errors: the caller falls back to `localAnswer`, and a demo that
@@ -138,60 +252,48 @@ export async function askAgent(
     throw new Error("No conversational agent configured");
   }
 
-  const { session } = await threadFor(sdk, options.threadKey);
-  const exchange = session.startExchange();
+  const thread = await threadFor(sdk, options.threadKey);
+
+  // Match the SDK's own id shape — it uses crypto.randomUUID().toUpperCase(),
+  // and the service rejects anything else.
+  const exchangeId = crypto.randomUUID().toUpperCase();
+
+  const seed = thread.seeded ? "" : seedBlock(options);
+  thread.seeded = true;
+  const payload = seed ? `Context:\n${seed}\n\n${question}` : question;
 
   return new Promise<string>((resolve, reject) => {
-    let text = "";
     let settled = false;
-
-    const timer = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      reject(new Error("The conversational agent did not answer in time"));
-    }, FIRST_TOKEN_TIMEOUT_MS);
-
-    const finish = (err?: Error) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      if (err) reject(err);
-      else if (text.trim()) resolve(text);
-      else reject(new Error("The conversational agent returned an empty answer"));
-    };
-
-    exchange.onMessageStart((message) => {
-      // The reader's own question comes back on this exchange too when echo is
-      // on elsewhere; only the assistant's turn is the answer.
-      if (!message.isAssistant) return;
-      message.onContentPartStart((part) => {
-        part.onChunk((chunk) => {
-          if (!chunk.data) return;
-          text += chunk.data;
-          // Every chunk buys another window — a long answer streaming steadily
-          // is working, not hung.
-          timer.refresh?.();
-          options.onChunk?.(text);
-        });
-      });
-    });
-
-    exchange.onExchangeEnd(() => finish());
-    exchange.onErrorStart((err) =>
-      finish(new Error(err.message || "The conversational agent errored")),
+    const timer = window.setTimeout(
+      () => settle(new Error("The conversational agent did not answer in time")),
+      ANSWER_TIMEOUT_MS,
     );
 
-    void exchange
-      .sendMessageWithContentPart({
-        data: options.context
-          ? `${question}\n\n---\nCase context:\n${JSON.stringify(options.context, null, 2)}`
-          : question,
-        role: MessageRole.User,
-        mimeType: "text/plain",
-      })
-      .catch((err: unknown) =>
-        finish(err instanceof Error ? err : new Error("Could not send the question")),
-      );
+    function settle(err?: Error) {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      const answer = thread.pending.get(exchangeId)?.text ?? "";
+      thread.pending.delete(exchangeId);
+      if (err) reject(err);
+      else if (answer.trim()) resolve(answer);
+      else reject(new Error("The conversational agent returned an empty answer"));
+    }
+
+    thread.pending.set(exchangeId, { text: "", onChunk: options.onChunk, settle });
+
+    try {
+      const exchange = thread.session.startExchange({ exchangeId });
+      const message = exchange.startMessage({ role: MessageRole.User });
+      void message
+        .sendContentPart({ data: payload })
+        .then(() => message.sendMessageEnd())
+        .catch((err: unknown) =>
+          settle(err instanceof Error ? err : new Error("Could not send the question")),
+        );
+    } catch (err) {
+      settle(err instanceof Error ? err : new Error("Could not start the exchange"));
+    }
   });
 }
 

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   askAgent,
+  caseIdentifiers,
   localAnswer,
   SUGGESTED_QUESTIONS,
   type AssistantMessage,
@@ -59,12 +60,11 @@ export function AskAiPanel({
     try {
       const answer = await askAgent(sdk!, question, {
         threadKey: warrantyCase.id,
-        context: {
-          caseId: warrantyCase.id,
-          stage: warrantyCase.currentStage,
-          owner: warrantyCase.owner,
-          variables: warrantyCase.variables,
-        },
+        identifiers: caseIdentifiers(warrantyCase),
+        seedContext:
+          `${warrantyCase.id} — ${warrantyCase.customer}, ${warrantyCase.site}. ` +
+          `${warrantyCase.description}. In ${warrantyCase.currentStage}, owned by ` +
+          `${warrantyCase.owner}.`,
       });
       setMessages((m) => [...m, { role: "assistant", text: answer }]);
     } catch (err) {

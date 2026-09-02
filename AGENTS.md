@@ -268,12 +268,38 @@ The rail's composer talks to a **Conversational Agent** — agent `162896` in fo
 the FUSION tenant, set in `.env` as `VITE_ASSISTANT_AGENT_ID` / `VITE_ASSISTANT_FOLDER_ID`, and
 needing the `ConversationalAgents` scope.
 
-The transport is a WebSocket, and the shape is nested: a session carries exchanges, an exchange
-carries messages, a message carries content parts, and text arrives as chunks on those parts.
-`assistantService.ts` attaches its handlers to the **exchange it starts**, not to the session —
-an exchange is one question and its answer, so listening at the session level would also catch
-turns belonging to other questions in flight. Chunks stream into the reply bubble as they
-arrive rather than appearing whole at the end.
+**The agent's tools need the case's GUIDs, and the panel has to hand them over.** They go out
+on the first turn as their own labelled lines — not inside prose, not inside JSON — so a tool
+can lift them without parsing English:
+
+```
+Case identifiers (use these for tool calls):
+caseInstanceId: cb386569-618f-44b7-9fb7-677c0661e181
+folderKey: cbf6dec7-939a-4eeb-ab3f-f78065dc9b27
+
+Case summary: WR-2026-0417 — Northstar Retail Distribution, …
+```
+
+`caseIdentifiers()` reads them off the case, falling back to the configured case folder when
+the row carries none, and **drops empty values rather than sending a blank line** — a tool will
+try to use `folderKey:` with nothing after it. `seedBlock()` is exported so the format is
+testable, because a contract that drifts silently is how the panel ends up asking about a case
+the agent cannot open.
+
+Four details are load-bearing, all learned the hard way in
+`~/Workspaces/TT-DevconLoanOrigination/loan-origination-app-0511-maestrolab`, which is the
+reference implementation:
+
+| Detail | Why |
+|---|---|
+| Resolve the agent via `getAll(folderId)` before opening a session | A wrong id otherwise opens a session that never answers, which looks like a hung panel. It now says which agents that folder actually holds. |
+| Wait for `onSessionStarted` before the first exchange | Sending ahead of the acknowledgement is rejected with `EXCHANGE_START_PROCESSING_FAILED`. A 4-second cap, then proceed anyway. |
+| `exchangeId` must be `crypto.randomUUID().toUpperCase()` | Matches the SDK's own `makeId`; other shapes are rejected the same way. |
+| `startMessage` → `sendContentPart` → `sendMessageEnd` | The one-shot `sendMessageWithContentPart` is accepted and then never answered. |
+
+Handlers are wired **once per session** and matched back to the question by exchange id, since
+the answer arrives on the session's own exchange stream. Chunks stream into the reply bubble as
+they arrive rather than appearing whole at the end.
 
 One conversation is kept per case + action, so a follow-up still has the first turn to refer
 back to. The cache holds the *promise*, not the result, so two questions asked in quick

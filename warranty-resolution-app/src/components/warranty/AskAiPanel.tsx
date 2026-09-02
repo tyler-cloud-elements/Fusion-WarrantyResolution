@@ -58,10 +58,13 @@ export function AskAiPanel({
 
     try {
       const answer = await askAgent(sdk!, question, {
-        caseId: warrantyCase.id,
-        stage: warrantyCase.currentStage,
-        owner: warrantyCase.owner,
-        variables: warrantyCase.variables,
+        threadKey: warrantyCase.id,
+        context: {
+          caseId: warrantyCase.id,
+          stage: warrantyCase.currentStage,
+          owner: warrantyCase.owner,
+          variables: warrantyCase.variables,
+        },
       });
       setMessages((m) => [...m, { role: "assistant", text: answer }]);
     } catch (err) {
@@ -118,8 +121,13 @@ export function AskAiPanel({
       <div className="flex flex-col gap-3 border-t border-border p-4">
         {!canUseAgent && (
           <span className="text-[11px] leading-snug text-muted-foreground">
-            Answering from case context. Set VITE_ASSISTANT_AGENT_ID and
-            VITE_ASSISTANT_FOLDER_ID to route these questions to a Conversational Agent.
+            {/* Says which of the two reasons applies. It used to tell you to
+                set env vars that may well already be set, which sends a reader
+                to a file to fix something that is not broken. */}
+            Answering from case context —{" "}
+            {isAssistantConfigured()
+              ? "sign in to UiPath to ask the conversational agent."
+              : "no conversational agent is configured."}
           </span>
         )}
         <div className="flex flex-wrap gap-2">

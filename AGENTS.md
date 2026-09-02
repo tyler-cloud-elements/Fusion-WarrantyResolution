@@ -262,6 +262,28 @@ stage it belongs to, being the same budget from the same start, so it was one co
 twice — and once the stage escalated, the two sat side by side with identical countdowns
 reporting different statuses. A task clock that duplicates its stage's is now dropped.
 
+### Ask about this case
+
+The rail's composer talks to a **Conversational Agent** — agent `162896` in folder `713281` on
+the FUSION tenant, set in `.env` as `VITE_ASSISTANT_AGENT_ID` / `VITE_ASSISTANT_FOLDER_ID`, and
+needing the `ConversationalAgents` scope.
+
+The transport is a WebSocket, and the shape is nested: a session carries exchanges, an exchange
+carries messages, a message carries content parts, and text arrives as chunks on those parts.
+`assistantService.ts` attaches its handlers to the **exchange it starts**, not to the session —
+an exchange is one question and its answer, so listening at the session level would also catch
+turns belonging to other questions in flight. Chunks stream into the reply bubble as they
+arrive rather than appearing whole at the end.
+
+One conversation is kept per case + action, so a follow-up still has the first turn to refer
+back to. The cache holds the *promise*, not the result, so two questions asked in quick
+succession share one conversation rather than racing to open two.
+
+Every failure — unconfigured, signed out, unreachable, silent, empty, or errored — falls back
+to `localAnswer`, which answers from the case in front of the reader and says it is doing so.
+A demo should never show a dead panel, and a demo that passes off a worse answer as the
+agent's is worse than one that admits where the answer came from.
+
 ## The decision screens
 
 The Actions queue **collapses to a rail** — a toggle in its header, a rail carrying the open
@@ -463,7 +485,7 @@ ConversationalAgents
 DataFabric.Data.Read DataFabric.Data.Write DataFabric.Schema.Read
 ```
 
-`OR.Jobs` and `ConversationalAgents` are only needed for the Ask AI panel. `DataFabric.*`
+`OR.Jobs` starts a case from the queue; `ConversationalAgents` powers "Ask about this case". `DataFabric.*`
 only for evidence documents. The redirect URI must be the app's own origin + path — for a
 Coded App that is `https://<org>.uipath.host/<routing-name>`.
 

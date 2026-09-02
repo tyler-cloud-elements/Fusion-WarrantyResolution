@@ -292,18 +292,38 @@ export function AssessmentPanel({
     setDraft("");
     setPending(true);
 
+    // The reply lands as an empty bubble that fills as the agent streams into
+    // it. Waiting for the whole answer would leave the rail blank for seconds on
+    // a question the agent is already answering.
+    const replyId = `a-${Date.now()}`;
+    const stream = (soFar: string) =>
+      setReplies((r) =>
+        r.some((m) => m.id === replyId)
+          ? r.map((m) => (m.id === replyId ? { ...m, text: soFar } : m))
+          : [...r, { id: replyId, from: "agent", text: soFar, time: "Now" }],
+      );
+
     const answer = canUseAgent
       ? await askAgent(sdk!, question, {
-          caseId: warrantyCase.id,
-          actionType: action.actionType,
-          recommendation: action.recommendation.recommendedOutcome,
-        }).catch(() => localAnswer(question, warrantyCase))
+          threadKey: `${warrantyCase.id}:${action.actionType}`,
+          context: {
+            caseId: warrantyCase.id,
+            customer: warrantyCase.customer,
+            stage: warrantyCase.currentStage,
+            actionType: action.actionType,
+            recommendation: action.recommendation.recommendedOutcome,
+            claimValue: warrantyCase.claimValue,
+          },
+          onChunk: stream,
+        }).catch((err) => {
+          console.warn("Conversational agent unavailable, answering locally:", err);
+          return localAnswer(question, warrantyCase);
+        })
       : localAnswer(question, warrantyCase);
 
-    setReplies((r) => [
-      ...r,
-      { id: `a-${Date.now()}`, from: "agent", text: answer, time: "Now" },
-    ]);
+    // Settles the bubble on the final text, which also replaces whatever a
+    // half-streamed answer left behind when the agent dropped mid-sentence.
+    stream(answer);
     setPending(false);
   }
 
@@ -427,8 +447,13 @@ export function AssessmentPanel({
       <div className="shrink-0 border-t border-border p-2.5">
         {!canUseAgent && (
           <p className="mb-2 text-[10px] leading-snug text-muted-foreground">
-            Answering from case context. Set VITE_ASSISTANT_AGENT_ID and
-            VITE_ASSISTANT_FOLDER_ID to route these to a Conversational Agent.
+            {/* Says which of the two reasons applies. It used to tell you to
+                set env vars that may well already be set, which sends a reader
+                to a file to fix something that is not broken. */}
+            Answering from case context —{" "}
+            {isAssistantConfigured()
+              ? "sign in to UiPath to ask the conversational agent."
+              : "no conversational agent is configured."}
           </p>
         )}
         <div className="relative">

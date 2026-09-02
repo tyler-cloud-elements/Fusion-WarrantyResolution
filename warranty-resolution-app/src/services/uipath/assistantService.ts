@@ -53,8 +53,26 @@ interface Thread {
   session: SessionStream;
   /** Exchange id → the question waiting on it. */
   pending: Map<string, Pending>;
-  /** The case identifiers go out once, on the first turn. */
+  /** True once the prose summary has gone out. */
   seeded: boolean;
+  /**
+   * The case this thread is about.
+   *
+   * Held here rather than taken from each call's options, because a question
+   * asked on this thread is by definition about this case — and depending on
+   * every caller to pass the same GUIDs on every click is how they went out
+   * inconsistently. A caller can still refine them (the live instance id
+   * arrives after the first read on an overlaid row); it cannot drop them.
+   */
+  identifiers: CaseIdentifiers;
+}
+
+/** Non-empty values win, so a later read can fill a blank but never clear one. */
+export function mergeIdentifiers(base: CaseIdentifiers, next?: CaseIdentifiers): CaseIdentifiers {
+  return {
+    caseInstanceId: next?.caseInstanceId || base.caseInstanceId,
+    folderKey: next?.folderKey || base.folderKey,
+  };
 }
 
 /**
@@ -76,7 +94,7 @@ const SESSION_ACK_MS = 4_000;
  */
 const ANSWER_SILENCE_MS = 45_000;
 
-async function openThread(sdk: UiPath): Promise<Thread> {
+async function openThread(sdk: UiPath, identifiers: CaseIdentifiers): Promise<Thread> {
   const agentId = Number(integrationConfig.assistantAgentId);
   const folderId = Number(integrationConfig.assistantFolderId);
   const client = new ConversationalAgent(sdk);
@@ -112,6 +130,7 @@ async function openThread(sdk: UiPath): Promise<Thread> {
     session,
     pending: new Map(),
     seeded: false,
+    identifiers,
   };
 
   // Wired once per session, not once per question. The answer arrives on the
@@ -142,12 +161,24 @@ async function openThread(sdk: UiPath): Promise<Thread> {
   return thread;
 }
 
-function threadFor(sdk: UiPath, key: string): Promise<Thread> {
+function threadFor(
+  sdk: UiPath,
+  key: string,
+  identifiers: CaseIdentifiers,
+): Promise<Thread> {
   const existing = threads.get(key);
-  if (existing) return existing;
+  if (existing) {
+    // Fold in anything newly known — an overlaid row has no instance id until
+    // the live read lands, and the thread should pick it up rather than spend
+    // the rest of the conversation without it.
+    return existing.then((thread) => {
+      thread.identifiers = mergeIdentifiers(thread.identifiers, identifiers);
+      return thread;
+    });
+  }
   // Cached as the promise, not the result, so two questions asked in quick
   // succession share one conversation instead of racing to open two.
-  const opening = openThread(sdk).catch((err) => {
+  const opening = openThread(sdk, identifiers).catch((err) => {
     threads.delete(key);
     throw err;
   });
@@ -290,7 +321,29 @@ export async function askAgent(
     throw new Error("No conversational agent configured");
   }
 
-  const thread = await threadFor(sdk, options.threadKey);
+  if (import.meta.env.DEV) {
+    // Logged before the connection, not after. The identifiers are the whole
+    // contract with the agent's tools, and a log that only appears once the
+    // socket is up is missing in exactly the case worth diagnosing.
+    console.debug("[assistant] question carrying:", {
+      thread: options.threadKey,
+      ...(options.identifiers ?? {}),
+    });
+  }
+
+  const thread = await threadFor(sdk, options.threadKey, options.identifiers ?? {});
+
+  // Resolved from the thread, not from this call's options: the identifiers
+  // belong to the case, and a click that happens to render without them must
+  // not send a question the agent cannot ground.
+  const identifiers = thread.identifiers;
+  if (!identifiers.caseInstanceId) {
+    console.warn(
+      "[assistant] asking without a case instance id — the agent's case tools " +
+        "will have nothing to open. Thread:",
+      options.threadKey,
+    );
+  }
 
   // Match the SDK's own id shape — it uses crypto.randomUUID().toUpperCase(),
   // and the service rejects anything else.
@@ -301,7 +354,8 @@ export async function askAgent(
   // thread that opened without one is not marked as having sent it.
   const summaryThisTurn = !thread.seeded && Boolean(options.seedContext);
   if (summaryThisTurn) thread.seeded = true;
-  const payload = turnPayload(question, options, summaryThisTurn);
+  const payload = turnPayload(question, { ...options, identifiers }, summaryThisTurn);
+
 
   return new Promise<string>((resolve, reject) => {
     let settled = false;

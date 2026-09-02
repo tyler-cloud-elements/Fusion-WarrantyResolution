@@ -296,6 +296,13 @@ folderKey: cbf6dec7-939a-4eeb-ab3f-f78065dc9b27
 Case summary: WR-2026-0417 — Northstar Retail Distribution, …
 ```
 
+**The thread owns them, not the caller.** Once a conversation is open for a case, every
+question on it carries that case's GUIDs regardless of what the click passed — depending on
+each caller to supply the same identifiers on every render is how they went out inconsistently.
+A later read can *refine* them (an overlaid row has no instance id until the live read lands);
+nothing can clear them. In dev, each question logs what it is carrying **before** the socket is
+opened, so the contract is visible even when the connection is what failed.
+
 **They go out on every turn, not just the first.** The agent does not carry them forward, so a
 tool call on the second question had no case to open — which is why a suggested question like
 "How long is left on the clock?" failed while the opening one worked. Three short lines

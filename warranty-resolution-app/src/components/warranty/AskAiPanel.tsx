@@ -3,6 +3,7 @@ import { ArrowUp, X } from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { AgentMarkdown } from "@/components/warranty/AgentMarkdown";
 import {
   askAgent,
   caseIdentifiers,
@@ -102,13 +103,17 @@ export function AskAiPanel({
           <div
             key={i}
             className={cn(
-              "max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-line",
+              "min-w-0 max-w-[85%] rounded-lg px-3 py-2 text-sm",
               message.role === "assistant"
                 ? "bg-muted text-foreground"
                 : "ml-auto bg-primary text-primary-foreground",
             )}
           >
-            {message.text}
+            {message.role === "assistant" ? (
+              <AgentMarkdown>{message.text}</AgentMarkdown>
+            ) : (
+              <span className="whitespace-pre-line">{message.text}</span>
+            )}
           </div>
         ))}
         {pending && (

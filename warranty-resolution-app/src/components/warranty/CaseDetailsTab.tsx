@@ -193,7 +193,11 @@ export function CaseDetailsTab({
   }
 
   return (
-    <div className={rail ? "flex flex-col gap-4" : "grid gap-4 lg:grid-cols-2"}>
+    <div
+      className={
+        rail ? "flex flex-col gap-4" : "grid gap-4 @min-[720px]:grid-cols-[repeat(2,minmax(0,1fr))]"
+      }
+    >
       {/* Its own card rather than fields on "Customer and site": these are read
           from Helios and weighed, not case fields to be maintained, and the
           block only makes its point read together. */}

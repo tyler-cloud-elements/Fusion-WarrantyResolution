@@ -193,8 +193,12 @@ export function CaseTabs({
     >
       <TabsList
         className={cn(
-          "h-auto justify-start rounded-none border-b border-border bg-transparent",
-          rail ? "gap-4 overflow-x-auto px-4 pb-0 pt-3" : "gap-6 p-0",
+          // Nine tabs that will not wrap need ~694px. Scrolling them inside
+          // their own strip keeps that off the page: without this the whole
+          // case scrolled sideways to reach "Comments", taking the cards with
+          // it. The rail variant already did exactly this.
+          "h-auto max-w-full justify-start overflow-x-auto rounded-none border-b border-border bg-transparent",
+          rail ? "gap-4 px-4 pb-0 pt-3" : "gap-6 p-0",
         )}
       >
         <TabsTrigger value="overview" className={cn(TAB_TRIGGER, rail && "text-xs")}>
@@ -239,7 +243,13 @@ export function CaseTabs({
         <TabsContent value="overview" className="mt-0 flex flex-col gap-4">
           <StageProgress warrantyCase={warrantyCase} compact={rail} />
 
-          <div className={rail ? "flex flex-col gap-4" : "grid gap-4 lg:grid-cols-[2fr_1fr]"}>
+          <div
+            className={
+              rail
+                ? "flex flex-col gap-4"
+                : "grid gap-4 @min-[820px]:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]"
+            }
+          >
             <div className={cn("flex flex-col gap-4", !rail && "self-start lg:order-2")}>
               {/* The case agent's account of where this case stands. */}
               <Card className="gap-4 p-5">

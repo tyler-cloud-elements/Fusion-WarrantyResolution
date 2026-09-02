@@ -108,7 +108,14 @@ export function CaseDetailPage() {
 
   return (
     <div className="flex h-full min-h-0">
-      <div className="min-w-0 flex-1 overflow-y-auto p-6">
+      {/*
+        A container, so the tab layouts below react to this column's width
+        rather than the window's. With the Ask panel open the column is 380px
+        narrower while `lg:` still reads the viewport as wide — which is how a
+        two-column Overview ended up 958px of content in 632px of room, cut off
+        under the panel and only reachable by scrolling sideways.
+      */}
+      <div className="@container min-w-0 flex-1 overflow-y-auto p-6">
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between gap-3">
             <Link

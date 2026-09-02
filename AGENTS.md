@@ -264,6 +264,22 @@ reporting different statuses. A task clock that duplicates its stage's is now dr
 
 ### Ask about this case
 
+The rail renders the agent's replies as **Markdown** — `AgentMarkdown`, on `react-markdown`
+with `remark-gfm` for tables. The agent answers with headings, bold, bullets and GFM tables, and
+a plain-text bubble showed all of it literally, `##` and `|---|---|` included. Headings collapse
+to two weights, because an agent opening with `##` is not implying a document outline and six
+sizes in a chat bubble read as a mistake. A table is the one thing that cannot be made to fit a
+330px rail, so it scrolls inside its own box rather than widening the bubble. The reader's own
+turns stay plain text: running them through a renderer would eat an asterisk they meant
+literally.
+
+The case page's content column is an `@container`, and the tab layouts key off it. `lg:` reads
+the *viewport*, which with the Ask panel open said "wide" while the column had 380px less to
+work with — 958px of Overview in 632px of room, cut off under the panel and only reachable by
+scrolling the whole case sideways. The nine-tab strip scrolls within itself for the same
+reason.
+
+
 The rail's composer talks to a **Conversational Agent** — agent `162896` in folder `713281` on
 the FUSION tenant, set in `.env` as `VITE_ASSISTANT_AGENT_ID` / `VITE_ASSISTANT_FOLDER_ID`, and
 needing the `ConversationalAgents` scope.

@@ -224,7 +224,7 @@ export function CaseStageBoard({
           </span>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 @min-[560px]:grid-cols-2 @min-[1000px]:grid-cols-3 @min-[1320px]:grid-cols-4">
           {primary.map((stage) => (
             <StageColumn
               key={stage.id}
@@ -248,7 +248,7 @@ export function CaseStageBoard({
             Conditional and terminal lanes · {lanes.length}
           </button>
           {showLanes && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 @min-[560px]:grid-cols-2 @min-[1000px]:grid-cols-3 @min-[1320px]:grid-cols-4">
               {lanes.map((stage) => (
                 <StageColumn
                   key={stage.id}

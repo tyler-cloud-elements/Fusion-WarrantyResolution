@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, PanelRightClose, PanelRightOpen, PanelRight } from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
+import { AgentMarkdown } from "@/components/warranty/AgentMarkdown";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/warranty/CoverageConsole";
@@ -135,7 +136,7 @@ function Bubble({
       >
         <div
           className={cn(
-            "whitespace-pre-line rounded-xl px-2.5 py-1.5 text-[12.5px] leading-relaxed",
+            "min-w-0 rounded-xl px-2.5 py-1.5 text-[12.5px] leading-relaxed",
             fromAgent
               ? "rounded-tl-sm bg-muted text-foreground"
               : "rounded-tr-sm border border-border bg-card",
@@ -144,7 +145,14 @@ function Bubble({
           )}
         >
           {children}
-          {message.text}
+          {/* The agent answers in Markdown; the reader types plain text, and
+              running their own words through a renderer would eat an asterisk
+              or a hash they meant literally. */}
+          {fromAgent ? (
+            <AgentMarkdown>{message.text}</AgentMarkdown>
+          ) : (
+            <span className="whitespace-pre-line">{message.text}</span>
+          )}
         </div>
         <span className="px-1 text-[10px] leading-none text-muted-foreground">{message.time}</span>
       </div>

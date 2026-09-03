@@ -250,7 +250,7 @@ export function CaseTabs({
                 : "grid gap-4 @min-[820px]:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]"
             }
           >
-            <div className={cn("flex flex-col gap-4", !rail && "self-start lg:order-2")}>
+            <div className={cn("flex flex-col gap-4", !rail && "self-start @min-[820px]:order-2")}>
               {/* The case agent's account of where this case stands. */}
               <Card className="gap-4 p-5">
                 <WidgetHeader
@@ -321,20 +321,10 @@ export function CaseTabs({
             {/* In the rail the surrounding screen already covers actions, so the
                 Overview there is just the summary and recent activity. */}
             {!rail && (
-              <div className="flex flex-col gap-4 lg:order-1">
-                <SlaPanel
-                  warrantyCase={warrantyCase}
-                  actions={actions}
-                  variant="summary"
-                  onOpen={() => onTabChange("sla")}
-                />
-
-                <StagesSummary
-                  warrantyCase={warrantyCase}
-                  actions={actions}
-                  onOpen={() => onTabChange("stages")}
-                />
-
+              <div className="flex flex-col gap-4 @min-[820px]:order-1">
+                {/* First, because it is the only thing here that is asking for
+                    something. The clocks and the stage board describe where the
+                    case stands; this is what a person has to do about it. */}
                 <Card className="gap-4 p-5">
                   <WidgetHeader
                     icon={<ListChecks className="size-4 text-muted-foreground" />}
@@ -347,6 +337,19 @@ export function CaseTabs({
                   </WidgetHeader>
                   {actionList}
                 </Card>
+
+                <SlaPanel
+                  warrantyCase={warrantyCase}
+                  actions={actions}
+                  variant="summary"
+                  onOpen={() => onTabChange("sla")}
+                />
+
+                <StagesSummary
+                  warrantyCase={warrantyCase}
+                  actions={actions}
+                  onOpen={() => onTabChange("stages")}
+                />
 
                 <Card className="gap-4 p-5">
                   <WidgetHeader

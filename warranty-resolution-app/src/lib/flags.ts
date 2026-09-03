@@ -100,16 +100,18 @@ export interface FeatureFlags {
    */
   compactFinding: boolean;
   /**
-   * Show the "Decide: …" button on a case's hero header.
+   * Send the case header's task button to the Actions queue.
    *
-   * It jumps straight from the case to the full-screen console, skipping the
-   * queue. Useful as a shortcut, but it puts a second front door on the
-   * decision — the Actions queue being the first — and on a case whose action
-   * title is long it dominates the header it sits in.
+   * The button is the same either way — "3 open tasks" — and only where it
+   * lands changes. Off, it opens the decision itself, which is the shorter
+   * path and the one the demo takes. On, it goes to the queue, which is where
+   * someone working a shift would start and which shows the case's tasks
+   * alongside everything else waiting.
    *
-   * On by default; turn it off to make the queue the only way in.
+   * Off by default: from a case you already have in front of you, a queue is a
+   * detour.
    */
-  showDecideShortcut: boolean;
+  useActions: boolean;
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
@@ -122,7 +124,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   showHomepageSplash: true,
   actionSideBySide: true,
   compactFinding: true,
-  showDecideShortcut: true,
+  useActions: false,
 };
 
 export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: string }> = {
@@ -154,9 +156,9 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
     label: "Morning brief",
     hint: "The overnight summary, trend tiles and pulse cards above the work queue.",
   },
-  showDecideShortcut: {
-    label: "Decide shortcut",
-    hint: 'The "Decide: …" button on a case header, straight to the console. Off, the queue is the only way in.',
+  useActions: {
+    label: "Use actions",
+    hint: "Send a case's task button to the Actions queue instead of straight to the decision. Off by default.",
   },
   compactFinding: {
     label: "Compact finding",

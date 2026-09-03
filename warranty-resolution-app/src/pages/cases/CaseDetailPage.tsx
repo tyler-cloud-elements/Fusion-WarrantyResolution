@@ -44,6 +44,11 @@ import { liveLinksAllowed, useFlags } from "@/lib/flags";
 import { useRole } from "@/lib/role/useRole";
 import { maestroInstanceUrl } from "@/services/uipath/config";
 
+/** "1 open task" / "3 open tasks" — the same words wherever the button goes. */
+function taskLabel(count: number): string {
+  return `${count} open ${count === 1 ? "task" : "tasks"}`;
+}
+
 function Meta({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
@@ -196,28 +201,30 @@ export function CaseDetailPage() {
               </Meta>
 
               <div className="flex w-full flex-wrap items-center gap-2">
-                {primaryAction && flags.showDecideShortcut && (
-                  <Button asChild>
-                    <Link
-                      to="/cases/$caseId/tasks/$taskId"
-                      params={{ caseId: warrantyCase.id, taskId: primaryAction.id }}
-                    >
-                      Decide: {primaryAction.title}
-                    </Link>
-                  </Button>
-                )}
+                {/*
+                  One button, and only its destination is a setting.
+                  It reads the same either way — the count is what a reader
+                  scans for — so the label does not shift under someone who has
+                  learned where it is. `useActions` sends it to the queue;
+                  without it, it opens the decision directly, which is the
+                  shorter path from a case already in front of you.
+                */}
                 {openActions.length > 0 && (
-                  // Leads with the count, because that is what the reader is
-                  // scanning for — and with the shortcut off this is the only
-                  // way through to the work, so it takes the primary style.
-                  <Button
-                    variant={flags.showDecideShortcut ? "outline" : "default"}
-                    asChild
-                  >
-                    <Link to="/actions" search={{ case: warrantyCase.id }}>
-                      <Inbox className="size-4" />
-                      {openActions.length} open {openActions.length === 1 ? "task" : "tasks"}
-                    </Link>
+                  <Button asChild>
+                    {flags.useActions || !primaryAction ? (
+                      <Link to="/actions" search={{ case: warrantyCase.id }}>
+                        <Inbox className="size-4" />
+                        {taskLabel(openActions.length)}
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/cases/$caseId/tasks/$taskId"
+                        params={{ caseId: warrantyCase.id, taskId: primaryAction.id }}
+                      >
+                        <Inbox className="size-4" />
+                        {taskLabel(openActions.length)}
+                      </Link>
+                    )}
                   </Button>
                 )}
                 {/*

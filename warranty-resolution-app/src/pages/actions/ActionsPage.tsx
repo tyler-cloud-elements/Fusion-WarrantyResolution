@@ -39,7 +39,7 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
  *
  * Deliberate, and not a fetch: on demo data the actions are in memory and would
  * otherwise appear instantly, which reads as a screenshot rather than a system
- * that went and looked. It is a floor, not an addition — a live read that takes
+ * that went and looked. It is a floor, not an addition: a live read that takes
  * longer keeps the skeleton up rather than waiting this out first.
  */
 const INTRO_SKELETON_MS = 2000;
@@ -210,7 +210,7 @@ export function ActionsPage() {
   );
 
   // Both waits at once, so the floor and a slow read overlap instead of adding
-  // up. Placed after every hook — an early return above them would change the
+  // up. Placed after every hook, because an early return above them would change the
   // hook order between renders.
   if (!settled || isLoading) return <ActionsSkeleton />;
 
@@ -231,7 +231,7 @@ export function ActionsPage() {
         onToggleFilters={() => setPanelOpen((o) => !o)}
       />
 
-      {/* Nothing to drag once the queue is a rail — and the handle would read
+      {/* Nothing to drag once the queue is a rail, and the handle would read
           as a second, broken way to bring it back. */}
       {!queueCollapsed && (
         <ResizeHandle onPointerDown={queue.onPointerDown} aria-label="Resize actions list" />

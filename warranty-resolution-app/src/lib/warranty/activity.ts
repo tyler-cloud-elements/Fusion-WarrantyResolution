@@ -107,7 +107,7 @@ const CATEGORY_FOR_ACTOR: Record<string, ActivityCategory> = {
 
 /**
  * A stage-and-task spine derived from where the case has actually got to. Used
- * when a case carries no authored feed — the 38 background cases, and any live
+ * when a case carries no authored feed: the 38 background cases, and any live
  * Maestro instance before its execution history is read.
  *
  * Timestamps are interpolated across the case's open span so the feed orders

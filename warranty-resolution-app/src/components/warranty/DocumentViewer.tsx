@@ -18,7 +18,7 @@ import type { EvidenceDocument, ExtractedField } from "@/lib/warranty/types";
 //
 // The page itself on the left, what IXP pulled out of it on the right. Two
 // panes rather than one because the question a reviewer is answering is not
-// "what does this say" but "is what the model read off it right" — which needs
+// "what does this say" but "is what the model read off it right", which needs
 // both, side by side.
 //
 // PDFs render in the browser's own viewer via an <object>. That is deliberate:
@@ -31,12 +31,12 @@ import type { EvidenceDocument, ExtractedField } from "@/lib/warranty/types";
  * The static host behind a deployed coded app serves every bundled file as
  * `application/octet-stream`, and `uip codedapp publish` exposes no per-file
  * content-type knob. A browser handed a PDF under that type downloads it
- * instead of rendering it — so opening a document fired a download and left an
+ * instead of rendering it, so opening a document fired a download and left an
  * empty pane behind. Fetching the bytes and re-wrapping them in a Blob typed
  * `application/pdf` puts back the type the host dropped: the native viewer
  * takes over, "New tab" opens inline, and Download still names the file.
  *
- * Locally this is a no-op beyond one extra fetch — Vite already serves the
+ * Locally this is a no-op beyond one extra fetch, since Vite already serves the
  * right type, and a correctly-typed body is reused as-is.
  */
 function usePdfUrl(href: string | undefined) {
@@ -64,7 +64,7 @@ function usePdfUrl(href: string | undefined) {
         setUrl(objectUrl);
       })
       .catch(() => {
-        // Fall back to the raw URL — no worse than not trying, and correct the
+        // Fall back to the raw URL. No worse than not trying, and correct the
         // day the host starts sending a real content type.
         if (!cancelled) setFailed(true);
       });
@@ -79,7 +79,7 @@ function usePdfUrl(href: string | undefined) {
 }
 
 function FieldRow({ field }: { field: ExtractedField }) {
-  const missing = field.value === "" || field.value === "—";
+  const missing = field.value === "";
 
   return (
     <div className="flex flex-col gap-0.5 border-b border-border/60 py-2 last:border-0">
@@ -102,7 +102,7 @@ function FieldRow({ field }: { field: ExtractedField }) {
           missing ? "italic text-muted-foreground" : "font-medium text-foreground",
         )}
       >
-        {missing ? "Not established — the model returned nothing" : field.value}
+        {missing ? "Not established. The model returned nothing" : field.value}
       </span>
 
       {field.source && (
@@ -137,7 +137,7 @@ export function DocumentViewer({
       {/* 80% of the viewport: big enough to read a page at width, small enough
           that the case behind it is still visible and the dialog reads as a
           preview rather than a navigation. The default max-w-lg is overridden
-          wholesale — a document is not a form. */}
+          wholesale. A document is not a form. */}
       <DialogContent
         showCloseButton={false}
         className="flex h-[80vh] w-[80vw] max-w-none flex-col gap-0 overflow-hidden p-0 sm:max-w-none"
@@ -241,7 +241,7 @@ export function DocumentViewer({
             <div className="flex h-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border p-8 text-center">
               <FileText className="size-6 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                No file attached — this evidence is a summary only.
+                No file attached. This evidence is a summary only.
               </p>
             </div>
           )}
@@ -279,7 +279,7 @@ export function DocumentViewer({
                   {inferredCount > 0 && (
                     <p className="mb-3 rounded-lg bg-insight-100/40 p-2.5 text-[11.5px] leading-relaxed text-muted-foreground dark:bg-insight-800/20">
                       {inferredCount} of these {doc.extracted.length} values are{" "}
-                      <span className="font-medium text-foreground">inferred</span> — stated
+                      <span className="font-medium text-foreground">inferred</span>, meaning stated
                       nowhere in the document, derived by reading it against another. Those are the
                       ones worth checking.
                     </p>

@@ -30,7 +30,7 @@ import type { WarrantyCase } from "@/lib/warranty/types";
 // The work queue.
 //
 // The queue holds only the cases where a person can change the outcome, and each
-// one says why it is there — that "why it's here" column is the whole point of
+// one says why it is there. That "why it's here" column is the whole point of
 // the screen, so it is never truncated away on narrower viewports.
 
 type QueueTab = "action" | "waiting" | "all";
@@ -99,7 +99,7 @@ function RedirectUriHint() {
   return (
     <button
       type="button"
-      title="Copy — this must match the External App registration exactly"
+      title="Copy. This must match the External App registration exactly"
       onClick={() => {
         void navigator.clipboard?.writeText(uri).then(() => {
           setCopied(true);
@@ -160,7 +160,7 @@ function SourceBadge({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {/* A button rather than a bare span so it is reachable by keyboard —
+        {/* A button rather than a bare span so it is reachable by keyboard.
             the tooltip is the only place this explanation now lives. */}
         <button
           type="button"
@@ -252,7 +252,7 @@ export function CasesListPage() {
         {/*
           Signing in is the one thing a person can do about the queue not being
           live, so it stays a button. Everything explanatory that used to sit in
-          a banner here is now on the source badge beside Refresh — the state is
+          a banner here is now on the source badge beside Refresh. The state is
           worth glancing at every time, the sentence only occasionally.
         */}
         {isUiPathConfigured() && !isAuthenticated && (

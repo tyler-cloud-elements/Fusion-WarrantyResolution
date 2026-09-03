@@ -20,7 +20,7 @@ import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 //
 // Grouped by urgency rather than by case: overdue first, then blocking, then
 // everything else open, then completed. A warranty coordinator's question on
-// opening this is "what will bite me", not "what belongs to which case" — the
+// opening this is "what will bite me", not "what belongs to which case". The
 // case is on every card either way.
 
 interface QueueSection {
@@ -49,7 +49,7 @@ export function TaskQueue({
   onSelect: (id: string) => void;
   /** Current width in px, driven by the drag handle in ActionsPage. */
   width: number;
-  /** Collapsed to a rail — the decision gets the whole pane. */
+  /** Collapsed to a rail, so the decision gets the whole pane. */
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
   headerChips?: React.ReactNode;
@@ -243,7 +243,7 @@ export function TaskQueue({
                     tabIndex={0}
                     onClick={() => onSelect(action.id)}
                     onKeyDown={(e) => {
-                      // Only when the card itself has focus — otherwise Enter on
+                      // Only when the card itself has focus. Otherwise Enter on
                       // the nested case link would be cancelled here.
                       if (e.target !== e.currentTarget) return;
                       if (e.key === "Enter" || e.key === " ") {

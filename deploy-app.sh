@@ -15,7 +15,7 @@
 # First deploy only: pass --path-name to pin the URL segment, e.g.
 #   uip codedapp deploy -n warranty-resolution-app --path-name warranty-resolution
 # On an upgrade the routing name already exists and passing it again fails with
-# HTTP 400 "routing name must be unique" — which is why this script never sends it.
+# HTTP 400 "routing name must be unique", which is why this script never sends it.
 
 set -euo pipefail
 
@@ -40,7 +40,7 @@ fi
 
 cd "$APP_PATH"
 
-# Read JSON value — uses jq when present, falls back to a sed extractor for
+# Read JSON value. Uses jq when present, falls back to a sed extractor for
 # the simple shapes we ship in .uipath/app.config.json and package.json.
 read_json() {
   local file="$1" key="$2"
@@ -69,7 +69,7 @@ if [[ -n "$VERSION_ARG" ]]; then
 elif [[ -n "$CURRENT_VERSION" ]]; then
   IFS='.' read -r MAJOR MINOR PATCH <<<"$CURRENT_VERSION"
   if [[ -z "${MAJOR:-}" || -z "${MINOR:-}" || -z "${PATCH:-}" ]]; then
-    echo "Could not parse version '$CURRENT_VERSION' from $CONFIG_FILE — pass version explicitly." >&2
+    echo "Could not parse version '$CURRENT_VERSION' from $CONFIG_FILE. Pass version explicitly." >&2
     exit 1
   fi
   VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
@@ -91,7 +91,7 @@ npm run build:uipath
 # blank page in production. Fail here instead.
 echo "==> verifying relative asset paths"
 if grep -qE '(src|href)="/assets' dist/index.html; then
-  echo "Absolute asset paths in dist/index.html — the deployed app would 404 its bundle." >&2
+  echo "Absolute asset paths in dist/index.html. The deployed app would 404 its bundle." >&2
   grep -oE '(src|href)="[^"]*assets[^"]*"' dist/index.html >&2
   exit 1
 fi

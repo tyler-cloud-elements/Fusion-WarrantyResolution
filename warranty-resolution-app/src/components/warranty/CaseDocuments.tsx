@@ -8,7 +8,7 @@ import { useRole } from "@/lib/role/useRole";
 import { addCaseEvidence, markEvidenceHelpful } from "@/lib/warranty/useCases";
 import type { EvidenceDocument, WarrantyCase } from "@/lib/warranty/types";
 
-// Documents on a warranty case ARE its evidence — the service report, the
+// Documents on a warranty case ARE its evidence: the service report, the
 // configuration baseline, the controls audit, the customer's photos. So this tab
 // is the evidence list plus an upload, rather than a second parallel store.
 
@@ -105,7 +105,7 @@ export function CaseDocumentsWidget({
 }
 
 /**
- * The Documents tab. Rating stays available here as well as in the console —
+ * The Documents tab. Rating stays available here as well as in the console,
  * evidence usefulness is a signal worth capturing whenever someone reads it,
  * not only at the moment of decision.
  */

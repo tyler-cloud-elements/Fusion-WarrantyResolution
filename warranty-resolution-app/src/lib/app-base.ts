@@ -8,7 +8,7 @@
  *   <meta name="uipath:app-base" content="/maestro-case-app">
  *
  * Locally and on Vercel the app is served from the domain root, no meta tag is
- * present, and this returns "/" — so the same build works in all three places.
+ * present, and this returns "/", so the same build works in all three places.
  *
  * This mirrors `getAppBase()` from `@uipath/uipath-typescript`. It's hand-rolled
  * because that package is the full UiPath SDK and this prototype makes no UiPath
@@ -27,7 +27,7 @@ export function getAppBase(): string {
 }
 
 /**
- * Absolute origin + base prefix, with no trailing slash — for building shareable
+ * Absolute origin + base prefix, with no trailing slash, for building shareable
  * links. At the root this is just the origin, so links stay unchanged locally.
  */
 export function appOrigin(): string {
@@ -39,7 +39,7 @@ export function appOrigin(): string {
  * Resolves an asset path in `public/` against the app's mount point.
  *
  * A bare relative path like `documents/report.pdf` resolves against the CURRENT
- * URL, not the app root — so the same link that works on `/actions` requests
+ * URL, not the app root, so the same link that works on `/actions` requests
  * `/cases/documents/report.pdf` from `/cases/WR-2026-0417` and 404s. This
  * prefixes the mount point instead, so a document opens from any route depth and
  * from a UiPath Coded App served under `/<routing-name>/`.

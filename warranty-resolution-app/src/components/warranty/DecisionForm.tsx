@@ -12,7 +12,7 @@ import { isCaseConfigured } from "@/services/uipath/config";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 
-// The decision itself — options with the reason each is or isn't supported, the
+// The decision itself: options with the reason each is or isn't supported, the
 // agent's recommendation preselected, and a rationale recorded on the case.
 //
 // Shared by the full-screen console and the Actions page's detail pane so the

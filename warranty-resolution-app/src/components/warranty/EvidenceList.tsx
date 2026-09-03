@@ -46,7 +46,7 @@ function EvidenceBody({
             <tbody>
               {document.table.rows.map((row) => {
                 // A row carrying an out-of-envelope delta is the finding, not a
-                // detail — mark it so the eye lands there first.
+                // detail, so mark it and the eye lands there first.
                 const flagged = row.some((cell) => /out of envelope/i.test(cell));
                 return (
                   <tr key={row.join("|")} className="border-b border-border/50 last:border-0">
@@ -90,7 +90,7 @@ function EvidenceBody({
 }
 
 /**
- * Was this evidence useful? Non-blocking, written to the decision ledger — the
+ * Was this evidence useful? Non-blocking, written to the decision ledger, and the
  * raw material continuous improvement reads later.
  *
  * Exported so the console's signal-capture rail can rate evidence without
@@ -158,7 +158,7 @@ export function EvidenceList({
   const [open, setOpen] = useState<Record<string, boolean>>(() =>
     defaultOpenFirst && documents[0] ? { [documents[0].id]: true } : {},
   );
-  // The document currently open in the full-window viewer, by id — held by id
+  // The document currently open in the full-window viewer, by id. Held by id
   // rather than by object so a rating made inside the viewer flows back in.
   const [viewing, setViewing] = useState<string | null>(null);
   const viewed = documents.find((d) => d.id === viewing) ?? null;

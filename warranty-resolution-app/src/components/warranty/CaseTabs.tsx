@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { caseProgressFacts, caseProgressSummary } from "@/lib/warranty/caseSummary";
 import { cn } from "@/lib/utils";
 import { WidgetHeader } from "@/components/warranty/WidgetHeader";
 import { ActivityDateFilter, ActivityFeed, ActivityFilters } from "@/components/warranty/ActivityFeed";
@@ -34,8 +35,9 @@ const TAB_TRIGGER =
   "rounded-none border-0 border-b-2 border-transparent px-0 pb-2.5 font-medium text-muted-foreground shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none";
 
 /**
- * An open decision, as a card. The whole card opens the Actions queue with this
- * action selected; "Open console" goes to the full-screen decision console.
+ * An open decision, as a card. "Open in queue" opens the Actions queue with this
+ * action selected; "Open task" goes straight to the decision itself, which is
+ * the primary of the two because it is what the card is asking you to do.
  */
 function OpenActionCard({ action }: { action: CaseAction }) {
   const remaining = formatRemaining(action.elapsedMinutes, action.slaMinutes);
@@ -81,7 +83,7 @@ function OpenActionCard({ action }: { action: CaseAction }) {
               to="/cases/$caseId/tasks/$taskId"
               params={{ caseId: action.caseId, taskId: action.id }}
             >
-              Open console
+              Open task
             </Link>
           </Button>
         </div>
@@ -93,7 +95,7 @@ function OpenActionCard({ action }: { action: CaseAction }) {
 /**
  * A decided action. The whole card reopens the console, because the settled
  * state is where the recorded effects, the signed rationale and "Reopen task"
- * live — without this link a submitted decision would be unreachable.
+ * live. Without this link a submitted decision would be unreachable.
  */
 function CompletedActionCard({ action }: { action: CaseAction }) {
   return (
@@ -122,8 +124,8 @@ function CompletedActionCard({ action }: { action: CaseAction }) {
 }
 
 /**
- * The case tab set — Overview / Details / Actions / Stages / SLAs / Documents /
- * Activity / Trail / Comments — shared by the case detail page and the Actions
+ * The case tab set (Overview / Details / Actions / Stages / SLAs / Documents /
+ * Activity / Trail / Comments) shared by the case detail page and the Actions
  * page's right rail.
  *
  * - `variant="page"` → wide two-column layouts.
@@ -207,7 +209,7 @@ export function CaseTabs({
         <TabsTrigger value="details" className={cn(TAB_TRIGGER, rail && "text-xs")}>
           Details
         </TabsTrigger>
-        {/* Redundant inside the Actions rail — you are already looking at the
+        {/* Redundant inside the Actions rail, where you are already looking at the
             action, the stage board, and the queue's own SLA figures. */}
         {!rail && (
           <TabsTrigger value="actions" className={TAB_TRIGGER}>
@@ -263,30 +265,17 @@ export function CaseTabs({
                 >
                   <span className="text-xs font-normal text-muted-foreground">AI generated</span>
                 </WidgetHeader>
+                {/* Progress, not the open decision. The Action needed card
+                    beside this one states what is owed and why it reached a
+                    person; both used to say it, which made the pair read as one
+                    thing printed twice. */}
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  {warrantyCase.reassessment?.detail ??
-                    `${warrantyCase.description}. The case is in ${warrantyCase.currentStage}, owned by ${warrantyCase.owner}, ${warrantyCase.slaStatus.toLowerCase()} against its stage clock.`}
+                  {caseProgressSummary(warrantyCase)}
                 </p>
                 <div className="flex flex-col gap-2 pt-1">
-                  <span className="text-sm font-semibold">Key facts &amp; decisions</span>
+                  <span className="text-sm font-semibold">Where it stands</span>
                   <ul className="flex flex-col gap-2">
-                    {[
-                      { label: "Stage", value: warrantyCase.currentStage },
-                      {
-                        label: "Coverage position",
-                        value: String(warrantyCase.variables["Coverage.Position"] ?? "Pending"),
-                      },
-                      {
-                        label: "Why it needs a person",
-                        value: warrantyCase.queueReason ?? "Nothing outstanding",
-                      },
-                      {
-                        label: "Open lanes",
-                        value: warrantyCase.activeLanes.length
-                          ? warrantyCase.activeLanes.join(", ")
-                          : "None",
-                      },
-                    ].map((fact) => (
+                    {caseProgressFacts(warrantyCase).map((fact) => (
                       <li key={fact.label} className="flex gap-2 text-sm">
                         <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
                         <span className="text-muted-foreground">

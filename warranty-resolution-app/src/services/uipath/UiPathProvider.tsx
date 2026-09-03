@@ -26,7 +26,7 @@ export interface UiPathUser {
 }
 
 interface UiPathContextValue {
-  /** Null while the tenant is unconfigured — every consumer must handle that. */
+  /** Null while the tenant is unconfigured. Every consumer must handle that. */
   sdk: UiPath | null;
   /** True when a tenant is configured AND the user has a valid token. */
   isAuthenticated: boolean;
@@ -58,7 +58,7 @@ function titleCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
-/** A real name has a space and no @/./_ separators — otherwise it's a username. */
+/** A real name has a space and no @/./_ separators. Otherwise it's a username. */
 function looksLikeRealName(s: string): boolean {
   return /\s/.test(s.trim()) && !/[@._]/.test(s);
 }
@@ -178,7 +178,7 @@ export function UiPathProvider({ children }: { children: ReactNode }) {
     sdk.logout();
     setIsAuthenticated(false);
     setError(null);
-    // A fresh instance — the old one holds a revoked token internally.
+    // A fresh instance. The old one holds a revoked token internally.
     setSdk(new UiPath(buildSdkConfig()));
   }, [sdk]);
 

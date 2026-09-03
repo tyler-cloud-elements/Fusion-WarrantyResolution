@@ -25,7 +25,7 @@ export function remainingMinutes(elapsedMinutes: number, slaMinutes: number): nu
   return slaMinutes - elapsedMinutes;
 }
 
-/** "3 hr 12 min", "1 d 4 hr", "45 min" — the compact form used in headers. */
+/** "3 hr 12 min", "1 d 4 hr", "45 min": the compact form used in headers. */
 export function formatDuration(minutes: number): string {
   const abs = Math.abs(Math.round(minutes));
   if (abs < 60) return `${abs} min`;
@@ -37,7 +37,7 @@ export function formatDuration(minutes: number): string {
   return restHours ? `${days} d ${restHours} hr` : `${days} d`;
 }
 
-/** "3 HR 12 MIN ELAPSED" — the storyboard's console header form. */
+/** "3 HR 12 MIN ELAPSED", the storyboard's console header form. */
 export function formatElapsed(minutes: number): string {
   return `${formatDuration(minutes).toUpperCase()} ELAPSED`;
 }

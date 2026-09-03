@@ -28,8 +28,8 @@ import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 
 // The decision console.
 //
-// Two shapes, chosen by the action itself. An action carrying `causes` — a
-// combined-cause coverage decision — gets the full console: the finding open, the
+// Two shapes, chosen by the action itself. An action carrying `causes`, meaning a
+// combined-cause coverage decision, gets the full console: the finding open, the
 // supporting record folded, the money split by cause, and the signer's limit.
 // Everything else gets the plain layout: why it reached you, the evidence, and
 // the decision form.
@@ -220,7 +220,7 @@ export function DecisionConsolePage() {
 
   // Only the departure is state; the recommendation is the resting value. Held
   // here because the assessment rail answers the position as well as the
-  // decision card setting it — see CoverageDecisionCard's `position` prop.
+  // decision card setting it. See CoverageDecisionCard's `position` prop.
   const [chosen, setChosen] = useState<string | null>(null);
   useEffect(() => setChosen(null), [taskId]);
 

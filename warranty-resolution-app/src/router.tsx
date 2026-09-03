@@ -23,8 +23,8 @@ import { DecisionConsolePage } from "@/pages/cases/DecisionConsolePage";
 import { PerformancePage } from "@/pages/PerformancePage";
 import { CasePlansPage } from "@/pages/CasePlansPage";
 
-// Information architecture follows the storyboard's three tabs — Cases,
-// Performance, Case plans — rendered in the Apollo Vertex shell's left nav.
+// Information architecture follows the storyboard's three tabs (Cases,
+// Performance, Case plans) rendered in the Apollo Vertex shell's left nav.
 // Labels are i18n keys and must exist in src/locales/en.json.
 const NAV_ITEMS: ShellNavItem[] = [
   { path: "/cases", label: "cases", icon: FileText },
@@ -91,7 +91,7 @@ const shellRoute = createRoute({
  *
  * It cannot redirect in `beforeLoad`: identity returns to the mount point with
  * `?code=&state=` on the URL, and a redirect there would strip them before the
- * SDK could exchange them — the sign-in would loop with no error. So it renders
+ * SDK could exchange them, and the sign-in would loop with no error. So it renders
  * instead, and hands off to the queue once the exchange has settled.
  */
 function LandingPage() {
@@ -179,7 +179,7 @@ const routeTree = rootRoute.addChildren([
 
 // `basepath` lets one build serve from the domain root (local dev) and from a
 // sub-path (UiPath Coded Apps at /<routing-name>). TanStack applies it as a
-// location rewrite — stripped on the way in, re-added on the way out — so every
+// location rewrite, stripped on the way in and re-added on the way out, so every
 // literal route path and `Link to=` in the app stays unprefixed.
 export const router = createRouter({ routeTree, basepath: getAppBase() });
 

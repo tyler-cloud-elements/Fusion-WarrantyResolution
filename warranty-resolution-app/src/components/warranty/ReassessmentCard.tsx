@@ -6,7 +6,7 @@ import { ConfidenceBadge } from "@/components/warranty/badges";
 import type { AgentRecommendation } from "@/lib/warranty/types";
 
 /**
- * The case agent's mid-case reassessment — storyboard scene 15.
+ * The case agent's mid-case reassessment, from storyboard scene 15.
  *
  * The point this card has to carry is that nobody routed anything: an event woke
  * the agent, it checked new evidence against a decision already taken, and it

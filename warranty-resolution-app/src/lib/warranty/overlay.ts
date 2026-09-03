@@ -2,12 +2,12 @@
 //
 // Pure functions, deliberately kept out of the hooks: which fields cross over
 // from a live case to a demo one is the most consequential decision in this app
-// — get it wrong and the screen quietly lies about a real case — and it is worth
+// Get it wrong and the screen quietly lies about a real case, so it is worth
 // being able to read, and test, without a React tree around it.
 //
 // Two modes, and they are not variations of each other:
-//   · merge  — live rows are the list; demo fills gaps Maestro does not carry
-//   · overlay — demo rows are the list, wearing live ids, stages and links
+//   · merge:   live rows are the list; demo fills gaps Maestro does not carry
+//   · overlay: demo rows are the list, wearing live ids, stages and links
 // `useCases` picks between them; neither ever produces a row that is partly one
 // case and partly another.
 
@@ -43,7 +43,7 @@ export function mergeCase(demo: WarrantyCase, live: WarrantyCase): WarrantyCase 
  * Live instances, with the demo row of the same id filling gaps Maestro does
  * not carry. Demo rows with no live counterpart are NOT appended: once the app
  * is reading a real case, padding the queue with fictional rows would make the
- * counts lie. Callers decide when to show the demo set instead — never blended.
+ * counts lie. Callers decide when to show the demo set instead, never blended.
  */
 export function mergeCases(live: WarrantyCase[]): WarrantyCase[] {
   const byId = new Map(DEMO_CASES.map((c) => [c.id, c]));
@@ -61,13 +61,13 @@ export function mergeCases(live: WarrantyCase[]): WarrantyCase[] {
  * Deliberately narrow. Only four things cross over, because only four things
  * are better coming from the tenant than from the script:
  *   · the id, so the row is the real case and its route is the real route
- *   · the links — instance and folder — so "Open case run" opens the run
- *   · stage state, so the board shows where the process actually got to —
+ *   · the links, instance and folder, so "Open case run" opens the run
+ *   · stage state, so the board shows where the process actually got to,
  *     except `status`, which the queue counts on; see below
  *   · liveness, so everything downstream treats it as real
  *
- * Everything the story rests on — customer, asset, evidence, claim value, the
- * SLA clocks, the variables — stays demo, because the tenant either does not
+ * Everything the story rests on (customer, asset, evidence, claim value, the
+ * SLA clocks, the variables) stays demo, because the tenant either does not
  * carry it or carries a placeholder, and a half-populated hero card is worse
  * than a scripted one.
  *
@@ -91,7 +91,7 @@ export function overlayCase(demo: WarrantyCase, live: WarrantyCase): WarrantyCas
 
     // Restated from the demo, on purpose, unlike the rest of the stage state.
     //
-    // `status` is not really a stage fact — it is what the queue sorts and
+    // `status` is not really a stage fact. It is what the queue sorts and
     // counts on, and this screen's whole claim is three cases needing a person
     // out of forty-one open. A rehearsal instance sitting in Progressing would
     // quietly empty that, leaving the app telling the truth about an instance
@@ -108,7 +108,7 @@ export function overlayCase(demo: WarrantyCase, live: WarrantyCase): WarrantyCas
  *
  * Paired by position, not by id: a Maestro instance id has no relationship to a
  * demo business id, so there is nothing to match on. **Newest instance first**,
- * which is the demo's own working order — the run started minutes before the
+ * which is the demo's own working order: the run started minutes before the
  * keynote is the one that should be Sarah Chen's case, and starting another from
  * "New case" makes that new one the hero in turn.
  *
@@ -135,7 +135,7 @@ export function overlayCases(live: WarrantyCase[]): WarrantyCase[] {
  *
  * Demo actions name their case by its demo id. Under the overlay that case is
  * wearing a live id, and an action still pointing at the old one belongs to no
- * case at all — it disappears from the detail page and the queue.
+ * case at all. It disappears from the detail page and the queue.
  */
 export function overlayActions(cases: WarrantyCase[], live: CaseAction[]): CaseAction[] {
   const renamed = new Map<string, string>();
@@ -146,7 +146,7 @@ export function overlayActions(cases: WarrantyCase[], live: CaseAction[]): CaseA
     return caseId ? { ...demo, caseId } : demo;
   });
 
-  // Live tasks land on the demo action for the same case and action type —
+  // Live tasks land on the demo action for the same case and action type,
   // `actionType` being the Action App's own dispatch code, which is the only
   // thing the two sides genuinely share. The live task brings its id, so
   // completing the decision completes the real task rather than a fiction.
@@ -166,7 +166,7 @@ export function overlayActions(cases: WarrantyCase[], live: CaseAction[]): CaseA
 
 /**
  * Live fields win; the demo action supplies the argument Action Center does not
- * carry — the causes, the cost lines, the authority limit, the recommendation.
+ * carry: the causes, the cost lines, the authority limit, the recommendation.
  * Matched on `actionType`, which is the Action App's own dispatch code.
  */
 export function mergeAction(demo: CaseAction, live: CaseAction): CaseAction {
@@ -182,7 +182,7 @@ export function mergeAction(demo: CaseAction, live: CaseAction): CaseAction {
 
     // The rich console's argument, restated rather than left to the spread.
     // A spread overwrites with `undefined` when the key is merely present, and
-    // `causes` is the switch the console reads to decide which form to render —
+    // `causes` is the switch the console reads to decide which form to render,
     // so a live task that happens to carry the key would silently demote the
     // combined-cause screen to the plain one. Live still wins when it has
     // something; the difference is that absence no longer counts as a value.

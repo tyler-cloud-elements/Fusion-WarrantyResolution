@@ -4,14 +4,14 @@ import { useSyncExternalStore } from "react";
 //
 // Presenter switches, not product configuration: things worth turning off
 // mid-rehearsal to see how a beat lands without them. They persist to
-// localStorage — unlike the case session state, which resets on reload, a
+// localStorage. Unlike the case session state, which resets on reload, a
 // presenter setting the room up should not have to set these again on refresh.
 
 export interface FeatureFlags {
   /**
    * Run on the bundled demo dataset instead of the live tenant.
    *
-   * On by default: the app opens in the state it can always be trusted in — the
+   * On by default: the app opens in the state it can always be trusted in, with the
    * storyboard's exact numbers, no sign-in, nothing that depends on a tenant
    * being up. Turn it off to go live, which is also what arms the overlay and
    * every link out to Maestro.
@@ -23,8 +23,8 @@ export interface FeatureFlags {
   /**
    * Keep the demo dataset as the spine and paint the live tenant over it.
    *
-   * The two sources carry different things. The demo set carries the story —
-   * the customer, the asset, the evidence, the combined-cause argument — and
+   * The two sources carry different things. The demo set carries the story:
+   * the customer, the asset, the evidence, the combined-cause argument. The
    * the tenant carries what is actually true right now: which stage the case
    * reached, the instance and task ids, the links that open the real run. On,
    * you get both: the storyboard's case, wired to a live instance, so "open the
@@ -34,14 +34,14 @@ export interface FeatureFlags {
    * and a failed one falls back to the demo set whole. That is the honest
    * setting; this one is the demonstrable setting, which is why it leads.
    *
-   * Ignored while `useMocks` is on — there is nothing live to overlay — which
+   * Ignored while `useMocks` is on, since there is nothing live to overlay, which
    * is the shipped state. Turning demo data off is what brings this into play.
    */
   overlayMocks: boolean;
   /**
    * Show the second, opposing cause on the decision console.
    *
-   * On, the finding reads as a genuine combined cause — two established causes
+   * On, the finding reads as a genuine combined cause: two established causes
    * pointing at different payers, which is the whole reason a person is looking
    * at it. Off, only the covering cause shows, and the case reads as a
    * straightforward approval. Useful for contrasting the two.
@@ -53,7 +53,7 @@ export interface FeatureFlags {
    * Show the reasoning tri-state under the decision.
    *
    * Off by default. It asks the signer to grade the agent's reasoning as well
-   * as make the call, and the assessment rail already collects that — per
+   * as make the call, and the assessment rail already collects that, per
    * signal, with a thumb, which is the more useful shape of the same feedback.
    */
   showReasoningCapture: boolean;
@@ -75,8 +75,8 @@ export interface FeatureFlags {
    */
   showHomepageSplash: boolean;
   /**
-   * Lay the Actions pane out like the console — finding and decision side by
-   * side — when there is room for it.
+   * Lay the Actions pane out like the console, finding and decision side by
+   * side, when there is room for it.
    *
    * On by default, so Actions reads the way the console does. "When there is
    * room" is not decoration: the case-details panel takes the same horizontal
@@ -88,8 +88,8 @@ export interface FeatureFlags {
   /**
    * Collapse the finding's two causes into one row each.
    *
-   * On, each cause is a line — which side it lands on, what it is, and the one
-   * clause that establishes it — with the full argument, the provenance stamp
+   * On, each cause is a line: which side it lands on, what it is, and the one
+   * clause that establishes it, with the full argument, the provenance stamp
    * and the sources an expand away. That is about a hundred words less on a
    * pane already competing with the decision card, and it keeps the two sides
    * beside each other in the narrow Actions layout, where the cards stack.
@@ -102,7 +102,7 @@ export interface FeatureFlags {
   /**
    * Send the case header's task button to the Actions queue.
    *
-   * The button is the same either way — "3 open tasks" — and only where it
+   * The button is the same either way, reading "3 open tasks", and only where it
    * lands changes. Off, it opens the decision itself, which is the shorter
    * path and the one the demo takes. On, it goes to the queue, which is where
    * someone working a shift would start and which shows the case's tasks
@@ -177,20 +177,20 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
  * clearest pair: with demo data on there is no live read at all, so there is
  * nothing for the overlay to paint on, and leaving its toggle looking live
  * invites someone to flip it mid-demo and conclude the app is broken. The data
- * layer already resolves the precedence — this is how the UI says so out loud.
+ * layer already resolves the precedence; this is how the UI says so out loud.
  */
 export function suppressedFlags(
   flags: FeatureFlags,
 ): Partial<Record<keyof FeatureFlags, string>> {
   const suppressed: Partial<Record<keyof FeatureFlags, string>> = {};
   if (flags.useMocks) {
-    suppressed.overlayMocks = "Overridden by Use demo data — nothing live to overlay.";
+    suppressed.overlayMocks = "Overridden by Use demo data. Nothing live to overlay.";
   }
   return suppressed;
 }
 
 /**
- * True when the app may show links out to the tenant — a case run, a task, a
+ * True when the app may show links out to the tenant: a case run, a task, a
  * job. Demo rows point at nothing, and a dead "Open case run" reads as a bug.
  */
 export function liveLinksAllowed(flags: FeatureFlags): boolean {
@@ -248,7 +248,7 @@ export function useFlags(): FeatureFlags {
   );
 }
 
-/** True when anything differs from the shipped defaults — surfaces a reset. */
+/** True when anything differs from the shipped defaults, which surfaces a reset. */
 export function isModified(flags: FeatureFlags): boolean {
   return (Object.keys(DEFAULT_FLAGS) as (keyof FeatureFlags)[]).some(
     (key) => flags[key] !== DEFAULT_FLAGS[key],

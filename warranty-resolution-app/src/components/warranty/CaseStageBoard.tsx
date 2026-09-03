@@ -83,7 +83,7 @@ function taskStates(
     }
     map.set(task.id, "completed");
   }
-  // Nothing open in a live stage means the work is under way, not finished —
+  // Nothing open in a live stage means the work is under way, not finished,
   // the last task is the one in flight.
   if (!reachedOpen && stage.tasks.length > 0) {
     map.set(stage.tasks[stage.tasks.length - 1].id, "open");

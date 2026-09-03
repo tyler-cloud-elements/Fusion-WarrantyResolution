@@ -73,7 +73,7 @@ export function StagesSummary({
 }) {
   const [filter, setFilter] = useState<StageFilter>("active");
 
-  // Terminal lanes only join the list once entered — an unentered one is not a
+  // Terminal lanes only join the list once entered. An unentered one is not a
   // stage that has not started, it is a path the case did not take.
   const enteredTerminal = TERMINAL_STAGES.filter((s) => warrantyCase.stageStates[s.id]);
   const all = [...PRIMARY_STAGES, ...CONDITIONAL_STAGES, ...enteredTerminal];

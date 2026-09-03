@@ -2,9 +2,9 @@
 //
 // Names mirror the case design so the app, the case plan, and the SDD all use
 // one vocabulary. Sources:
-//   • docs/warranty-resolution-sdd.md — §1 variables, §2 stages/tasks, §3 personas
-//   • Use Case Explorer case design   — the six primary stages + four conditional lanes
-//   • FUSION 2026 storyboard, Act II  — the queue, the console, the execution trail
+//   • docs/warranty-resolution-sdd.md: §1 variables, §2 stages/tasks, §3 personas
+//   • Use Case Explorer case design:   the six primary stages + four conditional lanes
+//   • FUSION 2026 storyboard, Act II:  the queue, the console, the execution trail
 //
 // When the real Maestro case is published, `caseService.ts` maps its stage and
 // task names onto these types; nothing else in the app needs to change.
@@ -22,7 +22,7 @@ export type StageKind = "primary" | "conditional" | "terminal";
 
 /**
  * Runtime state of a stage on one case instance. `skipped` is a stage the case
- * moved past without entering — a real outcome here, since coverage and
+ * moved past without entering, which is a real outcome here, since coverage and
  * containment run as parallel tracks and lanes are conditional.
  */
 export type StageState = "completed" | "active" | "skipped" | "pending";
@@ -38,7 +38,7 @@ export type Priority = "P1" | "P2" | "P3" | "P4";
 /**
  * Why a case is sitting in a person's queue. The storyboard's point is that the
  * queue holds only cases where a person can change the outcome, and each one
- * says why — so this is a first-class field, not a derived label.
+ * says why, so this is a first-class field rather than a derived label.
  */
 export type QueueReason =
   | "No rule resolves a combined cause"
@@ -93,7 +93,7 @@ export interface CaseAsset {
 /**
  * A field IXP pulled out of a document.
  *
- * `inferred` marks the interesting ones — values stated nowhere in the document
+ * `inferred` marks the interesting ones: values stated nowhere in the document
  * that had to be derived by reading two things against each other. Those are the
  * ones worth showing a confidence on, and the ones a reviewer should check.
  */
@@ -127,7 +127,7 @@ export interface EvidenceDocument {
   /** Path under `public/`, served relative so it works at any mount point. */
   fileUrl?: string;
   pages?: number;
-  /** Who issued it — a third party's document looks nothing like ours. */
+  /** Who issued it. A third party's document looks nothing like ours. */
   issuer?: string;
   /** Document reference: work order number, report number, RMA. */
   reference?: string;
@@ -135,7 +135,7 @@ export interface EvidenceDocument {
   extracted?: ExtractedField[];
 }
 
-/** One row of the execution trail — storyboard scene 16. */
+/** One row of the execution trail, from storyboard scene 16. */
 export interface TrailEntry {
   seq: number;
   actor: TaskActor;
@@ -150,7 +150,7 @@ export interface AgentRecommendation {
   headline: string;
   detail: string;
   confidence: "low" | "medium" | "medium-high" | "high";
-  /** What the agent is proposing to do — the preselected option. */
+  /** What the agent is proposing to do, as the preselected option. */
   recommendedOutcome: string;
   evidenceBasis: string[];
 }
@@ -158,13 +158,13 @@ export interface AgentRecommendation {
 export interface DecisionOption {
   outcome: string;
   label: string;
-  /** Why this option is or isn't supported — shown under the label in the console. */
+  /** Why this option is or isn't supported. Shown under the label in the console. */
   rationale: string;
   supported: boolean;
 
   // ── What choosing this option does ────────────────────────────────────────
   // Present on the combined-cause console. Picking a position re-attributes
-  // every cost line, which moves the totals and the authority meter with it —
+  // every cost line, which moves the totals and the authority meter with it,
   // that is the point of the screen: you can see what a position costs before
   // you sign it.
   /** Line id → where it lands under this position. */
@@ -181,7 +181,7 @@ export interface DecisionOption {
 //
 // A combined-cause coverage decision needs more than a list of buttons: the two
 // established causes side by side, the money split by cause attribution, and the
-// signer's delegated limit. These fields are optional on `CaseAction` — an action
+// signer's delegated limit. These fields are optional on `CaseAction`, since an action
 // that carries them renders the rich console, one that does not renders the plain
 // decision form. Transcribed from `docs/coverage-decision-wiith-signals.html`.
 
@@ -195,7 +195,7 @@ export interface DecisionCause {
   /**
    * The body in one clause, for the collapsed row.
    *
-   * Not a truncation of `body` — the first sentence of a finding is usually its
+   * Not a truncation of `body`. The first sentence of a finding is usually its
    * setup, not its point. Absent, the row falls back to trimming the body,
    * which reads worse but never leaves the row blank.
    */
@@ -213,7 +213,7 @@ export type CostParty = "vendor" | "customer";
 
 /**
  * One line of the claim. The amount belongs to the line; who pays it belongs to
- * the coverage position, so it is NOT stored here — a claim does not change
+ * the coverage position, so it is NOT stored here. A claim does not change
  * shape when the decision does.
  */
 export interface CostLine {
@@ -225,7 +225,7 @@ export interface CostLine {
 /** Where one line lands under a given coverage position, and why. */
 export interface CostAttribution {
   to: CostParty;
-  /** The attribution in one clause — "Caused by the unapproved change". */
+  /** The attribution in one clause, like "Caused by the unapproved change". */
   why: string;
   /** Absorbed as goodwill rather than owed. */
   goodwill?: boolean;
@@ -243,7 +243,7 @@ export interface DecisionAuthority {
  *
  * `open` is its own verdict rather than a failed pass: a check nobody could run
  * is not a check that came back clean, and the difference is the whole argument
- * about operator error — it is unestablished, so it has not been charged to
+ * about operator error. It is unestablished, so it has not been charged to
  * anyone.
  */
 export interface PolicyCheck {
@@ -252,11 +252,11 @@ export interface PolicyCheck {
   name: string;
   /** What was tested and what came back, in one line. */
   detail: string;
-  /** The system that answered — Helios, WT-9, Vault-PLM, Case. */
+  /** The system that answered: Helios, WT-9, Vault-PLM, Case. */
   source?: string;
 }
 
-/** A collapsible detail row — present so it is on the record, folded so it is not noise. */
+/** A collapsible detail row. Present so it is on the record, folded so it is not noise. */
 export interface DetailFold {
   id: string;
   label: string;
@@ -272,7 +272,7 @@ export interface DetailFold {
  * One thing the agent leaned on, and what it bought.
  *
  * The assessment rail lists these under the recommendation so the reasoning is
- * inspectable line by line rather than as one paragraph to take or leave — and
+ * inspectable line by line rather than as one paragraph to take or leave, and
  * each carries a thumb, because which signal was misread is more useful
  * feedback than whether the conclusion felt right.
  */
@@ -288,7 +288,7 @@ export interface AgentSignal {
   sources: string[];
 }
 
-/** How comparable cases went — one bar segment and one row. */
+/** How comparable cases went. One bar segment and one row. */
 export interface PrecedentSlice {
   /** The option's outcome code, so the reader's own position can be marked. */
   outcome: string;
@@ -319,12 +319,12 @@ export interface SuggestedReply {
 export interface DecisionEffect {
   title: string;
   detail?: string;
-  /** Held rather than released — rendered as a pause, not a tick. */
+  /** Held rather than released. Rendered as a pause, not a tick. */
   hold?: boolean;
 }
 
 /**
- * What the signer says about the agent's reasoning — separate from the outcome.
+ * What the signer says about the agent's reasoning, kept separate from the outcome.
  *
  * This is the learning signal: not which option was picked, but whether the
  * reasoning behind it held, and whether the agent should keep asking. Recorded
@@ -339,7 +339,7 @@ export interface ReasoningOption {
   effect: string;
 }
 
-/** An open human task — a row in the queue and the subject of the decision console. */
+/** An open human task: a row in the queue and the subject of the decision console. */
 export interface CaseAction {
   id: string;
   caseId: string;
@@ -386,7 +386,7 @@ export interface CaseAction {
   precedent?: string;
   /** The same figure broken out, for the rail's distribution bar. */
   precedentBreakdown?: PrecedentSlice[];
-  /** The population the breakdown is drawn from — "Last 18 months · combined cause". */
+  /** The population the breakdown is drawn from, like "Last 18 months · combined cause". */
   precedentBasis?: string;
   /** What the agent leaned on, listed under the recommendation. */
   signals?: AgentSignal[];
@@ -408,7 +408,7 @@ export type ActivityCategory = "human" | "rules" | "ai" | "agent" | "task";
 /** Stage transitions sit above milestones, which sit above individual tasks. */
 export type ActivityLevel = "stage" | "milestone" | "task" | "reassignment";
 
-/** The lifecycle of a human task — who it landed on, handoffs, drafts, completion. */
+/** The lifecycle of a human task: who it landed on, handoffs, drafts, completion. */
 export type HitlEventKind = "assigned" | "reassigned" | "draft" | "completed";
 
 export interface HitlEvent {
@@ -430,7 +430,7 @@ export interface ActivityItem {
   /** ISO timestamp. Rendered relative, filtered absolutely. */
   time: string;
   stage?: string;
-  /** The open action this event corresponds to, if any — lets a card deep-link. */
+  /** The open action this event corresponds to, if any. Lets a card deep-link. */
   actionId?: string;
   /** For human tasks: the assignment → completion history, shown when expanded. */
   hitl?: HitlEvent[];
@@ -443,24 +443,24 @@ export interface CaseComment {
   text: string;
 }
 
-/** One clock on the case — at case, stage, or action level. */
+/** One clock on the case, at case, stage, or action level. */
 export interface CaseSlaEntry {
   id: string;
   level: "case" | "stage" | "action";
   label: string;
   dueAt: Date;
   status: SlaStatus;
-  /** What makes this clock start — shown on the SLAs tab. */
+  /** What makes this clock start. Shown on the SLAs tab. */
   condition?: string;
 }
 
 /**
- * What the account is worth and what it has already cost — the commercial frame
+ * What the account is worth and what it has already cost: the commercial frame
  * a goodwill decision is made inside.
  *
  * Read-only, and from Helios rather than the case: a warranty lead does not set
  * an account's tier or its credit balance, they weigh them. It sits with the
- * case because the goodwill line on the decision is unarguable without it —
+ * case because the goodwill line on the decision is unarguable without it.
  * absorbing $1,240 of travel reads differently against $312,000 of credits
  * already issued than it does against none.
  */
@@ -488,7 +488,7 @@ export interface CustomerStanding {
 export interface WarrantyCase {
   /** Business identifier, e.g. WR-2026-0417. */
   id: string;
-  /** Commercial standing — "Strategic". Sits beside the customer's name. */
+  /** Commercial standing, like "Strategic". Sits beside the customer's name. */
   customerSegment?: string;
   /** The account's commercial position. Absent ⇒ the card is not shown. */
   standing?: CustomerStanding;
@@ -500,7 +500,7 @@ export interface WarrantyCase {
   asset: CaseAsset;
   priority: Priority;
   status: CaseStatus;
-  /** Stage the case is currently in — the latest entered primary stage. */
+  /** Stage the case is currently in, meaning the latest entered primary stage. */
   currentStage: string;
   /** Conditional lanes currently open alongside the primary stage. */
   activeLanes: string[];
@@ -528,7 +528,7 @@ export interface WarrantyCase {
   activity: ActivityItem[];
   comments: CaseComment[];
   /**
-   * How this case's case manager decides — labels the Activity tab's filter.
+   * How this case's case manager decides. Labels the Activity tab's filter.
    * "rules" reads as Rules; agent and hybrid read as Case manager.
    */
   caseManagerMode: "rules" | "agent" | "hybrid";
@@ -539,12 +539,12 @@ export interface WarrantyCase {
    * Under the overlay flag, the demo case this row is painted over.
    *
    * The row wears the live instance's id, so the demo id it started as would
-   * otherwise be lost — and the demo actions still refer to the case by it.
+   * otherwise be lost, and the demo actions still refer to the case by it.
    */
   overlaidFrom?: string;
 }
 
-/** Fleet-level numbers for the Performance page — storyboard scene 12. */
+/** Fleet-level numbers for the Performance page, from storyboard scene 12. */
 export interface OperationalInsights {
   autonomousRate: number;
   interventionRate: number;
@@ -552,10 +552,10 @@ export interface OperationalInsights {
   bottleneckStage: string;
   bottleneckLabel: string;
   queueEntryTrend: { period: string; entered: number; completed: number }[];
-  /** Seven-day SLA posture, oldest first — what the brief's sparkline plots. */
+  /** Seven-day SLA posture, oldest first. This is what the brief's sparkline plots. */
   slaTrend: { onTrack: number[]; breached: number[] };
   stageAccumulation: { stage: string; cases: number }[];
-  /** Personal KPIs on the queue page — storyboard scene 13. */
+  /** Personal KPIs on the queue page, from storyboard scene 13. */
   avgCoverageDecisionDays: number;
   restorationAdherence: number;
   criticalAtRisk: number;

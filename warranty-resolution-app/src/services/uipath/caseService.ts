@@ -81,8 +81,8 @@ function flattenTasks(stage: CaseGetStageResponse): StageTask[] {
 }
 
 /**
- * A stage's own status wins when it is conclusive. When it is not — Maestro
- * leaves ad-hoc stages unset until something in them runs — fall back to the
+ * A stage's own status wins when it is conclusive. When it is not, because Maestro
+ * leaves ad-hoc stages unset until something in them runs, fall back to the
  * tasks: all completed ⇒ completed, any started ⇒ active, otherwise pending.
  */
 export function classifyStage(stage: CaseGetStageResponse): StageState {
@@ -115,7 +115,7 @@ export function mapStageStates(stages: CaseGetStageResponse[]): Record<string, S
 /**
  * The stage the case is *in*. Ad-hoc stages that were defined but never
  * triggered stay "not started", so several earlier stages can look active at
- * once — the furthest-progressed one is the answer.
+ * once, and the furthest-progressed one is the answer.
  */
 export function deriveCurrentStage(stages: CaseGetStageResponse[] | null | undefined): string | null {
   if (!stages?.length) return null;
@@ -167,7 +167,7 @@ function minutesBetween(fromIso: string, toIso?: string | null): number {
 
 /**
  * Shapes one live instance into the app's case model. Fields Maestro does not
- * carry — customer, site, asset, claim value — come from case variables when the
+ * carry (customer, site, asset, claim value) come from case variables when the
  * published case declares them, and are left blank otherwise rather than
  * invented. `useCases` fills those gaps from the demo row of the same id.
  */
@@ -236,7 +236,7 @@ export function mapInstance(
 
 export interface LiveCaseResult {
   cases: WarrantyCase[];
-  /** True when the read failed or the case is unconfigured — the UI says so. */
+  /** True when the read failed or the case is unconfigured, which the UI says. */
   degraded: boolean;
   reason?: string;
 }
@@ -364,13 +364,13 @@ export function mapExecutionHistory(history: CaseInstanceExecutionHistoryRespons
       actor,
       actorLabel: actor === "human" ? "HT" : "PR",
       step: element.elementName || element.elementId,
-      stage: findStage(element.elementName ?? "")?.name ?? "—",
+      stage: findStage(element.elementName ?? "")?.name ?? "",
       time: element.completedTime
         ? new Date(element.completedTime).toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
           })
-        : "—",
+        : "",
     };
   });
 }
@@ -379,7 +379,7 @@ export function mapExecutionHistory(history: CaseInstanceExecutionHistoryRespons
 
 /**
  * Maestro stamps the case instance id onto each Action Center task, but in
- * different places depending on the task source and version — CreatorJobKey on
+ * different places depending on the task source and version: CreatorJobKey on
  * the raw object, an "externalid" tag, taskSource.sourceId, or buried in the
  * input data. Check them all rather than betting on one.
  */
@@ -400,7 +400,7 @@ function taskMatchesInstance(task: TaskGetResponse, instanceId: string): boolean
   return false;
 }
 
-/** CreatorJobKey isn't on the typed response — peek at the raw object. */
+/** CreatorJobKey isn't on the typed response, so peek at the raw object. */
 function readCreatorJobKey(task: TaskGetResponse): string | null {
   const peek = (obj: unknown): string | null => {
     if (!obj || typeof obj !== "object") return null;
@@ -468,7 +468,7 @@ export async function findOpenTask(
 
 /**
  * Completes a human task with the chosen outcome. `action` is the Action App
- * button value (the SDD's taskOutcome), `data` carries the recorded fields —
+ * button value (the SDD's taskOutcome), `data` carries the recorded fields,
  * rationale, evidence-usefulness signals, anything the app schema exposes.
  */
 export async function completeTask(
@@ -530,7 +530,7 @@ function minutesUntil(iso: string | null | undefined): number | null {
 /**
  * Shapes one live Action Center task into the app's action model.
  *
- * Only what Action Center actually carries is filled in — title, assignee,
+ * Only what Action Center actually carries is filled in: title, assignee,
  * status, priority, the clock. The console's argument (the two causes, the cost
  * lines, the authority limit) is not in a task payload, so it is left off here
  * and merged from the matching demo action by `useCases`, the same way case
@@ -634,7 +634,7 @@ export interface NewCaseInput {
 /**
  * Starts the configured process with the demo arguments.
  *
- * Orchestrator takes `inputArguments` as a JSON *string*, not an object — a
+ * Orchestrator takes `inputArguments` as a JSON *string*, not an object. A
  * plain object silently starts the job with no arguments at all, which looks
  * like success and produces a case with nothing in it.
  */
@@ -644,10 +644,10 @@ export async function startNewCase(
 ): Promise<{ jobId?: number; jobKey?: string }> {
   const processKey = caseConfig.newCaseProcessKey;
   if (!processKey) {
-    throw new Error("No process configured — set VITE_NEW_CASE_PROCESS_KEY or VITE_CASE_PROCESS_KEY");
+    throw new Error("No process configured. Set VITE_NEW_CASE_PROCESS_KEY or VITE_CASE_PROCESS_KEY");
   }
   if (!caseConfig.newCaseFolderKey) {
-    throw new Error("No folder configured — set VITE_NEW_CASE_FOLDER_KEY or VITE_CASE_FOLDER_KEY");
+    throw new Error("No folder configured. Set VITE_NEW_CASE_FOLDER_KEY or VITE_CASE_FOLDER_KEY");
   }
 
   const jobs = await new Processes(sdk).start(
@@ -718,7 +718,7 @@ export async function fetchEvidence(sdk: UiPath, caseId: string): Promise<Eviden
         kind: "pdf",
         title: recordValue(r, displayField) ?? `Document ${r.Id.slice(0, 8)}`,
         addedAt: typeof r.CreateTime === "string" ? r.CreateTime : new Date().toISOString(),
-        addedBy: recordValue(r, "CreatedBy") ?? "—",
+        addedBy: recordValue(r, "CreatedBy") ?? "Unknown",
         helpful: null,
       }));
 
@@ -740,7 +740,7 @@ export async function downloadEvidence(
 // ── Events ──────────────────────────────────────────────────────────────────
 
 /**
- * Fires the configured webhook — the storyboard's scene-15 trigger, where a
+ * Fires the configured webhook, the storyboard's scene-15 trigger, where a
  * customer upload becomes an event that wakes the case agent. Without a
  * configured URL the caller falls back to simulating the event locally.
  */

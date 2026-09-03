@@ -1,7 +1,7 @@
 // What a coverage position costs.
 //
 // The claim's lines are fixed; the coverage position decides who carries each
-// one. So the split is derived, never stored — pick a different position and the
+// one. So the split is derived, never stored: pick a different position and the
 // table, the totals and the authority meter all move with it. That is the point
 // of the console: you can see what a position costs before you sign it.
 
@@ -52,7 +52,7 @@ export function splitFor(action: CaseAction, option: DecisionOption | undefined)
   };
 }
 
-/** The split the agent is proposing — what the banner's recommendation shows. */
+/** The split the agent is proposing, which is what the banner's recommendation shows. */
 export function recommendedSplit(action: CaseAction): CostSplit {
   return splitFor(
     action,
@@ -64,7 +64,7 @@ export type AuthorityState = "within" | "over" | "denial";
 
 export interface AuthorityVerdict {
   state: AuthorityState;
-  /** What the signer is committing — the vendor's share. */
+  /** What the signer is committing, meaning the vendor's share. */
   amount: number;
   limit: number;
   approver: string;

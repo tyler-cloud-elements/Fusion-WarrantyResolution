@@ -44,7 +44,7 @@ import { liveLinksAllowed, useFlags } from "@/lib/flags";
 import { useRole } from "@/lib/role/useRole";
 import { maestroInstanceUrl } from "@/services/uipath/config";
 
-/** "1 open task" / "3 open tasks" — the same words wherever the button goes. */
+/** "1 open task" or "3 open tasks", the same words wherever the button goes. */
 function taskLabel(count: number): string {
   return `${count} open ${count === 1 ? "task" : "tasks"}`;
 }
@@ -79,8 +79,8 @@ export function CaseDetailPage() {
     () => typeof window !== "undefined" && window.innerWidth >= 1620,
   );
 
-  // Undefined while loading is not the same as absent. Landing here by URL —
-  // a refresh, a pasted link — starts with an empty store, and calling that a
+  // Undefined while loading is not the same as absent. Landing here by URL,
+  // from a refresh or a pasted link, starts with an empty store, and calling that a
   // missing case put a 404 on screen for a case that was seconds from arriving.
   if (isLoading && !warrantyCase) return <CaseDetailSkeleton />;
 
@@ -102,7 +102,7 @@ export function CaseDetailPage() {
 
   const openActions = actions.filter((a) => a.status === "Open");
   const primaryAction = openActions[0];
-  // Demo rows carry no instance id, so this is already null for them — the flag
+  // Demo rows carry no instance id, so this is already null for them. The flag
   // check is the explicit half of the same rule: under demo data nothing links
   // out, because there is nothing on the other end.
   const instanceUrl = liveLinksAllowed(flags)
@@ -116,7 +116,7 @@ export function CaseDetailPage() {
       {/*
         A container, so the tab layouts below react to this column's width
         rather than the window's. With the Ask panel open the column is 380px
-        narrower while `lg:` still reads the viewport as wide — which is how a
+        narrower while `lg:` still reads the viewport as wide, which is how a
         two-column Overview ended up 958px of content in 632px of room, cut off
         under the panel and only reachable by scrolling sideways.
       */}
@@ -203,8 +203,8 @@ export function CaseDetailPage() {
               <div className="flex w-full flex-wrap items-center gap-2">
                 {/*
                   One button, and only its destination is a setting.
-                  It reads the same either way — the count is what a reader
-                  scans for — so the label does not shift under someone who has
+                  It reads the same either way, since the count is what a reader
+                  scans for, so the label does not shift under someone who has
                   learned where it is. `useActions` sends it to the queue;
                   without it, it opens the decision directly, which is the
                   shorter path from a case already in front of you.
@@ -228,18 +228,18 @@ export function CaseDetailPage() {
                   </Button>
                 )}
                 {/*
-                  Manual actions — a presenter's controls, deliberately one step
+                  Manual actions: a presenter's controls, deliberately one step
                   back from the case's own buttons.
                      Everything else in this row is work: decide the action, open
                   the queue. These stand in for events the platform would deliver
-                  on its own — a real deployment fires the configured webhook and
-                  the event arrives — so they belong behind a menu that says as
+                  on its own. A real deployment fires the configured webhook and
+                  the event arrives, so they belong behind a menu that says as
                   much, rather than sitting at the same weight as "Decide" and
                   inviting a click mid-demo.
                 */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    {/* Pushed to the end of the row — same area, last in line. */}
+                    {/* Pushed to the end of the row: same area, last in line. */}
                     <Button variant="outline" className="ml-auto">
                       <FlaskConical className="size-4" />
                       Manual actions

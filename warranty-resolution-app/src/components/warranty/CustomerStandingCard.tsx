@@ -8,7 +8,7 @@ import type { WarrantyCase } from "@/lib/warranty/types";
 // It answers one question the coverage argument cannot: whether absorbing the
 // travel as goodwill is a gesture or a habit. $312,000 of credits already issued
 // and $0 of goodwill in twelve months are opposite halves of that, and neither
-// reads without the other — which is why they sit in one block rather than
+// reads without the other, which is why they sit in one block rather than
 // being scattered through the record.
 //
 // Two figures carry a warning tone. That is not decoration: credits already
@@ -81,7 +81,7 @@ export function CustomerStandingCard({ warrantyCase }: { warrantyCase: WarrantyC
     <Card className="gap-3 p-5">
       <div className="flex items-baseline gap-2">
         <span className="text-base font-semibold">Customer standing</span>
-        {/* Named because this is not the case's own data — a warranty lead
+        {/* Named because this is not the case's own data. A warranty lead
             weighs an account's tier and credit balance, they do not set them. */}
         <span className="ml-auto shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-wider text-muted-foreground">
           {warrantyCase.standing.source}

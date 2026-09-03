@@ -1,7 +1,7 @@
 import { createContext, useCallback, useEffect, useState, type ReactNode } from "react";
 
 // The personas the app can sign in as, from the FUSION 2026 storyboard's settled
-// cast. The storyboard pins three in the header strip — Sarah, Miguel, Ryan —
+// cast. The storyboard pins three in the header strip (Sarah, Miguel, Ryan)
 // and names three more who own work in the case: Priya (process owner), Tom
 // (claims administration) and Kelsey (parts). Kelsey is switchable here because
 // the parts substitution lane needs an actor; Priya and Tom appear as names on
@@ -20,11 +20,11 @@ export interface RoleProfile {
   initials: string;
   /** The stage owner label this persona maps to in the case plan and the SDD. */
   ownerGroup: string;
-  /** Stages this persona is accountable for — scopes their queue. */
+  /** Stages this persona is accountable for. Scopes their queue. */
   stages: string[];
   /**
    * Case detail defaults to the work-focused layout for field-facing personas
-   * (SDD §3 "Case Detail — field view").
+   * (SDD §3 "Case Detail, field view").
    */
   prefersFieldView?: boolean;
 }

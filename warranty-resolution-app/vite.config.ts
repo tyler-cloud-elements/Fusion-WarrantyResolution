@@ -12,11 +12,11 @@ export default defineConfig({
   //   so relative paths resolve correctly at any route depth. An absolute base
   //   would 404 there.
   //
-  // • Root hosting — local preview (`npm run build`) → "/". There is no injected
+  // • Root hosting for local preview (`npm run build`) → "/". There is no injected
   //   <base href>, so "./" would resolve against the current URL: a hard refresh
   //   on /cases/WR-2026-0417 would request /cases/assets/index.js, which the SPA
   //   fallback answers with index.html as text/html and the browser rejects as a
-  //   module — a blank page.
+  //   module, so a blank page.
   base: process.env.UIPATH_BUILD ? "./" : "/",
   plugins: [react(), tailwindcss()],
   define: {

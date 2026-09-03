@@ -19,7 +19,7 @@ import { useRole } from "@/lib/role/useRole";
  * strip of them beside the product name, so this sits at the top of the sidebar
  * where the shell's company block would otherwise be.
  *
- * There is no real identity here — the persona scopes what the queue shows and
+ * There is no real identity here. The persona scopes what the queue shows and
  * whose name a decision is recorded under. A UiPath sign-in, when configured,
  * runs alongside it and owns API access.
  */
@@ -30,7 +30,7 @@ export function PersonaSwitcher() {
   return (
     <DropdownMenu>
       {/* The trigger truncates both lines at the sidebar's width, and it is the
-          one control here that does not say what it does — an avatar and a name
+          one control here that does not say what it does, since an avatar and a name
           read as a label, not as a switch. The tooltip supplies both. */}
       <Tooltip>
         <TooltipTrigger asChild>

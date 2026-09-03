@@ -4,14 +4,14 @@
 // This file is the single place the case shape is declared. It is transcribed
 // from the "Industrial Equipment Warranty Resolution Case Design" reference
 // implementation, cross-checked against docs/warranty-resolution-sdd.md §2. When the
-// real Maestro case is published, reconcile THIS file with it — `caseService.ts`
+// real Maestro case is published, reconcile THIS file with it. `caseService.ts`
 // matches live stage/task names against these definitions by normalised name, so
 // keeping the names identical is what wires the app to the running case.
 //
 // SLA targets are the design's illustrative ones, which is what the demo shows
 // on screen (the console header reads "SLA 4 HR" for Coverage and evidence
-// review). The SDD proposes a more conservative set for production — noted per
-// stage below — and both are deliberately kept visible.
+// review). The SDD proposes a more conservative set for production, noted per
+// stage below, and both are deliberately kept visible.
 
 import type { StageDefinition, TaskActor, TaskDefinition } from "./types";
 
@@ -81,7 +81,7 @@ export const PRIMARY_STAGES: StageDefinition[] = [
     owner: "Field Service",
     description:
       "Correlates alarms with service history, gets containment approved so the site can be made safe, and defines the cause and repair scope.",
-    // SDD §2 s3 proposes 4 h at 75% at-risk — the P1 downtime driver.
+    // SDD §2 s3 proposes 4 h at 75% at-risk, the P1 downtime driver.
     tasks: [
       { id: "t31", name: "Correlate alarms and service history", actor: "agent" },
       {
@@ -146,7 +146,7 @@ export const PRIMARY_STAGES: StageDefinition[] = [
     owner: "Field Service",
     description:
       "Reserves and tracks approved parts, dispatches qualified service, confirms the site is ready for safe service, and captures the customer's validation of the restored outcome.",
-    // SDD §2 s5 proposes 3 d at 75% at-risk (provisional — SME review item 5).
+    // SDD §2 s5 proposes 3 d at 75% at-risk (provisional, SME review item 5).
     tasks: [
       { id: "t51", name: "Reserve and track approved parts", actor: "api" },
       { id: "t52", name: "Dispatch qualified service", actor: "process" },
@@ -175,7 +175,7 @@ export const PRIMARY_STAGES: StageDefinition[] = [
     owner: "Quality / Reliability",
     description:
       "Reconciles covered against actual cost, finalises the decision ledger, detects recurrence and severity, and confirms closure or routes to a quality escalation.",
-    // SDD §2 s6 proposes 10 d at 70% at-risk (provisional — SME review item 5).
+    // SDD §2 s6 proposes 10 d at 70% at-risk (provisional, SME review item 5).
     tasks: [
       { id: "t61", name: "Reconcile coverage and actual cost", actor: "api" },
       { id: "t62", name: "Finalize decision ledger", actor: "agent" },
@@ -412,7 +412,7 @@ export function findTask(actionType: string): TaskDefinition | undefined {
   return undefined;
 }
 
-/** The stage a given action type belongs to — used to label a task in the queue. */
+/** The stage a given action type belongs to. Used to label a task in the queue. */
 export function stageForActionType(actionType: string): StageDefinition | undefined {
   return ALL_STAGES.find((s) => s.tasks.some((t) => t.actionType === actionType));
 }

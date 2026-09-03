@@ -2,7 +2,7 @@
 //
 // With a Conversational Agent configured (VITE_ASSISTANT_AGENT_ID +
 // VITE_ASSISTANT_FOLDER_ID), questions stream from it over a WebSocket. Without
-// one — or when it is unreachable, silent, or errors — `localAnswer` answers
+// one, or when it is unreachable, silent, or errors, `localAnswer` answers
 // from the case in front of the reader. That fallback is deliberate: a demo
 // should never show a dead panel, and the local answers say they are local.
 
@@ -35,7 +35,7 @@ export const SUGGESTED_QUESTIONS = [
  * One live conversation per thread, so context carries between questions.
  *
  * Asking "what about the freight?" after "why is this a combined cause?" only
- * works if the agent still has the first turn — a fresh conversation per
+ * works if the agent still has the first turn. A fresh conversation per
  * question would make every follow-up a non-sequitur. Keyed by case (or case +
  * action), so two cases never share a thread.
  */
@@ -59,7 +59,7 @@ interface Thread {
    * The case this thread is about.
    *
    * Held here rather than taken from each call's options, because a question
-   * asked on this thread is by definition about this case — and depending on
+   * asked on this thread is by definition about this case, and depending on
    * every caller to pass the same GUIDs on every click is how they went out
    * inconsistently. A caller can still refine them (the live instance id
    * arrives after the first read on an overlaid row); it cannot drop them.
@@ -78,8 +78,8 @@ export function mergeIdentifiers(base: CaseIdentifiers, next?: CaseIdentifiers):
 /**
  * How long to wait for the server to acknowledge a new session.
  *
- * Then proceed regardless. The acknowledgement matters — sending an exchange
- * before it lands is rejected with EXCHANGE_START_PROCESSING_FAILED — but a
+ * Then proceed regardless. The acknowledgement matters, because sending an exchange
+ * before it lands is rejected with EXCHANGE_START_PROCESSING_FAILED. But a
  * server that never acknowledges is not a reason to refuse to try.
  */
 const SESSION_ACK_MS = 4_000;
@@ -88,7 +88,7 @@ const SESSION_ACK_MS = 4_000;
  * How long a question may go *silent* before the local answer takes over.
  *
  * A deadline on silence, not on the whole answer. A question that needs several
- * tool calls — "what is blocking closure?" walks stages, tasks and clocks —
+ * tool calls ("what is blocking closure?" walks stages, tasks and clocks)
  * can easily run past any sensible total, and killing it at a fixed 30 seconds
  * threw away an answer that was arriving. Every chunk pushes this out again.
  */
@@ -168,7 +168,7 @@ function threadFor(
 ): Promise<Thread> {
   const existing = threads.get(key);
   if (existing) {
-    // Fold in anything newly known — an overlaid row has no instance id until
+    // Fold in anything newly known. An overlaid row has no instance id until
     // the live read lands, and the thread should pick it up rather than spend
     // the rest of the conversation without it.
     return existing.then((thread) => {
@@ -204,7 +204,7 @@ export interface CaseIdentifiers {
  * The GUIDs off a case, for the agent's tools.
  *
  * `instanceId` is empty on a demo row, and on the overlay it is the live
- * instance the row is painted over — which is exactly the one the agent should
+ * instance the row is painted over, which is exactly the one the agent should
  * open. The folder falls back to the configured case folder, since a case read
  * from that folder lives in it whether or not the row says so.
  *
@@ -243,7 +243,7 @@ export interface AskOptions {
  * The identifier lines, as the agent's tools expect to find them.
  *
  * Sent with **every** turn, not just the first. They were first-turn-only, on
- * the assumption the agent would carry them forward — and it does not: a tool
+ * the assumption the agent would carry them forward, and it does not: a tool
  * call on the second question had no case to open, which is why a suggested
  * question like "How long is left on the clock?" failed while the opening one
  * worked. Repeating three short lines is a trivial cost next to a whole class
@@ -265,8 +265,8 @@ export function identifierLines(identifiers?: CaseIdentifiers): string {
  *
  * Identifiers every time; the prose summary only on the first turn of a thread,
  * because it is bulky and the agent genuinely does keep the conversation.
- * Exported because this is the contract with the agent's tools — labelled lines
- * they lift the GUIDs from — and a format that drifts silently is how the panel
+ * Exported because this is the contract with the agent's tools, the labelled lines
+ * they lift the GUIDs from, and a format that drifts silently is how the panel
  * ends up asking about a case the agent cannot open.
  */
 export function seedBlock(options: AskOptions, withSummary = true): string {
@@ -282,7 +282,7 @@ export function seedBlock(options: AskOptions, withSummary = true): string {
  * One turn as the agent receives it: the preamble, then the question.
  *
  * Exported so the every-turn identifier rule is under test rather than under
- * assumption — it was first-turn-only, and the failure that caused only appears
+ * assumption. It was first-turn-only, and the failure that caused only appears
  * on the *second* question, which is exactly the kind of bug a demo finds live.
  */
 export function turnPayload(
@@ -301,8 +301,8 @@ export function turnPayload(
  * exchanges, an exchange carries messages, a message carries content parts, and
  * text arrives as chunks on those parts.
  *
- * The message is sent through the explicit lifecycle — `startMessage`,
- * `sendContentPart`, `sendMessageEnd` — rather than the one-shot
+ * The message is sent through the explicit lifecycle of `startMessage`,
+ * `sendContentPart` and `sendMessageEnd`, rather than the one-shot
  * `sendMessageWithContentPart`, which the service accepts without ever
  * answering. The exchange id is a upper-cased UUID for the same reason: the
  * service rejects other shapes with EXCHANGE_START_PROCESSING_FAILED.
@@ -339,13 +339,13 @@ export async function askAgent(
   const identifiers = thread.identifiers;
   if (!identifiers.caseInstanceId) {
     console.warn(
-      "[assistant] asking without a case instance id — the agent's case tools " +
+      "[assistant] asking without a case instance id. The agent's case tools " +
         "will have nothing to open. Thread:",
       options.threadKey,
     );
   }
 
-  // Match the SDK's own id shape — it uses crypto.randomUUID().toUpperCase(),
+  // Match the SDK's own id shape. It uses crypto.randomUUID().toUpperCase(),
   // and the service rejects anything else.
   const exchangeId = crypto.randomUUID().toUpperCase();
 
@@ -436,7 +436,7 @@ export function localAnswer(question: string, warrantyCase: WarrantyCase): strin
       return "No evidence documents are attached to this case yet.";
     }
     const lines = warrantyCase.evidence.map(
-      (e) => `• ${e.title}${e.verdict ? ` — ${e.verdict}` : ""}`,
+      (e) => `• ${e.title}${e.verdict ? `: ${e.verdict}` : ""}`,
     );
     return `${warrantyCase.evidence.length} evidence items are attached:\n${lines.join("\n")}`;
   }
@@ -449,7 +449,7 @@ export function localAnswer(question: string, warrantyCase: WarrantyCase): strin
   }
 
   if (q.includes("clock") || q.includes("sla") || q.includes("long") || q.includes("due")) {
-    return `${warrantyCase.currentStage} carries a ${Math.round(warrantyCase.slaMinutes / 60)}-hour clock. ${formatRemaining(warrantyCase.elapsedMinutes, warrantyCase.slaMinutes)} — currently ${warrantyCase.slaStatus.toLowerCase()}.`;
+    return `${warrantyCase.currentStage} carries a ${Math.round(warrantyCase.slaMinutes / 60)}-hour clock. ${formatRemaining(warrantyCase.elapsedMinutes, warrantyCase.slaMinutes)}, currently ${warrantyCase.slaStatus.toLowerCase()}.`;
   }
 
   if (q.includes("cost") || q.includes("value") || q.includes("claim")) {
@@ -457,7 +457,7 @@ export function localAnswer(question: string, warrantyCase: WarrantyCase): strin
   }
 
   if (q.includes("who") || q.includes("owner") || q.includes("assign")) {
-    return `${warrantyCase.owner} — ${warrantyCase.ownerRole} — owns ${warrantyCase.id} in ${warrantyCase.currentStage}.`;
+    return `${warrantyCase.owner}, ${warrantyCase.ownerRole}, owns ${warrantyCase.id} in ${warrantyCase.currentStage}.`;
   }
 
   return `${warrantyCase.id} · ${warrantyCase.customer} · ${warrantyCase.site}. Currently in ${warrantyCase.currentStage}, ${warrantyCase.slaStatus.toLowerCase()} against its clock, owned by ${warrantyCase.owner}. Ask about the evidence, what is blocking closure, or the clock.`;

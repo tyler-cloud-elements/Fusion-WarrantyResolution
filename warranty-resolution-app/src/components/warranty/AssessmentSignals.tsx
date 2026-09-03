@@ -5,7 +5,7 @@ import type { AgentSignal, PrecedentSlice } from "@/lib/warranty/types";
 
 // The two rollups the assessment argues from, opened rather than summarised.
 //
-// Both were one-line counts before — "5 signals · 3 high", "60% agree" — which
+// Both were one-line counts before ("5 signals · 3 high", "60% agree") which
 // told the reader a number was available without telling them anything they
 // could disagree with. Opened, each signal names what it bought and takes a
 // thumb, and the precedent shows the forty percent who did something else.

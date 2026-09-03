@@ -16,7 +16,7 @@ import { authorityFor, splitFor, type AuthorityVerdict, type CostSplit } from "@
 import type { CaseAction, DecisionEffect, ReasoningVerdict, WarrantyCase } from "@/lib/warranty/types";
 
 // The deciding half of the console: the position, the money that follows from
-// it, whether the signer can sign it alone, the rationale, and — separately —
+// it, whether the signer can sign it alone, the rationale, and separately
 // what they think of the agent's reasoning.
 //
 // That last part is the point of the screen. The outcome tells the case what to
@@ -24,13 +24,13 @@ import type { CaseAction, DecisionEffect, ReasoningVerdict, WarrantyCase } from 
 // scene 20 calls it out as a beat: "agree, keep asking, stop asking".
 
 function currency(value: number | null): string {
-  return value == null ? "—" : value.toLocaleString("en-US", { minimumFractionDigits: 2 });
+  return value == null ? "" : value.toLocaleString("en-US", { minimumFractionDigits: 2 });
 }
 
 /**
  * Cost attribution under the selected position.
  *
- * Every row is recomputed when the position changes — the amounts stay put, the
+ * Every row is recomputed when the position changes. The amounts stay put, the
  * column they land in moves. The "why" moves with them, because a line reading
  * "Caused by the unapproved change" under a full-coverage position would be
  * describing a decision nobody made.
@@ -102,7 +102,7 @@ function SplitTable({ split }: { split: CostSplit }) {
  *
  * Three states, not two. Full coverage blows the limit and routes for
  * co-approval; a denial costs Cobalt Ridge nothing but is still a commitment to
- * the customer and routes for sign-off. Only the split sits inside the limit —
+ * the customer and routes for sign-off. Only the split sits inside the limit,
  * which is the argument the recommendation is making.
  */
 function AuthorityMeter({ verdict }: { verdict: AuthorityVerdict }) {
@@ -140,7 +140,7 @@ function AuthorityMeter({ verdict }: { verdict: AuthorityVerdict }) {
 
       <p className={cn("mt-2 text-xs font-medium", ok ? "text-success" : "text-destructive")}>
         {verdict.state === "within" && (
-          <>✓ Within your delegated authority — you can sign this alone.</>
+          <>✓ Within your delegated authority. You can sign this alone.</>
         )}
         {verdict.state === "over" && (
           <>
@@ -150,7 +150,7 @@ function AuthorityMeter({ verdict }: { verdict: AuthorityVerdict }) {
         )}
         {verdict.state === "denial" && (
           <>
-            ▲ $0 to Cobalt Ridge — but a denial is a customer commitment. Routes to{" "}
+            ▲ $0 to Cobalt Ridge, but a denial is a customer commitment. Routes to{" "}
             <b>{verdict.approver}</b> for sign-off.
           </>
         )}
@@ -195,7 +195,7 @@ function OnSubmitFold({ effects }: { effects: DecisionEffect[] }) {
                 <span className={cn(effect.hold ? "text-warning-foreground" : "text-foreground")}>
                   {effect.title}
                 </span>
-                {effect.detail ? ` — ${effect.detail}` : ""}
+                {effect.detail ? `: ${effect.detail}` : ""}
                 {effect.hold && <span className="text-warning"> · held</span>}
               </span>
             </li>
@@ -248,7 +248,7 @@ function SettledState({
                 <span>
                   {effect.title}
                   {effect.detail ? (
-                    <span className="text-muted-foreground"> — {effect.detail}</span>
+                    <span className="text-muted-foreground">: {effect.detail}</span>
                   ) : null}
                   {effect.hold && <span className="text-warning"> · held</span>}
                 </span>
@@ -300,8 +300,8 @@ export function CoverageDecisionCard({
   /**
    * The coverage position, when the host owns it.
    *
-   * The assessment rail answers the position — it says something different when
-   * you move to a denial than when you move to full coverage — so the two have
+   * The assessment rail answers the position. It says something different when
+   * you move to a denial than when you move to full coverage, so the two have
    * to be looking at the same value. The host holds it and hands it to both.
    * Left out, the card keeps its own, which is what the plain form wants.
    */
@@ -558,7 +558,9 @@ export function CoverageDecisionCard({
               disabled={submitting || !rationale.trim()}
               onClick={() => void submit()}
             >
-              {submitting ? "Submitting…" : `Submit — ${selectedOption?.label ?? selected}`}
+              {/* The outcome's short name, not the option's full sentence:
+                  "Submit Approve partial coverage + goodwill" is not a button. */}
+              {submitting ? "Submitting…" : `Submit ${outcomeLabel(selected).toLowerCase()}`}
             </Button>
             <Mono className="text-center text-[9.5px]">
               RECORDED TO THE DECISION LEDGER · REVERSIBLE UNTIL DISPATCH

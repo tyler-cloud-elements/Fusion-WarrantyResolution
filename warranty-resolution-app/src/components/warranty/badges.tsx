@@ -32,7 +32,7 @@ export function CaseStatusBadge({ status }: { status: CaseStatus }) {
 }
 
 // P1 is a line-down outage on a 24-hour case clock (SDD §1), so it reads as an
-// error rather than a warning — it is the one band that changes the SLA itself.
+// error rather than a warning. It is the one band that changes the SLA itself.
 const PRIORITY_TONE: Record<Priority, Tone | null> = {
   P1: "error",
   P2: "warning",
@@ -70,7 +70,7 @@ export function ActorChip({ actor, className }: { actor: TaskActor; className?: 
   );
 }
 
-/** The "why it's here" cell — the reason a case is in a person's queue at all. */
+/** The "why it's here" cell: the reason a case is in a person's queue at all. */
 export function QueueReasonPill({ reason }: { reason: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-sm text-foreground">

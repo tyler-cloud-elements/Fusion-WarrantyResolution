@@ -1,4 +1,4 @@
-// Case rules — the conditions that decide when stages and tasks start, complete,
+// Case rules: the conditions that decide when stages and tasks start, complete,
 // or exit. These are what the case agent reads at run time.
 //
 // Transcribed from the storyboard's Studio "Rules" view (scene 10) plus the

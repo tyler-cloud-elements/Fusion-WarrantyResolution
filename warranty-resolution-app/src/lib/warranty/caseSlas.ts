@@ -31,7 +31,7 @@ export function caseSlaLabel(warrantyCase: WarrantyCase): string {
  * Minutes the case has been open, measured from `openedAt`.
  *
  * Demo rows anchor their timestamps to module load (see `DEMO_NOW`), so this is
- * the same measurement for a demo case and a live one — no special case needed,
+ * the same measurement for a demo case and a live one, with no special case needed,
  * and a demo left on the shelf does not age out of step with the per-stage
  * figures stored on the row.
  */
@@ -50,13 +50,13 @@ function dueFrom(now: number, elapsedMinutes: number, budgetMinutes: number): Da
  * running, however much of that clock is left.
  *
  * Burn percentage is the wrong measure here. WR-2026-0417 has used 107 of 240
- * minutes — 45%, comfortably "On track" by the ordinary threshold — while the
+ * minutes, 45% and comfortably "On track" by the ordinary threshold, while the
  * customer's line has been down 96 hours with no divert. The clock is not at
  * risk because it is nearly spent; it is at risk because the thing it exists to
  * protect is already failing.
  *
- * Deliberately narrow. It escalates one entry — the stage the case is actually
- * in — rather than every clock on the case: a P1 with a dead line would
+ * Deliberately narrow. It escalates one entry, the stage the case is actually
+ * in, rather than every clock on the case: a P1 with a dead line would
  * otherwise light up its case clock, its stage clock and its task clock with
  * three copies of one fact, which is noise rather than signal. It never
  * escalates past At risk, because whether a clock has *breached* is a question
@@ -101,7 +101,7 @@ export function getCaseSlas(
         : slaStatusFor(caseElapsed, caseBudget),
     condition:
       warrantyCase.priority === "P1"
-        ? "priority is P1 — 24-hour line-down clock"
+        ? "priority is P1, on the 24-hour line-down clock"
         : "the case is opened",
   });
 
@@ -122,7 +122,7 @@ export function getCaseSlas(
         label: `${stage.name} SLA`,
         dueAt: new Date(now),
         status: "Not triggered",
-        condition: `${stage.sla.toLowerCase()} — no clock configured`,
+        condition: `${stage.sla.toLowerCase()}, no clock configured`,
       });
       continue;
     }
@@ -170,7 +170,7 @@ export function getCaseSlas(
   // ── Action level ──────────────────────────────────────────────────────────
   //
   // A task clock that falls on the same minute as the stage it belongs to is
-  // that stage's clock under another name — the stage is blocked on the task,
+  // that stage's clock under another name. The stage is blocked on the task,
   // both run the same budget from the same start, and listing both puts one
   // commitment on the screen twice. Worse, the two can disagree: a P1 stage
   // escalated by a dead line would sit beside its own task reporting "On track"

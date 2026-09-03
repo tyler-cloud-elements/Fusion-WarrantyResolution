@@ -2,7 +2,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
-// The agent answers in Markdown — headings, bold, bullets, GFM tables — and the
+// The agent answers in Markdown (headings, bold, bullets, GFM tables) and the
 // panels were rendering it as literal text, so a reply arrived full of `##` and
 // `|---|---|`.
 //
@@ -68,7 +68,7 @@ export function AgentMarkdown({ children, className }: { children: string; class
           hr: () => <hr className="my-2.5 border-border" />,
           // A table is wider than any rail. Scrolling it inside its own box is
           // the only option that does not either clip a column or widen the
-          // panel — and the header stays put while you scroll.
+          // panel, and the header stays put while you scroll.
           table: ({ children }) => (
             <div className="my-2 max-w-full overflow-x-auto rounded-md border border-border">
               <table className="w-max min-w-full border-collapse text-[11.5px]">{children}</table>

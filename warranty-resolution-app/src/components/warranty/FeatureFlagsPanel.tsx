@@ -16,7 +16,7 @@ import {
 // Presenter switches, in the sidebar footer.
 //
 // Collapsed by default so it does not compete with the nav, and it sits below
-// the nav rather than in it because these are not places to go — they change how
+// the nav rather than in it because these are not places to go. They change how
 // the screen you are already on behaves.
 
 function FlagRow({
@@ -32,8 +32,8 @@ function FlagRow({
   onChange: (next: boolean) => void;
 }) {
   const { label, hint } = FLAG_LABELS[flagKey];
-  // Still switchable while suppressed — a presenter setting the room up should
-  // be able to arrange both halves of a pair in either order — but dimmed, and
+  // Still switchable while suppressed, because a presenter setting the room up should
+  // be able to arrange both halves of a pair in either order. Dimmed, though, and
   // saying what is overriding it instead of what it would do.
   return (
     <label
@@ -75,7 +75,7 @@ function FlagRow({
 
 export function FeatureFlagsPanel() {
   const flags = useFlags();
-  // Read collapse state from the sidebar rather than taking it as a prop — the
+  // Read collapse state from the sidebar rather than taking it as a prop, because the
   // footer slot renders children directly, so there is nothing to pass it down.
   const { state, isMobile } = useSidebar();
   const [open, setOpen] = useState(false);
@@ -114,7 +114,7 @@ export function FeatureFlagsPanel() {
           <span className="font-medium">Presenter switches</span>
           <span className="block text-muted-foreground">
             {modified
-              ? "Some differ from the shipped defaults — open to review or reset them."
+              ? "Some differ from the shipped defaults. Open to review or reset them."
               : "Turn parts of the demo on and off. All at their shipped defaults."}
           </span>
         </TooltipContent>

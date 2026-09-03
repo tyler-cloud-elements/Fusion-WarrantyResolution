@@ -30,14 +30,14 @@ import {
 import { useUiPath } from "@/services/uipath/UiPathProvider";
 
 // Starts a case by starting the configured Orchestrator process with the demo
-// arguments. Not a Maestro API call — the case is created by the job the process
+// arguments. Not a Maestro API call: the case is created by the job the process
 // runs, which is why the arguments are a demo contract (`demoScenario`,
 // `demoRunId`, `ownerEmail`) rather than the case's own intake payload.
 
 const SCENARIOS = ["Standard", "MissingEvidence", "Rejected", "Critical"] as const;
 
 const SCENARIO_HINT: Record<(typeof SCENARIOS)[number], string> = {
-  Standard: "The happy path — coverage decided, restored, reconciled.",
+  Standard: "The happy path: coverage decided, restored, reconciled.",
   MissingEvidence: "Evidence incomplete, so the case waits on the customer.",
   Rejected: "Coverage denied, exiting through the denial lane.",
   Critical: "P1 line-down, on the 24-hour case clock.",
@@ -90,7 +90,7 @@ export function NewCaseDialog({ onStarted }: { onStarted?: () => void }) {
       });
       setStarted({ jobId, runId });
       // The case appears once the job creates the instance, which is not
-      // instant — refresh anyway so a fast one shows up without a manual click.
+      // instant, so refresh anyway and a fast one shows up without a manual click.
       onStarted?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not start the process.");
@@ -99,7 +99,7 @@ export function NewCaseDialog({ onStarted }: { onStarted?: () => void }) {
     }
   }
 
-  // Portal host, not the API host — this is a link for a person to click.
+  // Portal host, not the API host. This is a link for a person to click.
   const jobsUrl = `${portalUrl()}/${uipathConfig.orgName}/${uipathConfig.tenantName}/orchestrator_/jobs`;
 
   return (
@@ -209,10 +209,10 @@ export function NewCaseDialog({ onStarted }: { onStarted?: () => void }) {
 
             <p className="text-[11px] text-muted-foreground">
               Process{" "}
-              <code className="font-mono">{caseConfig.newCaseProcessKey.slice(0, 8) || "—"}…</code>{" "}
+              <code className="font-mono">{caseConfig.newCaseProcessKey.slice(0, 8) || "none"}…</code>{" "}
               in folder{" "}
               <code className="font-mono">
-                {caseConfig.newCaseFolderKey.slice(0, 8) || "—"}…
+                {caseConfig.newCaseFolderKey.slice(0, 8) || "none"}…
               </code>
             </p>
           </div>

@@ -1,6 +1,6 @@
 // Queue filters for the Actions page.
 //
-// Encoded into the URL so a filtered queue is shareable — the same pattern the
+// Encoded into the URL so a filtered queue is shareable, the same pattern the
 // case list uses for its own scope. Unknown values decode to the empty set
 // rather than throwing, because a stale link should show everything, not break.
 

@@ -120,7 +120,7 @@
 
 :root {
   --radius: 0.625rem;
-  /* Vertex AI gradient (apollo-vertex-theme --ai-gradient-strong) — theme-independent */
+  /* Vertex AI gradient (apollo-vertex-theme --ai-gradient-strong), theme-independent */
   --ai-gradient: linear-gradient(97.73deg, #6c5aef 8.79%, #69c7dd 91.48%);
   --background: oklch(1 0 89.88);
   --foreground: oklch(0.2394 0.0455 252.45);

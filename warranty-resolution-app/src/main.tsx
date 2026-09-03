@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
 // Providers sit ABOVE the router, not on its root route.
 //
 // UiPathProvider completes the OAuth callback, and it has to be able to do that
-// before any routing decision runs — a route that redirected first would strip
+// before any routing decision runs. A route that redirected first would strip
 // `?code=&state=` off the URL and the sign-in would loop silently.
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

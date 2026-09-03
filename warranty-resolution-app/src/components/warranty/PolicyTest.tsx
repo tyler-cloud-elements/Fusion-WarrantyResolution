@@ -25,7 +25,7 @@ function tally(checks: PolicyCheck[]) {
   };
 }
 
-/** "7 checks · 5 pass, 1 fail, 1 open" — derived, so it cannot drift. */
+/** "7 checks · 5 pass, 1 fail, 1 open", derived so it cannot drift. */
 export function policyTestSummary(checks: PolicyCheck[]): string {
   const t = tally(checks);
   const parts = [`${t.pass} pass`];
@@ -91,7 +91,7 @@ export function PolicyCheckRows({ checks }: { checks: PolicyCheck[] }) {
               </span>
               <span className="block text-[11.5px] leading-snug text-muted-foreground">
                 {/* An open check leads with its verdict, because "not established"
-                    is the finding — the sentence after it is only the reason. */}
+                    is the finding, and the sentence after it is only the reason. */}
                 {check.verdict === "open" ? (
                   <>
                     <b className="font-semibold text-foreground">Not established</b>
@@ -103,7 +103,7 @@ export function PolicyCheckRows({ checks }: { checks: PolicyCheck[] }) {
               </span>
             </span>
             <span className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-wider text-muted-foreground">
-              {check.source ?? "—"}
+              {check.source ?? "None"}
             </span>
           </li>
         );
@@ -133,7 +133,7 @@ export function PolicyTestCard({
   return (
     <Card className="gap-0 p-4">
       <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-        <Label className="shrink-0">Policy test{agreement ? ` — ${agreement}` : ""}</Label>
+        <Label className="shrink-0">Policy test{agreement ? `: ${agreement}` : ""}</Label>
         <span className="min-w-0 flex-1 text-xs text-muted-foreground">
           {policyTestSummary(checks)}
         </span>

@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/PageContainer";
 //
 // Both are reachable by URL, so a refresh starts with no cases in memory and
 // spends a beat restoring the token and reading the instance. These stand in for
-// that beat. They trace the real layout — hero, meta row, tabs — so the page
+// that beat. They trace the real layout (hero, meta row, tabs) so the page
 // does not jump when the data replaces them.
 
 function Line({ className }: { className?: string }) {
@@ -117,7 +117,7 @@ export function DecisionConsoleSkeleton() {
 /**
  * The Actions pane, before it has anything in it.
  *
- * Traces the real three-part layout — queue, decision column, decision card —
+ * Traces the real three-part layout (queue, decision column, decision card)
  * so the page does not jump when the content replaces it. The queue's fixed
  * width matches the pane's default so the seam does not move either.
  */

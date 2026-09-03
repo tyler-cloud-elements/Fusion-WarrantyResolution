@@ -43,7 +43,7 @@ export interface CasesResult {
   /** True when demo rows are on screen wearing live ids, stages and links. */
   isOverlay: boolean;
   isLoading: boolean;
-  /** A refetch over data already on screen — a spinner, not a skeleton. */
+  /** A refetch over data already on screen: a spinner, not a skeleton. */
   isRefreshing: boolean;
   reason?: string;
   refresh: () => void;
@@ -55,7 +55,7 @@ export function useCases(): CasesResult {
   const queryClient = useQueryClient();
 
   // Live is the default. The demo dataset is what you get when the flag asks for
-  // it, when there is no tenant, or when the read fails — never a silent blend
+  // it, when there is no tenant, or when the read fails. Never a silent blend
   // of the two, because a queue that is half real is worse than either.
   const enabled = !useMocks && Boolean(sdk) && isAuthenticated && isCaseConfigured();
 
@@ -98,7 +98,7 @@ export function useCases(): CasesResult {
   const isOverlay = cases.some((c) => c.overlaidFrom);
 
   const reason = useMocks
-    ? "Demo data — the Use demo data flag is on"
+    ? "Demo data. The Use demo data flag is on"
     : isOverlay
       ? "Demo cases, overlaid with live stage state, ids and tasks"
     : !isUiPathConfigured()
@@ -114,7 +114,7 @@ export function useCases(): CasesResult {
     isDemo: !enabled || (query.data?.degraded ?? true),
     isOverlay,
     // Auth settling counts. While the provider is still restoring a token
-    // `enabled` is false, so `cases` is the demo set — and a live case id read
+    // `enabled` is false, so `cases` is the demo set, and a live case id read
     // from the URL is "not found" until the token lands. Callers that resolve
     // one case need to hold their verdict across both waits, not just the query.
     isLoading: authLoading || (enabled && query.isLoading),
@@ -126,7 +126,7 @@ export function useCases(): CasesResult {
 
 export interface CaseResult {
   warrantyCase: WarrantyCase | undefined;
-  /** Still resolving — `warrantyCase` being undefined does not yet mean absent. */
+  /** Still resolving. `warrantyCase` being undefined does not yet mean absent. */
   isLoading: boolean;
   isRefreshing: boolean;
   refresh: () => void;
@@ -152,8 +152,8 @@ const CASE_POLL_MS = 10_000;
 /**
  * Keeps an open case current while someone is looking at it.
  *
- * A case in flight is being moved by the process — a stage completes, a task
- * appears — and none of that arrives on its own, so the page would sit on
+ * A case in flight is being moved by the process: a stage completes, a task
+ * appears, and none of that arrives on its own, so the page would sit on
  * whatever was true when it loaded. Polling stops at Closed, where there is
  * nothing left to move, and while the tab is hidden, so a demo left open in a
  * background tab is not quietly hammering the tenant.
@@ -255,7 +255,7 @@ export function useActionsForCase(caseId: string): CaseAction[] {
 }
 
 /**
- * The case's activity feed — authored or derived, with completed decisions
+ * The case's activity feed, authored or derived, with completed decisions
  * folded in. Session events reach it through the case override, so a decision
  * taken during a demo shows up here immediately.
  */
@@ -287,7 +287,7 @@ export function useAgentSummary() {
 // Every mutator below takes the case being looked at, not its id. That is the
 // whole point: overrides are keyed by the id ON SCREEN, which since the app went
 // live-by-default is a Maestro id, not a demo one. Resolving the case being
-// changed out of DEMO_CASES instead — as these once did — silently no-ops every
+// changed out of DEMO_CASES instead, as these once did, silently no-ops every
 // one of them the moment a live read succeeds, because no demo row carries that
 // id. Taking the case itself makes the base state and the override key come from
 // the same object, so there is nothing left to mismatch.
@@ -341,7 +341,7 @@ export function recordDecision(
   outcome: string,
   decidedBy: string,
   rationale: string,
-  /** What the signer said about the agent's reasoning — the learning signal. */
+  /** What the signer said about the agent's reasoning, which is the learning signal. */
   reasoning?: ReasoningVerdict,
 ) {
   actionCompletions[action.id] = {
@@ -355,13 +355,13 @@ export function recordDecision(
   emit();
 }
 
-/** Puts a decided action back in front of its owner — the console's "Reopen task". */
+/** Puts a decided action back in front of its owner, the console's "Reopen task". */
 export function reopenDecision(actionId: string) {
   delete actionCompletions[actionId];
   emit();
 }
 
-/** Records which evidence a decision-maker marked useful — the signal capture. */
+/** Records which evidence a decision-maker marked useful, the signal capture. */
 export function markEvidenceHelpful(
   warrantyCase: WarrantyCase,
   evidenceId: string,
@@ -399,7 +399,7 @@ export function addCaseComment(warrantyCase: WarrantyCase, comment: CaseComment)
  *
  * Fires on the case being looked at rather than on the one the scene was written
  * around. The button sits on every case's page, so pinning the event to a single
- * authored id meant it did nothing on any other case — and nothing at all once
+ * authored id meant it did nothing on any other case, and nothing at all once
  * the hero case came back from Maestro wearing a live id.
  */
 export function fireEvidenceUploadEvent(warrantyCase: WarrantyCase) {
@@ -418,7 +418,7 @@ export function fireEvidenceUploadEvent(warrantyCase: WarrantyCase) {
  * True once scene 15's upload has landed on this case.
  *
  * Read off the case rather than tracked separately, so it stays right when the
- * session state is reset underneath it — and it lets the menu item say "already
+ * session state is reset underneath it, and it lets the menu item say "already
  * arrived" instead of looking live and doing nothing on a second click.
  */
 export function hasEvidenceUploadFired(warrantyCase: WarrantyCase): boolean {

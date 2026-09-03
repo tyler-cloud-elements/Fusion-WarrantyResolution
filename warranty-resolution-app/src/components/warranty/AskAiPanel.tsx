@@ -18,7 +18,7 @@ import type { WarrantyCase } from "@/lib/warranty/types";
 /**
  * The case-scoped assistant. Streams from a UiPath Conversational Agent when one
  * is configured; otherwise answers from the case in front of the user and says
- * so. A failed agent call falls back the same way rather than showing an error —
+ * so. A failed agent call falls back the same way rather than showing an error:
  * mid-demo, a degraded answer beats a broken panel.
  */
 export function AskAiPanel({
@@ -66,7 +66,7 @@ export function AskAiPanel({
         threadKey: warrantyCase.id,
         identifiers: caseIdentifiers(warrantyCase),
         seedContext:
-          `${warrantyCase.id} — ${warrantyCase.customer}, ${warrantyCase.site}. ` +
+          `${warrantyCase.id}, ${warrantyCase.customer}, ${warrantyCase.site}. ` +
           `${warrantyCase.description}. In ${warrantyCase.currentStage}, owned by ` +
           `${warrantyCase.owner}.`,
       });
@@ -140,7 +140,7 @@ export function AskAiPanel({
             {/* Says which of the two reasons applies. It used to tell you to
                 set env vars that may well already be set, which sends a reader
                 to a file to fix something that is not broken. */}
-            Answering from case context —{" "}
+            Answering from case context.{" "}
             {isAssistantConfigured()
               ? "sign in to UiPath to ask the conversational agent."
               : "no conversational agent is configured."}

@@ -8,7 +8,7 @@ import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
  *
  * This replaced a "Why this reached you" card, which asked the reader to take
  * the escalation on trust. What is here instead is what the coverage argument
- * rests on — whose asset, where, under an agreement live until when — and the
+ * rests on (whose asset, where, under an agreement live until when) and the
  * sentence about why a person has it closes the block rather than standing
  * alone.
  *
@@ -22,7 +22,7 @@ import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
  * while the card's totals move with the position. They cannot disagree, and
  * knowing the size of the thing before reading the argument is worth a figure.
  *
- * The mock's agent-recommendation tile is still left out — that one would
+ * The mock's agent-recommendation tile is still left out, because that one would
  * genuinely restate the decision card, and would go stale the moment a position
  * changed.
  */

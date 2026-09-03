@@ -31,13 +31,13 @@ import type {
 
 // The "Ask about this case" rail.
 //
-// The component keeps its Assessment name — as does the `rightPanel` state and
+// The component keeps its Assessment name, as does the `rightPanel` state and
 // the localStorage key behind it, which would strand everyone's saved panel
 // choice if renamed. Only what a reader sees has changed.
 //
 // A conversation, not a widget: it opens with the agent's recommendation and the
 // reasoning behind it, and the signer's verdict on that reasoning lands in the
-// same thread as a reply. That is deliberate — the point of the screen is that
+// same thread as a reply. That is deliberate: the point of the screen is that
 // the reasoning is discussable, and what the person says back is the record.
 //
 // It never decides. Decision controls live in the decision card only.
@@ -47,7 +47,7 @@ interface Message {
   from: "agent" | "user";
   text: string;
   time: string;
-  /** Tints the bubble amber — the agent flagging a departure, not answering. */
+  /** Tints the bubble amber for the agent flagging a departure, not answering. */
   tone?: "warning";
 }
 
@@ -192,7 +192,7 @@ export function AssessmentPanel({
   warrantyCase: WarrantyCase;
   /** When set, the host owns open/closed and the panel's own strip is dropped. */
   onClose?: () => void;
-  /** Swap this panel for the case details — they share one column. */
+  /** Swap this panel for the case details. They share one column. */
   onShowCase?: () => void;
   /**
    * The coverage position currently selected in the decision card.
@@ -234,7 +234,7 @@ export function AssessmentPanel({
       return {
         id: "stance-agreed",
         from: "agent",
-        text: "I've preselected it — review and submit, or change the position.",
+        text: "I've preselected it. Review and submit, or change the position.",
         time: "Now",
       };
     }
@@ -249,14 +249,14 @@ export function AssessmentPanel({
       text: `You've moved to ${title.toLowerCase()}, which ${departureClause(
         action,
         position,
-      )}. That's a different call from mine, and the reason matters more than the change does — it's what I'd learn from. What did I get wrong?`,
+      )}. That's a different call from mine, and the reason matters more than the change does, and it's what I'd learn from. What did I get wrong?`,
       time: "Now",
     };
   }, [action, position, departed]);
 
   /**
-   * Replies worth offering here. Filtered by position — an objection to a denial
-   * is not an objection to full coverage — and spent once used, so the rail does
+   * Replies worth offering here. Filtered by position, since an objection to a denial
+   * is not an objection to full coverage, and spent once used, so the rail does
    * not keep offering something already said.
    */
   const offered = useMemo(
@@ -346,7 +346,7 @@ export function AssessmentPanel({
             threadKey: `${warrantyCase.id}:${action.actionType}`,
             identifiers: caseIdentifiers(warrantyCase),
             seedContext:
-              `${warrantyCase.id} — ${warrantyCase.customer}, ${warrantyCase.site}. ` +
+              `${warrantyCase.id}, ${warrantyCase.customer}, ${warrantyCase.site}. ` +
               `${warrantyCase.description}. In ${warrantyCase.currentStage}, ` +
               `${money(warrantyCase.claimValue)} claimed. The open decision is ` +
               `"${action.title}"; the agent recommends ` +
@@ -354,7 +354,7 @@ export function AssessmentPanel({
             onChunk: stream,
           }).catch((err: unknown) => {
             // Surfaced, not swallowed. Every failure used to look identical from
-            // the outside — "it didn't work" — with the reason only in a console
+            // the outside, all of it "it didn't work", with the reason only in a console
             // nobody has open during a demo.
             const why =
               err instanceof Error ? err.message : "the agent was unreachable";
@@ -372,7 +372,7 @@ export function AssessmentPanel({
       stream(answer);
     } finally {
       // In a finally so a throw anywhere above cannot leave the composer
-      // disabled — a stuck `pending` presents as clicking doing nothing at all,
+      // disabled. A stuck `pending` presents as clicking doing nothing at all,
       // which is the least diagnosable failure this panel has.
       setPending(false);
     }
@@ -444,7 +444,7 @@ export function AssessmentPanel({
                 verdicts={verdicts}
                 onVerdict={(id, v) =>
                   setVerdicts((prev) =>
-                    // Clicking the same thumb again clears it — a verdict you
+                    // Clicking the same thumb again clears it, because a verdict you
                     // cannot take back is one people stop giving honestly.
                     prev[id] === v
                       ? Object.fromEntries(
@@ -513,7 +513,7 @@ export function AssessmentPanel({
             {/* Says which of the two reasons applies. It used to tell you to
                 set env vars that may well already be set, which sends a reader
                 to a file to fix something that is not broken. */}
-            Answering from case context —{" "}
+            Answering from case context.{" "}
             {isAssistantConfigured()
               ? "sign in to UiPath to ask the conversational agent."
               : "no conversational agent is configured."}

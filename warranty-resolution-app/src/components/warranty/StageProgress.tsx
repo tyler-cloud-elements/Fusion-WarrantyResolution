@@ -7,7 +7,7 @@ import { CONDITIONAL_STAGES, PRIMARY_STAGES, stageById } from "@/lib/warranty/ca
 import { formatSlaBudget } from "@/lib/warranty/sla";
 import type { StageDefinition, StageState, WarrantyCase } from "@/lib/warranty/types";
 
-// Case progress as a segmented meter — one segment per primary stage, with the
+// Case progress as a segmented meter: one segment per primary stage, with the
 // conditional lanes listed underneath. A warranty case is not linear: coverage
 // and containment run as parallel tracks (BR-002) and a lane can open off any
 // stage, so a stage's colour comes from what the case actually entered, never
@@ -34,7 +34,7 @@ const HATCH: React.CSSProperties = {
 };
 
 // Completed uses a lighter success tint and active a solid info, so the two
-// separate by lightness as well as hue — the tokens are close in tone alone.
+// separate by lightness as well as hue. The tokens are close in tone alone.
 function segmentClass(state: StageState): string {
   if (state === "completed") return "bg-success/55";
   if (state === "active") return "bg-info";
@@ -118,13 +118,13 @@ export function StageProgress({
   compact = false,
 }: {
   warrantyCase: WarrantyCase;
-  /** Tighter padding, no per-segment labels — for a rail or a list row. */
+  /** Tighter padding and no per-segment labels, for a rail or a list row. */
   compact?: boolean;
 }) {
   const steps = PRIMARY_STAGES.map((stage) => ({ stage, state: stateOf(warrantyCase, stage) }));
   const doneCount = steps.filter((s) => s.state === "completed").length;
 
-  // Terminal lanes only appear once entered — they end a case rather than
+  // Terminal lanes only appear once entered. They end a case rather than
   // sitting dormant on the plan, so listing them upfront would misread.
   const enteredTerminal = Object.keys(warrantyCase.stageStates)
     .map(stageById)
@@ -169,7 +169,7 @@ export function StageProgress({
               <HoverCardTrigger asChild>
                 <button
                   type="button"
-                  aria-label={`${stage.name} — ${STATE_LABEL[state]}`}
+                  aria-label={`${stage.name}: ${STATE_LABEL[state]}`}
                   className={cn(
                     "block w-full rounded-[4px] border-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
                     compact ? "h-3" : "h-6",
@@ -236,7 +236,7 @@ export function StageProgress({
   );
 }
 
-/** The stage plan as a task-by-task board — the Case plans page and the plan tab. */
+/** The stage plan as a task-by-task board, for the Case plans page and the plan tab. */
 export function StageTaskList({ stage }: { stage: StageDefinition }) {
   return (
     <ul className="flex flex-col gap-1.5">

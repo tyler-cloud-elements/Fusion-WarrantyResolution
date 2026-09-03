@@ -60,7 +60,7 @@ function MetaItem({
  * Says where the rest went.
  *
  * The action pane deliberately carries no documents, no asset record and no
- * claim breakdown — they are in the case panel. Without a pointer that reads as
+ * claim breakdown. They are in the case panel. Without a pointer that reads as
  * an omission rather than a decision, so this names what is over there and
  * opens it.
  */
@@ -127,7 +127,7 @@ export function TaskDetail({
   const { actionSideBySide } = useFlags();
 
   /**
-   * Which panel occupies the right column — one piece of state, not two
+   * Which panel occupies the right column. One piece of state, not two
    * booleans, because the two panels share the space and can never both be
    * open. Two booleans would let an impossible state be represented.
    *
@@ -161,7 +161,7 @@ export function TaskDetail({
    * width.
    *
    * The two rails are not equivalent, despite sharing a column. The case rail is
-   * elastic — `flex-1`, so it claims whatever is left — and with it open there is
+   * elastic (`flex-1`, so it claims whatever is left), and with it open there is
    * genuinely no room for two columns here. The assessment is a fixed 330px,
    * which the pane can absorb.
    *
@@ -176,7 +176,7 @@ export function TaskDetail({
   // fold stack, so it is pulled out and shown as its own card.
   // Only the departure is state; the recommendation is the resting value. Held
   // here rather than in the decision card because the assessment rail answers
-  // the position too — see CoverageDecisionCard's `position` prop.
+  // the position too. See CoverageDecisionCard's `position` prop.
   const [chosen, setChosen] = useState<string | null>(null);
   useEffect(() => setChosen(null), [action.id]);
   const position = chosen ?? action.recommendation.recommendedOutcome;
@@ -184,7 +184,7 @@ export function TaskDetail({
 
   const policyTest = action.folds?.find((f) => f.id === "policy-test");
   const agreementName =
-    policyTest?.label.replace(/^Policy test\s*—\s*/, "") ?? "";
+    policyTest?.label.replace(/^Policy test\s*[:\u2014-]\s*/, "") ?? "";
 
   return (
     <div className="flex h-full flex-1 overflow-x-auto">
@@ -197,7 +197,7 @@ export function TaskDetail({
           transition={{ duration: 0.2, ease: "easeOut" }}
           className={cnFlex(rightPanel !== null)}
         >
-          {/* Header — spans the action work and the case rail beneath it. */}
+          {/* Header, spanning the action work and the case rail beneath it. */}
           <header className="flex flex-wrap items-start gap-x-10 gap-y-4 border-b border-border px-6 py-4">
             <div className="mr-auto flex min-w-0 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -251,7 +251,7 @@ export function TaskDetail({
 
             <div className="flex items-center gap-2">
               {/* The console is the same decision, full-screen, with the
-                  signal-capture rail — the storyboard's scene-14 surface. */}
+                  signal-capture rail, the storyboard's scene-14 surface. */}
               <Button variant="outline" size="sm" asChild>
                 <Link
                   to="/cases/$caseId/tasks/$taskId"
@@ -275,7 +275,7 @@ export function TaskDetail({
 
           <div className="flex min-h-0 flex-1 overflow-hidden">
             {/*
-              Action work — the decision, and only the decision.
+              Action work: the decision, and only the decision.
               Everything that supports it (the documents, the asset record, the
               claim breakdown, the history) is one panel to the right, so this
               column does not carry a second copy of it. The finding stays,
@@ -283,7 +283,7 @@ export function TaskDetail({
             */}
             {/*
               Container root. The split below reacts to this pane's own width
-              rather than the window's — `xl:` measured the viewport, which says
+              rather than the window's. `xl:` measured the viewport, which says
               nothing about the space left after the queue and whichever rail is
               open, and at 1280px it was putting a 420px decision card next to a
               115px finding.
@@ -311,8 +311,8 @@ export function TaskDetail({
                       // squeeze either side to nothing is worse than one column.
                       // Below the threshold the tracks collapse to a single
                       // column and the children stack in reading order.
-                      // The threshold is what the two tracks actually need —
-                      // 340 + 16 gap + 380 — not a stock breakpoint. `@3xl` is
+                      // The threshold is what the two tracks actually need,
+                      // 340 + 16 gap + 380, not a stock breakpoint. `@3xl` is
                       // 768px, which stacked a pane with 741px of room in it.
                       sideBySide &&
                         "@min-[736px]:h-full @min-[736px]:items-stretch @min-[736px]:grid-cols-[minmax(340px,1fr)_minmax(380px,420px)]",
@@ -340,7 +340,7 @@ export function TaskDetail({
 
                       {/* The clauses the finding is tested against. It sits under
                         the causes because it is what turns two established facts
-                        into a coverage position — and because the one failing
+                        into a coverage position, and because the one failing
                         clause is the reason the split falls where it does. */}
                       {policyTest?.checks?.length ? (
                         <PolicyTestCard
@@ -365,11 +365,11 @@ export function TaskDetail({
                     </div>
 
                     {/*
-                    Deciding column — its own scroller beside the finding, the
+                    Deciding column: its own scroller beside the finding, the
                     next thing down when stacked. Rendered once either way: the
                     previous version mounted a second copy for the stacked case,
-                    which threw away the card's state — a half-typed rationale
-                    included — every time the layout flipped.
+                    which threw away the card's state, a half-typed rationale
+                    included, every time the layout flipped.
 
                     Scrolling itself replaces the sticky positioning this had:
                     sticky only pins the top of a card taller than the viewport,
@@ -426,7 +426,7 @@ export function TaskDetail({
               </div>
             </div>
 
-            {/* The right-edge controls, shown only when the case panel is shut —
+            {/* The right-edge controls, shown only when the case panel is shut.
                 once it is open its own header carries the assessment toggle, and
                 two of the same control on one edge is one too many. */}
             {warrantyCase && !railOpen && (
@@ -454,7 +454,7 @@ export function TaskDetail({
               </div>
             )}
 
-            {/* Assessment — same column as the case rail, and replaces it. Both
+            {/* Assessment: same column as the case rail, and replaces it. Both
                 sit under the action header rather than beside it, so the
                 action's identity stays put whichever panel is showing. */}
             {warrantyCase && chatOpen && !rich && (
@@ -474,7 +474,7 @@ export function TaskDetail({
               />
             )}
 
-            {/* Case rail — the same tabs as the detail page, compact variant. */}
+            {/* Case rail: the same tabs as the detail page, compact variant. */}
             {warrantyCase && railOpen && (
               <aside className="flex min-w-[300px] flex-1 flex-col overflow-hidden border-l border-border">
                 <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">

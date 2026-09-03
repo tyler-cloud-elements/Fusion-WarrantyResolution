@@ -12,8 +12,8 @@ import type { CaseAction, CaseSlaEntry, SlaStatus, WarrantyCase } from "@/lib/wa
 
 // The case's clocks, at all three levels.
 //
-// A warranty case runs several at once — the case clock, one per entered stage,
-// one per open decision — so the Overview shows the case clock plus whatever
+// A warranty case runs several at once: the case clock, one per entered stage,
+// one per open decision. The Overview shows the case clock plus whatever
 // needs attention, and the SLAs tab shows the full grouped list. Both read
 // `getCaseSlas`, so the summary can never disagree with the list.
 
@@ -208,7 +208,7 @@ export function SlaPanel({
     );
   }
 
-  // Full list — only statuses actually present become filter segments, so the
+  // Full list. Only statuses actually present become filter segments, so the
   // control doubles as a count rollup rather than showing empty buckets.
   const present = STATUS_ORDER.filter((s) => others.some((e) => e.status === s));
   const matches = (entry: CaseSlaEntry) => statusFilter === "all" || entry.status === statusFilter;

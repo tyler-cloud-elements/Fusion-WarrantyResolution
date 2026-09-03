@@ -18,7 +18,7 @@ import { ROLE_PROFILES } from "@/lib/role/RoleProvider";
 import type { Priority, WarrantyCase } from "@/lib/warranty/types";
 
 // The Details tab: the case record, grouped the way a warranty coordinator
-// thinks about it — who and where, what broke, what it's worth, and the case
+// thinks about it: who and where, what broke, what it's worth, and the case
 // variables Maestro carries.
 //
 // Almost everything is read-only, because the connected systems are the record:
@@ -85,19 +85,19 @@ const CARDS: { id: string; title: string; fields: FieldDef[] }[] = [
     id: "asset",
     title: "Asset and entitlement",
     fields: [
-      { key: "assetModel", label: "Model", value: (c) => c.asset.model || "—" },
-      { key: "assetSerial", label: "Serial", value: (c) => c.asset.serial || "—" },
-      { key: "assetDescription", label: "Description", value: (c) => c.asset.description || "—" },
+      { key: "assetModel", label: "Model", value: (c) => c.asset.model || "Not recorded" },
+      { key: "assetSerial", label: "Serial", value: (c) => c.asset.serial || "Not recorded" },
+      { key: "assetDescription", label: "Description", value: (c) => c.asset.description || "Not recorded" },
       {
         key: "inService",
         label: "In service",
-        value: (c) => (c.asset.inServiceMonths ? `${c.asset.inServiceMonths} months` : "—"),
+        value: (c) => (c.asset.inServiceMonths ? `${c.asset.inServiceMonths} months` : "Not recorded"),
       },
       { key: "warrantyStatus", label: "Warranty status", value: (c) => c.asset.warrantyStatus },
       {
         key: "coveragePosition",
         label: "Coverage position",
-        value: (c) => String(c.variables["Coverage.Position"] ?? "—"),
+        value: (c) => String(c.variables["Coverage.Position"] ?? "Not yet set"),
       },
     ],
   },
@@ -115,7 +115,7 @@ const CARDS: { id: string; title: string; fields: FieldDef[] }[] = [
         value: (c) => <PriorityBadge priority={c.priority} />,
         raw: (c) => c.priority,
         // The P1 override in SDD §1 keys off this, so changing it changes the
-        // case clock — which is exactly why it is worth being editable.
+        // case clock, which is exactly why it is worth being editable.
         patch: (v) => ({ priority: v as Priority }),
       },
       {
@@ -148,7 +148,7 @@ const CARDS: { id: string; title: string; fields: FieldDef[] }[] = [
       },
       { key: "status", label: "Status", value: (c) => c.status },
       { key: "slaStatus", label: "Stage SLA", value: (c) => <SlaBadge status={c.slaStatus} /> },
-      { key: "closureReason", label: "Closure reason", value: (c) => c.closureReason ?? "—" },
+      { key: "closureReason", label: "Closure reason", value: (c) => c.closureReason ?? "Not closed" },
     ],
   },
 ];
@@ -167,7 +167,7 @@ export function CaseDetailsTab({
   rail = false,
 }: {
   warrantyCase: WarrantyCase;
-  /** Case owner only — enables the pencils. */
+  /** Case owner only. Enables the pencils. */
   editable?: boolean;
   onSave?: (patch: Partial<WarrantyCase>) => void;
   rail?: boolean;

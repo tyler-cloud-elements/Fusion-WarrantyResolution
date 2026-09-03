@@ -65,11 +65,11 @@ function RuleRow({ rule }: { rule: CaseRule }) {
         {rule.if ? (
           <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{rule.if}</code>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="text-muted-foreground">None</span>
         )}
       </td>
       <td className="px-3 py-2.5">{rule.then}</td>
-      <td className="py-2.5 pl-3 pr-4 text-muted-foreground">{rule.authoredBy ?? "—"}</td>
+      <td className="py-2.5 pl-3 pr-4 text-muted-foreground">{rule.authoredBy ?? "Unattributed"}</td>
     </tr>
   );
 }
@@ -194,7 +194,7 @@ export function CasePlansPage() {
               <span className="text-base font-semibold">Rules decide how your case moves</span>
               <p className="text-sm text-muted-foreground">
                 Rules are the conditions that control the case. They decide when stages and tasks
-                start, complete, or exit — and the case agent reads them at run time to work out the
+                start, complete, or exit, and the case agent reads them at run time to work out the
                 next best action when no rule fully settles the question.
               </p>
             </Card>

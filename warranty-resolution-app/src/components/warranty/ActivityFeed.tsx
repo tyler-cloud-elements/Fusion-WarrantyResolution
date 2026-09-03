@@ -141,8 +141,8 @@ function LevelTag({ level }: { level?: ActivityLevel }) {
   return <span className={cn("rounded px-1.5 py-0.5 text-xs font-semibold", cls)}>{label}</span>;
 }
 
-// One glyph per kind of event. Colour is deliberately not encoded here — the
-// row's tags carry that — so the marks read as one consistent set.
+// One glyph per kind of event. Colour is deliberately not encoded here, since the
+// row's tags carry that, so the marks read as one consistent set.
 function markIcon(item: ActivityItem): LucideIcon {
   if (item.level === "stage") return Layers;
   if (item.level === "milestone") return Flag;

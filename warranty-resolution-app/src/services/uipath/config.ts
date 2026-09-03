@@ -1,7 +1,7 @@
 // Runtime configuration, read once from Vite env.
 //
 // Every value is optional. With the UiPath block unset the app runs entirely on
-// the bundled demo dataset — which is the state a fresh clone starts in, and the
+// the bundled demo dataset, which is the state a fresh clone starts in, and the
 // state to leave it in until the real case is published.
 
 import type { UiPathSDKConfig } from "@uipath/uipath-typescript/core";
@@ -14,7 +14,7 @@ function env(key: string): string {
 
 export const uipathConfig = {
   /**
-   * The API host the SDK calls — `https://api.uipath.com`, not the portal.
+   * The API host the SDK calls: `https://api.uipath.com`, not the portal.
    *
    * The portal origin serves no `Access-Control-Allow-Origin`, so every request
    * from the browser dies in preflight:
@@ -28,7 +28,7 @@ export const uipathConfig = {
   clientId: env("VITE_UIPATH_CLIENT_ID"),
   redirectUri: env("VITE_UIPATH_REDIRECT_URI"),
   scopes: env("VITE_UIPATH_SCOPES"),
-  /** Overrides the derived portal origin. Rarely needed — see `portalUrl()`. */
+  /** Overrides the derived portal origin. Rarely needed; see `portalUrl()`. */
   portalUrl: env("VITE_UIPATH_PORTAL_URL"),
 } as const;
 
@@ -63,7 +63,7 @@ export const caseConfig = {
    * The process the "New case" button starts.
    *
    * Falls back to the case process itself, which is the common setup. Point it
-   * at a separate seeding process when one exists — the demo arguments
+   * at a separate seeding process when one exists. The demo arguments
    * (`demoScenario`, `demoRunId`, `ownerEmail`) suggest a launcher rather than
    * the case's own intake contract, so this is deliberately its own setting.
    */
@@ -80,7 +80,7 @@ export const integrationConfig = {
 
 /**
  * The SDK cannot be constructed without these four. When any is missing the app
- * stays in demo mode and never renders a login screen — a demo that asks for
+ * stays in demo mode and never renders a login screen. A demo that asks for
  * credentials it does not have is worse than one that just runs.
  */
 export function isUiPathConfigured(): boolean {
@@ -92,7 +92,7 @@ export function isUiPathConfigured(): boolean {
   );
 }
 
-/** True once a case is pointed at — the gate on every live read. */
+/** True once a case is pointed at. This gates every live read. */
 export function isCaseConfigured(): boolean {
   return isUiPathConfigured() && Boolean(caseConfig.processKey);
 }
@@ -109,16 +109,16 @@ export function isAssistantConfigured(): boolean {
  * `origin + window.location.pathname` is only stable under a hash router (where
  * pathname is always "/"); this app routes on the history API, so from /cases it
  * would send `http://localhost:5173/cases` and identity rejects it with
- * `invalid_request — Invalid redirect_uri`.
+ * `invalid_request: Invalid redirect_uri`.
  *
- * `getAppBase()` is the mount point — "/" locally, "/<routing-name>" on UiPath
- * Coded Apps — so this yields one value per deployment:
+ * `getAppBase()` is the mount point, "/" locally and "/<routing-name>" on UiPath
+ * Coded Apps, so this yields one value per deployment:
  *   http://localhost:5173/
  *   https://<org>.uipath.host/<routing-name>/
  *
  * The trailing slash matches what a hash-routed app produces, which is the shape
  * these External Apps are normally registered with. If yours is registered
- * without it, set VITE_UIPATH_REDIRECT_URI explicitly — it must match exactly.
+ * without it, set VITE_UIPATH_REDIRECT_URI explicitly. It must match exactly.
  */
 function defaultRedirectUri(): string {
   if (typeof window === "undefined") return "";
@@ -137,7 +137,7 @@ export function buildSdkConfig(): UiPathSDKConfig {
   };
 }
 
-/** Deep link to a task in Action Center — portal host, so a person can open it. */
+/** Deep link to a task in Action Center, on the portal host so a person can open it. */
 export function actionCenterUrl(taskId: number | string): string | null {
   if (!uipathConfig.baseUrl || !uipathConfig.orgName || !uipathConfig.tenantName) return null;
   return `${portalUrl()}/${uipathConfig.orgName}/${uipathConfig.tenantName}/actions_/tasks/${taskId}`;
@@ -146,7 +146,7 @@ export function actionCenterUrl(taskId: number | string): string | null {
 /**
  * Deep link to a case instance run in Maestro.
  *
- * The shape is the one the product actually uses — the case processKey is part
+ * The shape is the one the product actually uses: the case processKey is part
  * of the path and the folder rides as a query param, both of which the page
  * needs to resolve the run:
  *   /{org}/{tenant}/maestro_/cases/{processKey}/instances/{instanceId}?folderKey=…

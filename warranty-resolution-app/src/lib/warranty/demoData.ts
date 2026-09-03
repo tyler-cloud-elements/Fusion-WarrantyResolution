@@ -2,7 +2,7 @@
 //
 // WR-2026-0417 and its evidence, decision options, agent recommendation,
 // reassessment and execution trail are transcribed verbatim from the FUSION 2026
-// storyboard, Act II scenes 13–16 — these are the exact words that appear on
+// storyboard, Act II scenes 13-16. These are the exact words that appear on
 // stage, so edit them only alongside the storyboard. WR-2026-0421 and
 // WR-2026-0409 come from the scene-13 queue. The remaining 38 open cases are
 // generated deterministically so the counts the talk track quotes hold up:
@@ -32,7 +32,7 @@ import type {
  * tidier but rots: the stored per-stage figures ("3 hr 12 min elapsed") stay put
  * while anything computed against real time drifts, so after a week on the shelf
  * the SLA rows and the activity feed contradict the header. Anchoring to load
- * keeps every relative figure — clocks, countdowns, "16 hr ago" — saying the
+ * keeps every relative figure (clocks, countdowns, "16 hr ago") saying the
  * same thing on any day, which is what the demo actually needs.
  */
 export const DEMO_NOW = new Date();
@@ -53,7 +53,7 @@ function minutesFromNow(m: number): string {
  * The agreement, tested clause by clause against this claim.
  *
  * Seven checks, and the two that are not passes are the case: §4.2 fails on the
- * unapproved configuration change, and operator-error contribution is *open* —
+ * unapproved configuration change, and operator-error contribution is *open*.
  * nobody could run it, because the site never provided its maintenance history.
  * That distinction is load-bearing. An open check has not been decided against
  * the customer, which is why the rationale says the contribution is unestablished
@@ -92,7 +92,7 @@ const POLICY_CHECKS_0417: PolicyCheck[] = [
     id: "pc-parts",
     verdict: "pass",
     name: "Original-parts clause §6.1",
-    detail: "Alternate 8400-DRV-GBX-45B fitted — form, fit and function validated",
+    detail: "Alternate 8400-DRV-GBX-45B fitted. Form, fit and function validated",
     source: "Vault-PLM",
   },
   {
@@ -107,7 +107,7 @@ const POLICY_CHECKS_0417: PolicyCheck[] = [
     verdict: "open",
     name: "Operator-error contribution",
     detail:
-      "Not established — site maintenance history was not provided. This remains open at the point of decision.",
+      "Not established. Site maintenance history was not provided. This remains open at the point of decision.",
   },
 ];
 
@@ -116,7 +116,7 @@ const POLICY_CHECKS_0417: PolicyCheck[] = [
  *
  * Five, not fifty: the rail is an argument, and an argument that lists
  * everything it touched is not one. Three carry the split itself, one prices
- * the goodwill, and the last is the one that says what is *not* being charged —
+ * the goodwill, and the last is the one that says what is *not* being charged,
  * which is the signal a reviewer is most likely to disagree with, and so the
  * one most worth having on the list.
  */
@@ -127,14 +127,14 @@ const SIGNALS_0417: AgentSignal[] = [
     short: "Two causes, neither sole",
     backs: "A split, not all-or-nothing",
     detail:
-      "The policy test comes back 5 pass, 1 fail, 1 open — a defect inside its term and an unapproved configuration change, each proven, neither excluding the other. No coverage rule in the case plan resolves a combined cause, which is why the case escalated to a person rather than closing itself. A split by cause attribution is the only position that answers the finding as found: denial and full coverage each require treating one established cause as if it were not there.",
+      "The policy test comes back 5 pass, 1 fail, 1 open: a defect inside its term and an unapproved configuration change, each proven, neither excluding the other. No coverage rule in the case plan resolves a combined cause, which is why the case escalated to a person rather than closing itself. A split by cause attribution is the only position that answers the finding as found: denial and full coverage each require treating one established cause as if it were not there.",
     sources: ["Case", "Helios"],
   },
   {
     id: "sig-defect-in-term",
     importance: "high",
     short: "Defect inside its rated term",
-    backs: "Parts — $8,450.00 to us",
+    backs: "Parts, $8,450.00 to us",
     detail:
       "The gearbox failed 30 months into a 60-month rated service life, with bearing race spalling consistent with a manufacturing defect and not with overload, contamination or missed lubrication. Established on site on 03-20, first-time fix confirmed. The component sits in a covered subsystem under an agreement that runs to 2027-09-02 with a $0 deductible, so nothing about the term or the scope stands in the way.",
     sources: ["FieldLink", "WT-9", "Vault-PLM"],
@@ -143,16 +143,16 @@ const SIGNALS_0417: AgentSignal[] = [
     id: "sig-unapproved-change",
     importance: "high",
     short: "§4.2 change never approved",
-    backs: "Labour + freight — $6,582.50",
+    backs: "Labour and freight, $6,582.50",
     detail:
-      "Drive control parameters — acceleration ramp and current limit — were raised above the commissioned envelope on 2026-02-14 with no approval record, and ESA §4.2 requires configuration changes to be approved in writing before they take effect. The labour and the expedited freight are downstream of that change, which is what makes them separable: the original part carried a six-week lead time, so the $3,900 air freight is the cost of recovering from the change rather than of the defect.",
+      "Drive control parameters (acceleration ramp and current limit) were raised above the commissioned envelope on 2026-02-14 with no approval record, and ESA §4.2 requires configuration changes to be approved in writing before they take effect. The labour and the expedited freight are downstream of that change, which is what makes them separable: the original part carried a six-week lead time, so the $3,900 air freight is the cost of recovering from the change rather than of the defect.",
     sources: ["Vault-PLM", "Sentinel", "SAP"],
   },
   {
     id: "sig-goodwill-headroom",
     importance: "medium",
     short: "Goodwill has room and a reason",
-    backs: "Travel — $1,240.00 absorbed",
+    backs: "Travel, $1,240.00 absorbed",
     detail:
       "A strategic account at $184,000 a year, 96 hours down with no divert, and $312,000 of credits already issued this year against a budget that still has headroom. Travel and per diem is the smallest line on the claim and the one least attributable to either cause, which makes it the right one to absorb: it reads as a gesture rather than as a concession on the coverage argument.",
     sources: ["SAP", "Case"],
@@ -163,13 +163,13 @@ const SIGNALS_0417: AgentSignal[] = [
     short: "Operator error left open",
     backs: "No third cause charged",
     detail:
-      "Site maintenance history was never provided, so operator-error contribution could not be tested and stays open at the point of decision. It is on the record as unestablished rather than dismissed — nothing has been charged to the customer on account of it, and if the history arrives later this is the check that would reopen the split.",
-    sources: ["—"],
+      "Site maintenance history was never provided, so operator-error contribution could not be tested and stays open at the point of decision. It is on the record as unestablished rather than dismissed. Nothing has been charged to the customer on account of it, and if the history arrives later this is the check that would reopen the split.",
+    sources: ["None recorded"],
   },
 ];
 
 /**
- * How comparable cases went. Sixty percent agree is not an endorsement — it is
+ * How comparable cases went. Sixty percent agree is not an endorsement. It is
  * also forty percent who did something else, which is why the two dissenting
  * positions are listed with their counts rather than rolled into "other".
  */
@@ -193,9 +193,9 @@ const REPLIES_0417: SuggestedReply[] = [
     id: "cr-which-rule-freight",
     kind: "ask-back",
     label: "Which rule moves the freight?",
-    body: "Which rule puts freight on the customer? The policy test cites the configuration change, but I cannot see the rule that moves freight specifically — and I have to name it in the rationale.",
+    body: "Which rule puts freight on the customer? The policy test cites the configuration change, but I cannot see the rule that moves freight specifically, and I have to name it in the rationale.",
     answer:
-      "ESA §4.2 itself — it voids cover for what an unapproved change causes, and the expedite is downstream of the change: the approved part carried a six-week lead time, so the $3,900 air freight only exists because the failure happened when it did. There is no freight-specific rule, and if you need one named in the rationale, §4.2 is the one to cite.",
+      "ESA §4.2 itself. It voids cover for what an unapproved change causes, and the expedite is downstream of the change: the approved part carried a six-week lead time, so the $3,900 air freight only exists because the failure happened when it did. There is no freight-specific rule, and if you need one named in the rationale, §4.2 is the one to cite.",
   },
   {
     id: "cr-prior-goodwill",
@@ -212,14 +212,14 @@ const REPLIES_0417: SuggestedReply[] = [
     label: "The change caused it, not a defect",
     body: "Raising the acceleration ramp and the current limit above the commissioned envelope is what broke this gearbox. Bearing race spalling is what an over-driven drive does. Thirty months into a sixty-month life is not evidence of a defect when the duty it was run at was changed four weeks earlier.",
     answer:
-      "Taken as causal rather than contributing, the defect finding does not hold up on its own — a rated life means the duty it was rated for, and that changed in February.",
+      "Taken as causal rather than contributing, the defect finding does not hold up on its own. A rated life means the duty it was rated for, and that changed in February.",
     forOptions: ["Denied"],
   },
   {
     id: "cr-site-knew",
     kind: "disagree",
     label: "The site made the change knowingly",
-    body: "The site changed the drive parameters without asking, and knew the approval requirement. That is not a shared cause — it is the customer's cause.",
+    body: "The site changed the drive parameters without asking, and knew the approval requirement. That is not a shared cause. It is the customer's cause.",
     answer:
       "If the requirement was known and the change was made anyway, that reads as acceptance of the risk rather than an oversight, and it weakens the case for absorbing the travel as goodwill.",
     forOptions: ["Denied"],
@@ -228,9 +228,9 @@ const REPLIES_0417: SuggestedReply[] = [
     id: "cr-operator-error-open",
     kind: "disagree",
     label: "Operator error isn't established",
-    body: "The unapproved configuration change is on the record, but nobody has established that it caused the failure — there is no maintenance history for the period and no engineering finding. Moving labour and freight to the customer on a contribution that is still open puts the whole split on something we have not proved.",
+    body: "The unapproved configuration change is on the record, but nobody has established that it caused the failure. There is no maintenance history for the period and no engineering finding. Moving labour and freight to the customer on a contribution that is still open puts the whole split on something we have not proved.",
     answer:
-      "You're right that the contribution is still open. §4.2 does not require the change to be proven causal, only unapproved — but if you want the split to rest on cause rather than clause, that is a different argument and the labour is the line it turns on.",
+      "You're right that the contribution is still open. §4.2 does not require the change to be proven causal, only unapproved. But if you want the split to rest on cause rather than clause, that is a different argument and the labour is the line it turns on.",
     forOptions: ["Approved"],
   },
 ];
@@ -268,7 +268,7 @@ const CASE_0417: WarrantyCase = {
   },
   priority: "P1",
   status: "Action required",
-  // Storyboard 26 Aug moved this case to Resolution decision — scenes 19, 21
+  // Storyboard 26 Aug moved this case to Resolution decision. Scenes 19, 21
   // and 22 all agree, and scene 22's Global variables source Coverage.Position
   // from Resolution decision. The console mock still labels the stage "Coverage
   // and evidence review"; the storyboard is the script, so it wins.
@@ -276,11 +276,11 @@ const CASE_0417: WarrantyCase = {
   activeLanes: [],
   owner: "Sarah Chen",
   ownerRole: "Warranty Resolution Lead",
-  description: "Coverage disputed — combined cause finding",
+  description: "Coverage disputed: combined cause finding",
   queueReason: "No rule resolves a combined cause",
   claimValue: 16272.5,
   lineStatus: "Down · no divert",
-  // How long the customer's line has been down — the talk track's number, and a
+  // How long the customer's line has been down. It is the talk track's number, and a
   // different clock from the case's own. The line failed four days ago; the
   // claim reached us twelve hours ago, which is where this case starts.
   lineDownHours: 96,
@@ -288,7 +288,7 @@ const CASE_0417: WarrantyCase = {
   //
   // It used to be 96 hours, borrowed from the line-down figure, which put the
   // case three days past its 24-hour P1 budget and stamped BREACHED on a case
-  // whose every other clock is green — including the header two lines up, which
+  // whose every other clock is green, including the header two lines up, which
   // reads "2 hr 13 min left". Nothing on the case happened in that window
   // either: its earliest event is 11 hr 40 min old.
   openedAt: minutesAgo(11 * 60 + 45),
@@ -306,7 +306,7 @@ const CASE_0417: WarrantyCase = {
   },
   // The seven documents in docs/ixp-warranty-documents/, with what IXP read off each.
   // `inferred: true` marks the values stated nowhere in the document that had to
-  // be derived — the ones the whole case turns on, and the ones a reviewer is
+  // be derived. They are the ones the whole case turns on, and the ones a reviewer is
   // actually checking. One field is deliberately empty: the duration at the
   // raised thermal threshold is not established, and a model returning nothing
   // there is the right answer.
@@ -321,7 +321,7 @@ const CASE_0417: WarrantyCase = {
       pages: 2,
       fileUrl: "documents/third-party-service-report.pdf",
       body:
-        "Meridian replaced the main sort drive on 6 April 2026 after the customer reported intermittent stoppages and overtemp faults. The OEM unit was quoted at a three-week lead time, so the customer authorised substitution with an \"equivalent unit\" from Meridian's stock — an Altek AD-5500-HD, fitted with a 6mm adapter plate fabricated on site.\n\nThe replacement would not hold the existing acceleration profile, so three controls parameters were raised. The technician recorded that full OEM commissioning was NOT performed, and noted twice that raising the thermal cutback is a stopgap and the root cause of the original overheating was never established.",
+        "Meridian replaced the main sort drive on 6 April 2026 after the customer reported intermittent stoppages and overtemp faults. The OEM unit was quoted at a three-week lead time, so the customer authorised substitution with an \"equivalent unit\" from Meridian's stock: an Altek AD-5500-HD, fitted with a 6mm adapter plate fabricated on site.\n\nThe replacement would not hold the existing acceleration profile, so three controls parameters were raised. The technician recorded that full OEM commissioning was NOT performed, and noted twice that raising the thermal cutback is a stopgap and the root cause of the original overheating was never established.",
       table: {
         columns: ["Parameter", "Was", "Set to", "Reason"],
         rows: [
@@ -389,13 +389,13 @@ const CASE_0417: WarrantyCase = {
           inferred: true,
           confidence: 96,
           source:
-            "Derivable from the commissioning date plus the 24-month term in clause 1.1 — and stated outright here, so the derived value can be cross-checked.",
+            "Derivable from the commissioning date plus the 24-month term in clause 1.1, and stated outright here, so the derived value can be cross-checked.",
         },
         { label: "Open finding", value: "SF-2026-0114 · 18 January 2026", confidence: 98 },
         { label: "Finding detail", value: "Drive case 64C vs 52–58C nominal", confidence: 95 },
         {
           label: "Did the thermal condition predate the third-party work?",
-          value: "Yes — by 78 days",
+          value: "Yes, by 78 days",
           inferred: true,
           confidence: 93,
           source:
@@ -423,7 +423,7 @@ const CASE_0417: WarrantyCase = {
         { label: "Component failure covered", value: "Yes, within term", source: "Clause 3.1", confidence: 98 },
         {
           label: "Equivalent parts approved?",
-          value: "No — specifically excluded",
+          value: "No, specifically excluded",
           source: "Clause 3.2",
           confidence: 98,
         },
@@ -442,7 +442,7 @@ const CASE_0417: WarrantyCase = {
       id: "ev-0417-4",
       kind: "pdf",
       title: "Returned part inspection",
-      verdict: "Preliminary — no common failure mechanism established",
+      verdict: "Preliminary. No common failure mechanism established",
       issuer: "Cobalt Ridge Component Analysis Laboratory",
       reference: "CAL-2026-0731 · RMA CRA-RMA-2026-0442",
       pages: 3,
@@ -464,7 +464,7 @@ const CASE_0417: WarrantyCase = {
         { label: "Disposition", value: "HOLD", confidence: 97 },
         {
           label: "Common failure mechanism established?",
-          value: "No — sample too small, confounded by ambient",
+          value: "No. Sample too small, confounded by ambient",
           inferred: true,
           confidence: 86,
           source:
@@ -475,7 +475,7 @@ const CASE_0417: WarrantyCase = {
           value: "",
           inferred: true,
           source:
-            "The report says the duration is not established. Nothing to extract — this is the negative case, and the one most likely to produce a confident hallucination.",
+            "The report says the duration is not established. Nothing to extract. This is the negative case, and the one most likely to produce a confident hallucination.",
         },
       ],
       addedAt: minutesAgo(5 * 60 + 20),
@@ -500,7 +500,7 @@ const CASE_0417: WarrantyCase = {
         { label: "Claimed daily exposure", value: "$275,000", confidence: 94 },
         {
           label: "Impact tier",
-          value: "P1 — line down, no divert",
+          value: "P1, line down, no divert",
           inferred: true,
           confidence: 92,
           source:
@@ -508,7 +508,7 @@ const CASE_0417: WarrantyCase = {
         },
         {
           label: "Is this the same fault as the open finding?",
-          value: "Consistent — same overtemp signature",
+          value: "Consistent, same overtemp signature",
           inferred: true,
           confidence: 79,
           source: "Reported fault read against SF-2026-0114. Consistent, not proven.",
@@ -528,7 +528,7 @@ const CASE_0417: WarrantyCase = {
       pages: 3,
       fileUrl: "documents/warranty-SOP-v3.pdf",
       body:
-        "The internal procedure governing warranty resolution — evidence requirements, authority thresholds, and the route each coverage position takes.",
+        "The internal procedure governing warranty resolution: evidence requirements, authority thresholds, and the route each coverage position takes.",
       extracted: [
         { label: "Applies to", value: "Warranty resolution, all impact tiers", confidence: 97 },
         { label: "Version", value: "v3", confidence: 99 },
@@ -547,7 +547,7 @@ const CASE_0417: WarrantyCase = {
       pages: 7,
       fileUrl: "documents/claim-evidence-packet-combined.pdf",
       body:
-        "Three separate documents submitted as a single file with no separator pages — which is how customers actually send evidence. Split and classified on ingest rather than pre-processed by hand.",
+        "Three separate documents submitted as a single file with no separator pages, which is how customers actually send evidence. Split and classified on ingest rather than pre-processed by hand.",
       extracted: [
         { label: "Documents detected", value: "3", inferred: true, confidence: 95, source: "Split on layout and header change; no separator pages present." },
         { label: "Total pages", value: "7", confidence: 99 },
@@ -625,7 +625,7 @@ const CASE_0417: WarrantyCase = {
       level: "task",
       actor: "Tom Beckerman",
       title: "Classify customer impact",
-      detail: "P1 — production line down, 11 hours and counting",
+      detail: "P1, production line down, 11 hours and counting",
       time: minutesAgo(11 * 60 + 2),
       stage: "Intake and impact triage",
       hitl: [
@@ -649,7 +649,7 @@ const CASE_0417: WarrantyCase = {
       level: "milestone",
       actor: "Case manager",
       title: "Intake and impact triage completed",
-      detail: "Required tasks completed — coverage and containment start in parallel",
+      detail: "Required tasks completed. Coverage and containment start in parallel",
       time: minutesAgo(10 * 60 + 40),
       stage: "Intake and impact triage",
     },
@@ -680,7 +680,7 @@ const CASE_0417: WarrantyCase = {
       actor: "Evidence agent",
       title: "Flag missing and conflicting facts",
       detail:
-        "Two established causes point to different payers — no rule resolves a combined cause",
+        "Two established causes point to different payers, and no rule resolves a combined cause",
       time: minutesAgo(3 * 60 + 58),
       stage: "Coverage and evidence review",
     },
@@ -708,7 +708,7 @@ const CASE_0417: WarrantyCase = {
       author: "Miguel Alvarez",
       role: "Reliability and Controls Engineer",
       time: minutesAgo(3 * 60 + 40),
-      text: "The torque increase is real but it isn't the sole cause — the bearing was already failing early. Happy to look again if new evidence lands.",
+      text: "The torque increase is real but it isn't the sole cause. The bearing was already failing early. Happy to look again if new evidence lands.",
     },
   ],
   isLive: false,
@@ -719,7 +719,7 @@ const CASE_0417: WarrantyCase = {
  * rather than showing the case as already reassessed.
  *
  * Carries no case id on purpose. It was written around WR-2026-0417, but the
- * button that fires it applies it to whichever case is open — a case read from
+ * button that fires it applies it to whichever case is open. A case read from
  * Maestro has a live id, and an authored id here only invited the event to be
  * filed against a case nobody is looking at.
  */
@@ -792,7 +792,7 @@ const CASE_0421: WarrantyCase = {
     {
       id: "ev-0421-1",
       kind: "pdf",
-      title: "Recurrence scan — SR-440 drive family",
+      title: "Recurrence scan: SR-440 drive family",
       verdict: "4 related failures in 12 months",
       body:
         "Four SR-440 bearing failures across three customers inside twelve months, all within the first 18 months of service. Three share the same supplier lot. The v2 recurrence gate holds closure until this is reviewed.",
@@ -843,7 +843,7 @@ const CASE_0421: WarrantyCase = {
       level: "task",
       actor: "Automation",
       title: "Reconcile coverage and actual cost",
-      detail: "Covered and actual cost reconciled — no open items",
+      detail: "Covered and actual cost reconciled. No open items",
       time: minutesAgo(6 * 60),
       stage: "Close and learn",
     },
@@ -863,7 +863,7 @@ const CASE_0421: WarrantyCase = {
       level: "milestone",
       actor: "Case manager",
       title: "Recurrence gate held closure",
-      detail: "relatedFailures >= 4 — entered Product-quality escalation (case plan v2)",
+      detail: "relatedFailures >= 4, so it entered Product-quality escalation (case plan v2)",
       time: minutesAgo(178),
       stage: "Close and learn",
       actionId: "quality-disposition",
@@ -996,7 +996,7 @@ const CASE_0409: WarrantyCase = {
       level: "milestone",
       actor: "Case manager",
       title: "Routed to Engineering exception",
-      detail: "Equivalence not established — BR-006 reserves the judgement for Engineering",
+      detail: "Equivalence not established. BR-006 reserves the judgement for Engineering",
       time: minutesAgo(138),
       stage: "Diagnose and contain",
       actionId: "engineering-exception",
@@ -1037,7 +1037,7 @@ const OWNERS: { name: string; role: string }[] = [
 
 const PRIORITIES: Priority[] = ["P1", "P2", "P3", "P3", "P4"];
 
-/** FNV-1a — a stable pseudo-random source so every render draws the same list. */
+/** FNV-1a, a stable pseudo-random source so every render draws the same list. */
 function seed(input: string): number {
   let h = 2166136261;
   for (let i = 0; i < input.length; i++) {
@@ -1131,17 +1131,17 @@ function buildBackgroundCase(index: number): WarrantyCase {
         actorLabel: "PR",
         step: "Create and correlate warranty case",
         stage: "Intake and impact triage",
-        time: "—",
+        time: "",
       },
       {
         seq: 2,
         actor: "agent",
         actorLabel: "AG",
         step: waiting
-          ? `Case manager: holding — ${WAITING_REASONS[(s >> 19) % WAITING_REASONS.length]}`
+          ? `Case manager: holding, ${WAITING_REASONS[(s >> 19) % WAITING_REASONS.length]}`
           : `Case manager: advanced to ${stage.name}`,
         stage: stage.name,
-        time: "—",
+        time: "",
       },
     ],
     variables: {
@@ -1171,7 +1171,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
     id: "coverage-decision",
     caseId: "WR-2026-0417",
     actionType: "coverage-decision",
-    title: "Coverage decision — combined cause finding",
+    title: "Coverage decision: combined cause finding",
     // See the note on CASE_0417.currentStage: the 26 Aug storyboard puts this
     // decision in Resolution decision, the console mock still says Coverage and
     // evidence review. The storyboard wins.
@@ -1183,7 +1183,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
     slaMinutes: 4 * 60,
     elapsedMinutes: 4 * 60 - 133,
     whyThisReachedYou:
-      "The gearbox failed 30 months into a 60-month rated life — but the drive was reconfigured above its commissioned limits in February with no written approval. Both causes are established and no coverage rule resolves a combined cause, which is why this is with a person.",
+      "The gearbox failed 30 months into a 60-month rated life, but the drive was reconfigured above its commissioned limits in February with no written approval. Both causes are established and no coverage rule resolves a combined cause, which is why this is with a person.",
     options: [
       {
         outcome: "Denied",
@@ -1202,7 +1202,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
         effects: [
           { title: "Coverage position written to WT-9", detail: "denied" },
           { title: "No accrual raised in SAP", detail: "$0" },
-          { title: "Denial letter drafted — VP sign-off required", hold: true },
+          { title: "Denial letter drafted, VP sign-off required", hold: true },
           { title: "FieldLink dispatch held", hold: true },
           { title: "SLA credit exposure flagged to Finance", detail: "$312,000 YTD" },
           { title: "Decision written to the ledger", detail: "override of the recommendation" },
@@ -1240,7 +1240,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
         allocation: {
           parts: { to: "vendor", why: "Failed inside its term" },
           labour: { to: "customer", why: "Caused by the unapproved change" },
-          travel: { to: "vendor", why: "Goodwill — strategic account", goodwill: true },
+          travel: { to: "vendor", why: "Goodwill, strategic account", goodwill: true },
           freight: { to: "customer", why: "Expedite caused by the change" },
         },
         draftRationale:
@@ -1287,7 +1287,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
         label: "Cause 1",
         title: "Component defect, inside its term",
         body:
-          "Induction drive gearbox internal failure. The component was 30 months into a 60-month rated service life. Bearing race spalling consistent with a manufacturing defect — not with overload, contamination, or missed lubrication. Replaced on site, first-time fix confirmed.",
+          "Induction drive gearbox internal failure. The component was 30 months into a 60-month rated service life. Bearing race spalling consistent with a manufacturing defect, not with overload, contamination, or missed lubrication. Replaced on site, first-time fix confirmed.",
         summary: "30 of 60 months · defect signature, not wear",
         points: "Points to covered",
         established: "ESTABLISHED 03-20 ON SITE",
@@ -1298,7 +1298,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
         label: "Cause 2",
         title: "Configuration change, unapproved",
         body:
-          "Drive control parameters were changed on 2026-02-14 — acceleration ramp and current limit raised above the commissioned envelope. No approval record exists. ESA §4.2 requires configuration changes to be approved in writing before they take effect.",
+          "Drive control parameters were changed on 2026-02-14: acceleration ramp and current limit raised above the commissioned envelope. No approval record exists. ESA §4.2 requires configuration changes to be approved in writing before they take effect.",
         summary: "Limits raised 02-14 · no approval on record",
         points: "Points to excluded",
         established: "CHANGE LOGGED 02-14",
@@ -1311,11 +1311,11 @@ export const DEMO_ACTIONS: CaseAction[] = [
       // repeating it here is what made the block read like a slogan.
       headline: "No rule covers both causes.",
       detail:
-        "Each holds up on its own evidence, and they point opposite ways — the defect toward cover, the unapproved change away from it. The agreement is silent on what happens when both apply, so the split has to be decided here.",
+        "Each holds up on its own evidence, and they point opposite ways: the defect toward cover, the unapproved change away from it. The agreement is silent on what happens when both apply, so the split has to be decided here.",
     },
     costLines: [
-      { id: "parts", name: "Parts — gearbox", amount: 8450 },
-      { id: "labour", name: "Labour — 14.5 hrs", amount: 2682.5 },
+      { id: "parts", name: "Parts, gearbox", amount: 8450 },
+      { id: "labour", name: "Labour, 14.5 hrs", amount: 2682.5 },
       { id: "travel", name: "Travel & per diem", amount: 1240 },
       { id: "freight", name: "Expedited freight", amount: 3900 },
     ],
@@ -1332,7 +1332,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
       },
       {
         id: "policy-test",
-        label: "Policy test — ESA NRD-ESA-2024-0219",
+        label: "Policy test: ESA NRD-ESA-2024-0219",
         summary: "7 checks · 5 pass, 1 fail, 1 open",
         marked: 3,
         checks: POLICY_CHECKS_0417,
@@ -1420,7 +1420,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
         "Four related failures on the SR-440 drive family in twelve months, three from one supplier lot, all inside the first 18 months of service.",
       confidence: "high",
       recommendedOutcome: "InvestigationOpened",
-      evidenceBasis: ["Recurrence scan — SR-440 drive family"],
+      evidenceBasis: ["Recurrence scan: SR-440 drive family"],
     },
     peerContext:
       "Of the 6 recurrence gates raised this quarter, 4 opened an investigation and 2 recorded a monitoring plan.",
@@ -1445,7 +1445,7 @@ export const DEMO_ACTIONS: CaseAction[] = [
         outcome: "Approved",
         label: "Approve for resolution",
         rationale:
-          "Supported once the equivalence standard is met — the heavier carriage exceeds the original load rating on every axis.",
+          "Supported once the equivalence standard is met. The heavier carriage exceeds the original load rating on every axis.",
         supported: true,
       },
       {
@@ -1482,7 +1482,7 @@ export const DEMO_INSIGHTS: OperationalInsights = {
   atSlaRisk: 4,
   bottleneckStage: "Coverage and evidence review",
   bottleneckLabel: "Evidence review",
-  // The point of this chart is that fewer cases ENTER the queue — not that the
+  // The point of this chart is that fewer cases ENTER the queue, not that the
   // queue drains faster. Entered falls while completed stays roughly flat.
   queueEntryTrend: [
     { period: "Mar", entered: 41, completed: 38 },
@@ -1492,7 +1492,7 @@ export const DEMO_INSIGHTS: OperationalInsights = {
     { period: "Jul", entered: 15, completed: 17 },
     { period: "Aug", entered: 9, completed: 11 },
   ],
-  // On-track share climbing while breaches fall — the "improving" the card claims.
+  // On-track share climbing while breaches fall, which is the "improving" the card claims.
   slaTrend: {
     onTrack: [24, 25, 27, 26, 29, 30, 31],
     breached: [6, 5, 5, 4, 2, 1, 0],
@@ -1522,7 +1522,7 @@ export const REASONING_OPTIONS: ReasoningOption[] = [
   {
     value: "agree",
     label: "I agree with the reasoning",
-    effect: "Recorded as agreement with no standing instruction — you'll still see the next one.",
+    effect: "Recorded as agreement with no standing instruction. You'll still see the next one.",
   },
   {
     value: "agree-keep-asking",

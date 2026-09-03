@@ -31,7 +31,7 @@ export function Label({ children, className }: { children: React.ReactNode; clas
   );
 }
 
-/** Monospaced provenance stamp — dates, references, system names. */
+/** Monospaced provenance stamp for dates, references and system names. */
 export function Mono({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <span className={cn("font-mono text-[10.5px] tracking-wide text-muted-foreground", className)}>
@@ -230,7 +230,7 @@ function CauseCard({ cause }: { cause: DecisionCause }) {
  * The same cause, as one line.
  *
  * Which side it lands on, what it is, and the clause that establishes it. The
- * argument itself is not gone — it is one click down, alongside the provenance
+ * argument itself is not gone. It is one click down, alongside the provenance
  * stamp and the sources, which is where it belongs on a pane that is also
  * carrying a decision. The side stays colour-coded and stays in the leading
  * position, because "on us / on them" is the thing being read first.
@@ -314,7 +314,7 @@ function CauseRow({ cause }: { cause: DecisionCause }) {
 }
 
 /**
- * The finding — the established causes and what follows from them.
+ * The finding: the established causes and what follows from them.
  *
  * The `showOpposingCause` flag drops the excluded cause. That is not a cosmetic
  * hide: with only the covering cause the case is a clean approval and the
@@ -326,7 +326,7 @@ export function FindingCauses({
   columns = 2,
 }: {
   action: CaseAction;
-  /** 1 forces a stacked layout — for the narrower Actions pane. */
+  /** 1 forces a stacked layout, for the narrower Actions pane. */
   columns?: 1 | 2;
 }) {
   const { showOpposingCause, compactFinding } = useFlags();
@@ -343,7 +343,7 @@ export function FindingCauses({
     <Card className="gap-3 p-4">
       <div className="flex items-baseline gap-2">
         <Label>
-          {combined ? `The finding — ${causes.length} causes` : "The finding"}
+          {combined ? `The finding: ${causes.length} causes` : "The finding"}
         </Label>
         <Mono className="ml-auto text-[9.5px]">
           {combined ? "BOTH ESTABLISHED" : "ESTABLISHED"}

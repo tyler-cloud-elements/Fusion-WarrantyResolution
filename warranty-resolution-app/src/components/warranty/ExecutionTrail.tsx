@@ -3,7 +3,7 @@ import { ActorChip } from "@/components/warranty/badges";
 import type { TrailEntry } from "@/lib/warranty/types";
 
 /**
- * The execution trail — what triggered a decision, the action the case agent
+ * The execution trail: what triggered a decision, the action the case agent
  * selected, and who signed off. When work runs on its own, this is the answer to
  * "why did this claim go to engineering", and it is part of the case rather than
  * a log somebody has to go and find.

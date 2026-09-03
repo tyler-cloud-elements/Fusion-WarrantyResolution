@@ -19,7 +19,7 @@ import { useCases, useInsights } from "@/lib/warranty/useCases";
 
 // The establishing shot: the whole operation before any one case.
 //
-// The chart that matters is "cases entering the human queue" — the point is that
+// The chart that matters is "cases entering the human queue". The point is that
 // straight-through completion is up because FEWER cases reach a person, not
 // because the queue drains faster. Both series are plotted so that reading is
 // available rather than asserted.

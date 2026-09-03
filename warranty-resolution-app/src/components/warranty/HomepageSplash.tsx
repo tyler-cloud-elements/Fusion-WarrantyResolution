@@ -12,7 +12,7 @@ import type { OperationalInsights, WarrantyCase } from "@/lib/warranty/types";
 // The morning brief.
 //
 // The queue below answers "what is waiting"; this answers "what happened while I
-// was gone, and what should I do first" — which is the question someone actually
+// was gone, and what should I do first", which is the question someone actually
 // opens the app with. Modelled on the loan-origination dashboard's Morning Brief
 // and Portfolio Pulse.
 //
@@ -129,7 +129,7 @@ const STAGE_SHORT: Record<string, string> = {
   "Close and learn": "Close",
 };
 
-// Stage order on the spine, not by volume — the bar reads as a pipeline.
+// Stage order on the spine, not by volume, so the bar reads as a pipeline.
 const STAGE_ORDER = Object.keys(STAGE_SHORT);
 
 function StageBars({ insights }: { insights: OperationalInsights }) {
@@ -182,7 +182,7 @@ function SlaChip({
 /**
  * Turns a series into an SVG polyline over a 120×32 box.
  *
- * `scale` lets two series share one axis — without it each is normalised to its
+ * `scale` lets two series share one axis. Without it each is normalised to its
  * own max, and a line falling from 6 to 0 would be drawn the same height as one
  * climbing from 24 to 31.
  */
@@ -288,7 +288,7 @@ export function HomepageSplash() {
             </div>
 
             <div className="text-[13px] leading-relaxed text-muted-foreground">
-              {/* The storyboard's scene-19 line, verbatim — it is said out loud. */}
+              {/* The storyboard's scene-19 line, verbatim. It is said out loud. */}
               <Fact>{summary.headline}</Fact> The other{" "}
               <Fact>{stats.autonomous}</Fact> are progressing on their own.{" "}
               {stats.p1 > 0 && (
@@ -302,7 +302,7 @@ export function HomepageSplash() {
                   {notable.map((c) => (
                     <li key={c.id}>
                       <Fact>{c.id}</Fact>
-                      {c.queueReason ? ` — ${c.queueReason.toLowerCase()}` : ""}
+                      {c.queueReason ? `, ${c.queueReason.toLowerCase()}` : ""}
                       {c.lineStatus && c.lineDownHours
                         ? `, and the line has been down ${c.lineDownHours} hours.`
                         : "."}

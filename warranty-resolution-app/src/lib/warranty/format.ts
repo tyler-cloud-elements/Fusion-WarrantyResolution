@@ -18,7 +18,7 @@ const CURRENCY_EXACT = new Intl.NumberFormat("en-US", {
 });
 
 /**
- * Money with cents. The queue and the KPI tiles round — a claim value is a
+ * Money with cents. The queue and the KPI tiles round, because a claim value is a
  * rough size there. A decision that splits $16,272.50 between two payers does
  * not: the rounded halves would not add up to the rounded total.
  */
@@ -45,24 +45,24 @@ const DATE_ONLY = new Intl.DateTimeFormat("en-US", {
 
 export function dateTime(iso: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : DATE_TIME.format(d);
+  return Number.isNaN(d.getTime()) ? "" : DATE_TIME.format(d);
 }
 
 export function dateOnly(iso: string): string {
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "—" : DATE_ONLY.format(d);
+  return Number.isNaN(d.getTime()) ? "" : DATE_ONLY.format(d);
 }
 
 export function timeOnly(iso: string): string {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
-/** "12 min ago", "3 hr ago", "2 d ago" — relative to a fixed `now` for stability. */
+/** "12 min ago", "3 hr ago", "2 d ago", relative to a fixed `now` for stability. */
 export function relativeTime(iso: string, now: Date = new Date()): string {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "";
   const mins = Math.round((now.getTime() - d.getTime()) / 60_000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins} min ago`;
@@ -102,16 +102,16 @@ const OUTCOME_LABELS: Record<string, string> = {
   EngineeringNeeded: "Engineering review needed",
   ReturnForDiagnosis: "Returned for diagnosis",
   ControlledEscalation: "Controlled escalation",
-  EscalatedNoResponse: "Escalated — no response",
+  EscalatedNoResponse: "Escalated, no response",
   InvestigationOpened: "Quality investigation opened",
   MonitoringPlan: "Monitoring plan",
   NoAction: "No action",
   DenialRecorded: "Denial recorded",
   WithdrawalRecorded: "Withdrawal recorded",
   HandoffAccepted: "Handoff accepted",
-  CoverageReassessment: "Reopen — coverage",
-  TechnicalReassessment: "Reopen — technical",
-  ClosureReassessment: "Reopen — closure",
+  CoverageReassessment: "Reopen for coverage",
+  TechnicalReassessment: "Reopen for technical",
+  ClosureReassessment: "Reopen for closure",
   OutOfEnvelope: "Out of envelope",
 };
 
@@ -122,7 +122,7 @@ export function outcomeLabel(outcome: string): string {
 /**
  * A case id short enough to sit in a queue card.
  *
- * Demo ids are already short — `WR-2026-0417` passes through untouched. Live
+ * Demo ids are already short, so `WR-2026-0417` passes through untouched. Live
  * ones are the case process name with a run number welded on, e.g.
  * `IndustrialWarrantyResolution-16331444`, which is three times the width of
  * the column it has to live in.

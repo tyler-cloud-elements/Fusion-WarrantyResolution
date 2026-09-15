@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { ChevronLeft, CircleAlert, Clock } from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
@@ -25,6 +25,22 @@ import {
   useCase,
 } from "@/lib/warranty/useCases";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
+import { useFlags } from "@/lib/flags";
+import { coverageFixtureFor } from "@/lib/coverage/fixture";
+
+/**
+ * THE CI BUILD OF THIS SCREEN, behind `ciCoverageDecision`.
+ *
+ * LAZY, and the reason is weight rather than taste: the rebuilt screen pulls in
+ * its own component tree, its reducer and its fixture — some eight thousand lines
+ * that nothing else in the app imports. Split out, none of it is fetched until
+ * somebody opens the one URL it serves.
+ */
+const CoverageDecisionCiPage = lazy(() =>
+  import("@/pages/cases/CoverageDecisionCiPage").then((m) => ({
+    default: m.CoverageDecisionCiPage,
+  })),
+);
 
 // The decision console.
 //
@@ -217,6 +233,7 @@ export function DecisionConsolePage() {
   const { action, isLoading: actionLoading } = useAction(taskId);
   const { warrantyCase, isLoading: caseLoading } = useCase(caseId);
   const navigate = useNavigate();
+  const flags = useFlags();
 
   // Only the departure is state; the recommendation is the resting value. Held
   // here because the assessment rail answers the position as well as the
@@ -244,6 +261,25 @@ export function DecisionConsolePage() {
           </p>
         </div>
       </PageContainer>
+    );
+  }
+
+  /**
+   * THE FLAG, AND THE CASE, AND BOTH HAVE TO HOLD.
+   *
+   * Below the loading and not-found guards, so the two screens share them and
+   * arrive with a case and an action already in hand.
+   *
+   * `coverageFixtureFor` authors WR-2026-0417 and returns null for every other
+   * case, so a flag-ON app still shows the console below on the rest of the queue
+   * rather than a page apologising for having no evidence set. Off the flag,
+   * nothing changes at all.
+   */
+  if (flags.ciCoverageDecision && coverageFixtureFor(caseId)) {
+    return (
+      <Suspense fallback={<DecisionConsoleSkeleton />}>
+        <CoverageDecisionCiPage action={action} warrantyCase={warrantyCase} />
+      </Suspense>
     );
   }
 

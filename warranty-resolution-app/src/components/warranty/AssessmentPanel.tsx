@@ -187,11 +187,23 @@ export function AssessmentPanel({
   onClose,
   onShowCase,
   position,
+  defaultOpen = true,
 }: {
   action: CaseAction;
   warrantyCase: WarrantyCase;
   /** When set, the host owns open/closed and the panel's own strip is dropped. */
   onClose?: () => void;
+  /**
+   * Start collapsed to the rail rather than open.
+   *
+   * Open is the right default on the console, where the rail is one of the two
+   * things on the screen. On a page that reads as a single column it is the
+   * second thing, and opening at 330px narrows the column before anybody asked a
+   * question — so that page passes `false` and the reader opens it themselves.
+   *
+   * Ignored when `onClose` is set, since the host owns open/closed then.
+   */
+  defaultOpen?: boolean;
   /** Swap this panel for the case details. They share one column. */
   onShowCase?: () => void;
   /**
@@ -209,7 +221,7 @@ export function AssessmentPanel({
     isAssistantConfigured() && isAuthenticated && Boolean(sdk);
 
   const hostControlled = Boolean(onClose);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
   const [replies, setReplies] = useState<Message[]>([]);

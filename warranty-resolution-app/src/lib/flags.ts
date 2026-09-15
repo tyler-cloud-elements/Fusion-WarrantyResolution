@@ -112,6 +112,21 @@ export interface FeatureFlags {
    * detour.
    */
   useActions: boolean;
+  /**
+   * Swap the coverage decision for the CI build of the screen.
+   *
+   * On, /cases/WR-2026-0417/tasks/coverage-decision renders the rebuilt single
+   * reading column: the case and the finding established about it, then the
+   * decision with the evidence it rests on underneath it, then this customer,
+   * the precedent and the documents, folded. Off, the two-column console with
+   * the sticky decision card comes back unchanged.
+   *
+   * On by default. Only WR-2026-0417 has an evidence set authored for it
+   * (`coverageFixtureFor` in ./coverage/fixture.ts), so every other case keeps
+   * the existing console either way rather than opening a page that has to
+   * apologise for having nothing to show.
+   */
+  ciCoverageDecision: boolean;
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
@@ -125,6 +140,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   actionSideBySide: true,
   compactFinding: true,
   useActions: false,
+  ciCoverageDecision: true,
 };
 
 export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: string }> = {
@@ -167,6 +183,13 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
   actionSideBySide: {
     label: "Side-by-side action",
     hint: "Finding and decision in two columns, like the console. Stacks anyway while the case panel is open.",
+  },
+  // LAST, and the position is the point: the panel renders
+  // `Object.keys(FLAG_LABELS)` in order, so this is what puts the row at the end
+  // of the nav's list.
+  ciCoverageDecision: {
+    label: "CI Coverage decision",
+    hint: "Showcase the coverage decision page for CI",
   },
 };
 

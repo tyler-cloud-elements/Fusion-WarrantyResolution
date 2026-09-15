@@ -1,0 +1,299 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>What changed — visual indicators</title>
+<style>
+  :root {
+    --background: oklch(1 0 89.88);
+    --foreground: oklch(0.2394 0.0455 252.45);
+    --card: oklch(1 0 89.88);
+    --muted: oklch(0.963 0.0062 255.48);
+    --muted-foreground: oklch(0.4594 0.028 264.25);
+    --border: oklch(0.9229 0.0065 252.13);
+    --primary: oklch(0.64 0.115 208);
+    --success: oklch(0.57 0.105 152);
+    --warning-foreground: oklch(0.166 0.0283 203.34);
+    --warning: oklch(0.8 0.1401 80.82);
+    --destructive: oklch(0.62 0.15 18);
+    --insight-600: oklch(0.56 0.20 277);
+    --radius: 0.625rem;
+    --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  .dark {
+    --background: oklch(0.21 0.03 258.5);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.233 0.036 254.7);
+    --muted: oklch(0.2648 0.0329 254.38);
+    --muted-foreground: oklch(0.72 0.03 254.38);
+    --border: oklch(0.3068 0.0426 258.29);
+    --primary: oklch(0.69 0.112 207);
+    --success: oklch(0.7 0.12 152);
+    --warning: oklch(0.6889 0.1401 80.82);
+    --destructive: oklch(0.68 0.155 18);
+    --insight-600: oklch(0.70 0.19 277);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 24px; font-family: var(--font-sans);
+         background: var(--background); color: var(--foreground); }
+  main { max-width: 1060px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 4px; }
+  .lede { font-size: 13px; color: var(--muted-foreground); margin: 0 0 30px;
+          max-width: 68ch; line-height: 1.6; }
+  section { margin-bottom: 34px; }
+  h2 { font-size: 13px; font-weight: 600; margin: 0 0 2px; }
+  .note { font-size: 12px; color: var(--muted-foreground); margin: 0 0 14px;
+          max-width: 76ch; line-height: 1.6; }
+  .pair { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .col { flex: 1 1 440px; min-width: 380px; }
+  .col.dark { background: var(--background); padding: 14px; border-radius: var(--radius); }
+  .tag { display: block; margin-bottom: 10px; font-family: var(--font-mono);
+         font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+         color: var(--muted-foreground); }
+  .tag b { color: var(--insight-600); font-weight: 600; }
+
+  /* ── the panel, container and header unchanged ────────────────────── */
+  .panel { overflow: hidden; border-radius: 12px; border: 1px solid var(--border);
+           background: var(--card); }
+  .panel-head { display: flex; align-items: baseline; gap: 8px;
+                border-bottom: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+                padding: 8px 14px; font-size: 13px; font-weight: 600; }
+
+  /* ── NOW: flex row, fixed part column, text arrow ─────────────────── */
+  .row-now { display: flex; align-items: baseline; gap: 10px; padding: 8px 14px;
+             border-bottom: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
+             font-size: 12px; }
+  .row-now:last-child { border-bottom: 0; }
+  .row-now .part { width: 88px; flex: none; color: var(--muted-foreground); }
+  .row-now .val { min-width: 0; flex: 1; }
+
+  /* ── AFTER: a real grid, so four columns align down the list ──────── */
+  .row { display: grid; grid-template-columns: 16px 88px minmax(0,1fr) auto;
+         align-items: center; column-gap: 10px; padding: 8px 14px;
+         border-bottom: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
+         font-size: 12px; }
+  .row:last-child { border-bottom: 0; }
+  .row:hover { background: color-mix(in oklab, var(--muted) 40%, transparent); }
+  .row .pico { width: 14px; height: 14px; color: var(--muted-foreground); }
+  .row .part { color: var(--muted-foreground); }
+  .row .val { min-width: 0; display: flex; align-items: center;
+              gap: 6px; flex-wrap: wrap; }
+
+  .subj { font-weight: 600; }
+  .was { color: var(--muted-foreground); text-decoration: line-through; }
+  .is { font-weight: 600; }
+  .detail { color: var(--muted-foreground); }
+  .arrow-ch { color: var(--muted-foreground); margin: 0 6px; }
+  svg.arrow { width: 12px; height: 12px; color: var(--muted-foreground); flex: none; }
+
+  /* attribution — the new information */
+  svg.who { width: 13px; height: 13px; flex: none; }
+  svg.who.agent { color: var(--insight-600); }
+  svg.who.you   { color: var(--muted-foreground); }
+
+  /* value glyphs, lifted from LabelledSelect */
+  .bars { display: inline-flex; align-items: flex-end; gap: 1.5px; height: 10px; flex: none; }
+  .bars i { display: block; width: 3px; border-radius: 1px; background: var(--border); }
+  .bars i.on { background: var(--foreground); }
+  .bars i:nth-child(1) { height: 4px; } .bars i:nth-child(2) { height: 7px; }
+  .bars i:nth-child(3) { height: 10px; }
+  .dash { display: inline-flex; width: 12px; height: 10px; align-items: flex-end; flex: none; }
+  .dash i { display: block; height: 3px; width: 100%; border-radius: 1px; background: var(--border); }
+  .call { font-size: 11px; font-weight: 800; line-height: 1; flex: none; }
+  .call.approve { color: var(--success); }
+  .call.partial { color: var(--warning-foreground); }
+  .call.deny { color: var(--destructive); }
+  svg.mv { width: 13px; height: 13px; flex: none; }
+  svg.mv.up { color: var(--success); }
+  svg.mv.down { color: var(--muted-foreground); }
+  svg.mv.add { color: var(--success); }
+  svg.mv.del { color: var(--destructive); }
+  svg.mv.edit { color: var(--muted-foreground); }
+  svg.mv.ok { color: var(--success); }
+
+  .empty { margin: 0; padding: 10px 14px; font-size: 12px;
+           color: color-mix(in oklab, var(--foreground) 75%, transparent); }
+  .empty-after { display: flex; align-items: flex-start; gap: 8px; }
+
+  code { font-family: var(--font-mono); font-size: 11px; background: var(--muted);
+         padding: 1px 5px; border-radius: 4px; }
+  .verdict { font-size: 12px; margin-top: 14px; padding-top: 13px;
+             border-top: 1px solid var(--border); color: var(--muted-foreground); line-height: 1.6; }
+  .verdict b { color: var(--foreground); }
+  table.key { border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+  table.key td { padding: 5px 12px 5px 0; vertical-align: middle; }
+  table.key td:first-child { width: 58px; }
+</style>
+
+<svg style="display:none">
+  <symbol id="ai-mark" viewBox="0 0 24 24"><path fill="currentColor" d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"/></symbol>
+  <symbol id="user-round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5" fill="currentColor" stroke="none"/><path d="M20 21a8 8 0 0 0-16 0" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <symbol id="scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+    <symbol id="banknote" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+    <symbol id="pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+    <symbol id="highlighter" viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></symbol>
+    <symbol id="arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+    <symbol id="arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></symbol>
+    <symbol id="arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+    <symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  </g>
+</svg>
+
+<main>
+  <h1>What changed — visual indicators</h1>
+  <p class="lede">
+    Every string is unchanged. What is new is beside them: a part icon, the move drawn
+    with the folder's own value glyphs, and the attribution — which
+    <code>changesSince()</code> already computes as <code>by: "you" | "agent"</code> and
+    the panel currently never draws.
+  </p>
+
+  <!-- before / after -->
+  <section>
+    <h2>The same four changes, before and after</h2>
+    <p class="note">
+      A filed decision that moved the resolution, the refund, the rationale and one
+      evidence row. Identical wording on both sides — compare the rows, not the words.
+    </p>
+    <div class="pair">
+      <div class="col">
+        <span class="tag">now</span>
+        <div class="panel">
+          <div class="panel-head">What changed</div>
+          <div class="row-now"><span class="part">Resolution</span><span class="val"><span class="was">Deny coverage</span><span class="arrow-ch">→</span><span class="is">Approve partial + goodwill</span></span></div>
+          <div class="row-now"><span class="part">Refund</span><span class="val"><span class="was">$0.00</span><span class="arrow-ch">→</span><span class="is">$4,940.00</span><span class="detail"> · within the $5,000.00 authority</span></span></div>
+          <div class="row-now"><span class="part">Rationale</span><span class="val"><span class="is">Rewritten</span><span class="detail"> · replaced when the position moved</span></span></div>
+          <div class="row-now"><span class="part">Evidence</span><span class="val"><span class="subj">Renewal within 3 months · </span><span class="was">Low</span><span class="arrow-ch">→</span><span class="is">High</span></span></div>
+        </div>
+      </div>
+      <div class="col">
+        <span class="tag"><b>after</b></span>
+        <div class="panel">
+          <div class="panel-head">What changed</div>
+          <div class="row">
+            <svg class="pico"><use href="#scale"/></svg>
+            <span class="part">Resolution</span>
+            <span class="val"><span class="was">Deny coverage</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">Approve partial + goodwill</span></span>
+            <svg class="who agent"><use href="#ai-mark"/></svg>
+          </div>
+          <div class="row">
+            <svg class="pico"><use href="#banknote"/></svg>
+            <span class="part">Refund</span>
+            <span class="val"><span class="was">$0.00</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">$4,940.00</span><svg class="mv up"><use href="#arrow-up"/></svg><span class="detail">· within the $5,000.00 authority</span></span>
+            <svg class="who agent"><use href="#ai-mark"/></svg>
+          </div>
+          <div class="row">
+            <svg class="pico"><use href="#pencil"/></svg>
+            <span class="part">Rationale</span>
+            <span class="val"><svg class="mv edit"><use href="#pencil"/></svg><span class="is">Rewritten</span><span class="detail">· replaced when the position moved</span></span>
+            <svg class="who agent"><use href="#ai-mark"/></svg>
+          </div>
+          <div class="row">
+            <svg class="pico"><use href="#highlighter"/></svg>
+            <span class="part">Evidence</span>
+            <span class="val"><span class="subj">Renewal within 3 months ·</span><span class="bars"><i class="on"></i><i></i><i></i></span><span class="was">Low</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="is">High</span></span>
+            <svg class="who you"><use href="#user-round"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="verdict">
+      <b>The attribution is the real gain.</b> On the left, nothing says the first three
+      rows are the agent answering the reviewer's one edit — the data says so and the
+      panel throws it away. On the right the causal chain reads in one glance: one
+      <code>UserRound</code>, three <code>AiMark</code>.
+    </p>
+  </section>
+
+  <!-- the full glyph set -->
+  <section>
+    <h2>Every kind of move</h2>
+    <p class="note">
+      <code>RankBars</code> and <code>CallDot</code> are imported from
+      <code>LabelledSelect.tsx</code> — the same glyphs the evidence rows above the
+      panel already draw, so nothing here is a new vocabulary to learn.
+    </p>
+    <div class="pair">
+      <div class="col">
+        <span class="tag"><b>after</b> — all seven</span>
+        <div class="panel">
+          <div class="panel-head">What changed</div>
+          <div class="row"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="val"><span class="subj">Defect in warranty ·</span><span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="was">High</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="dash"><i></i></span><span class="is">Not relevant</span></span><svg class="who you"><use href="#user-round"/></svg></div>
+          <div class="row"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="val"><span class="subj">Unapproved change ·</span><span class="call approve">✓</span><span class="was">Approve</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="call deny">✗</span><span class="is">Deny</span></span><svg class="who you"><use href="#user-round"/></svg></div>
+          <div class="row"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="val"><span class="subj">No goodwill drawn this year ·</span><svg class="mv add"><use href="#plus"/></svg><span class="is">Added</span></span><svg class="who you"><use href="#user-round"/></svg></div>
+          <div class="row"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="val"><span class="subj">Renewal within 3 months ·</span><svg class="mv del"><use href="#trash"/></svg><span class="is">Removed</span></span><svg class="who you"><use href="#user-round"/></svg></div>
+          <div class="row"><svg class="pico"><use href="#banknote"/></svg><span class="part">Refund</span><span class="val"><span class="was">$4,940.00</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">$1,200.00</span><svg class="mv down"><use href="#arrow-down"/></svg><span class="detail">· within the $5,000.00 authority</span></span><svg class="who you"><use href="#user-round"/></svg></div>
+          <div class="row"><svg class="pico"><use href="#pencil"/></svg><span class="part">Rationale</span><span class="val"><svg class="mv edit"><use href="#pencil"/></svg><span class="is">Rewritten</span><span class="detail">· you edited the draft</span></span><svg class="who you"><use href="#user-round"/></svg></div>
+          <div class="row"><svg class="pico"><use href="#scale"/></svg><span class="part">Resolution</span><span class="val"><span class="was">Approve partial + goodwill</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">Deny coverage</span></span><svg class="who you"><use href="#user-round"/></svg></div>
+        </div>
+      </div>
+      <div class="col">
+        <span class="tag">the key</span>
+        <table class="key">
+          <tr><td><span class="bars"><i class="on"></i><i></i><i></i></span> <svg class="arrow"><use href="#arrow-right"/></svg> <span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span></td><td><code>RankBars</code> — relevance moved</td></tr>
+          <tr><td><span class="call approve">✓</span> <svg class="arrow"><use href="#arrow-right"/></svg> <span class="call deny">✗</span></td><td><code>CallDot</code> — the call moved</td></tr>
+          <tr><td><span class="dash"><i></i></span></td><td>off the scale, not the bottom of it</td></tr>
+          <tr><td><svg class="mv up"><use href="#arrow-up"/></svg> <svg class="mv down"><use href="#arrow-down"/></svg></td><td>refund rose / fell</td></tr>
+          <tr><td><svg class="mv add"><use href="#plus"/></svg></td><td>item added</td></tr>
+          <tr><td><svg class="mv del"><use href="#trash"/></svg></td><td>item removed</td></tr>
+          <tr><td><svg class="mv edit"><use href="#pencil"/></svg></td><td>rationale rewritten</td></tr>
+          <tr><td><svg class="who agent"><use href="#ai-mark"/></svg></td><td><code>by: "agent"</code></td></tr>
+          <tr><td><svg class="who you"><use href="#user-round"/></svg></td><td><code>by: "you"</code></td></tr>
+        </table>
+        <p class="verdict">
+          <b>One new field.</b> <code>from</code> and <code>to</code> arrive
+          pre-formatted, so the refund's direction needs the numbers:
+          <code>up?: boolean</code> on <code>Change</code>, set in
+          <code>changesSince</code>'s Refund branch. The two enums need nothing —
+          <code>label()</code> is a pure title-case, so the panel inverts it with a
+          four-entry lookup.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- empty + dark -->
+  <section>
+    <h2>Nothing changed, and dark</h2>
+    <p class="note">
+      The empty sentence is byte-identical; it gains a <code>Check</code> so the panel
+      reads as settled rather than as a paragraph.
+    </p>
+    <div class="pair">
+      <div class="col">
+        <span class="tag">now → <b>after</b></span>
+        <div class="panel" style="margin-bottom:12px">
+          <div class="panel-head">What changed</div>
+          <p class="empty">The resolution, the refund, the rationale and all 3 evidence items are as the case opened.</p>
+        </div>
+        <div class="panel">
+          <div class="panel-head">What changed</div>
+          <div class="empty empty-after">
+            <svg class="mv ok" style="margin-top:2px"><use href="#check"/></svg>
+            <span>The resolution, the refund, the rationale and all 3 evidence items are as the case opened.</span>
+          </div>
+        </div>
+      </div>
+      <div class="col dark dark">
+        <span class="tag"><b>after</b> — dark</span>
+        <div class="panel">
+          <div class="panel-head">What changed</div>
+          <div class="row"><svg class="pico"><use href="#scale"/></svg><span class="part">Resolution</span><span class="val"><span class="was">Deny coverage</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">Approve partial + goodwill</span></span><svg class="who agent"><use href="#ai-mark"/></svg></div>
+          <div class="row"><svg class="pico"><use href="#banknote"/></svg><span class="part">Refund</span><span class="val"><span class="was">$0.00</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">$4,940.00</span><svg class="mv up"><use href="#arrow-up"/></svg></span><svg class="who agent"><use href="#ai-mark"/></svg></div>
+          <div class="row"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="val"><span class="subj">Renewal within 3 months ·</span><span class="bars"><i class="on"></i><i></i><i></i></span><span class="was">Low</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="is">High</span></span><svg class="who you"><use href="#user-round"/></svg></div>
+        </div>
+      </div>
+    </div>
+    <p class="verdict">
+      <b>Structure untouched.</b> Same container, same header, same separators, same
+      four fields in the same order. The one structural edit is
+      <code>flex</code> + a <code>w-[88px]</code> spacer →
+      <code>grid-cols-[16px_88px_minmax(0,1fr)_auto]</code>, so the icon, the word, the
+      value and the attribution line up down the whole list instead of drifting once
+      rows carry glyphs of different widths.
+    </p>
+  </section>
+</main>

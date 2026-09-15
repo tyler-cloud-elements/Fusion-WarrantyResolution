@@ -1,0 +1,208 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>CI coverage decision — style deltas</title>
+<style>
+  /* The app's own tokens, lifted verbatim from warranty-resolution-app/src/index.css
+     so the swatches below are the real thing, not an approximation. */
+  :root {
+    --background: oklch(1 0 89.88);
+    --foreground: oklch(0.2394 0.0455 252.45);
+    --card: oklch(1 0 89.88);
+    --card-foreground: oklch(0.2394 0.0455 252.45);
+    --popover: oklch(1 0 89.88);
+    --popover-foreground: oklch(0.2394 0.0455 252.45);
+    --primary: oklch(0.64 0.115 208);
+    --muted: oklch(0.963 0.0062 255.48);
+    --muted-foreground: oklch(0.4594 0.028 264.25);
+    --border: oklch(0.9229 0.0065 252.13);
+    --radius: 0.625rem;
+    --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  .dark {
+    --background: oklch(0.21 0.03 258.5);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.233 0.036 254.7);
+    --card-foreground: oklch(0.9525 0.011 225.98);
+    --popover: oklch(0.21 0.03 258.5);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.69 0.112 207);
+    --muted: oklch(0.26 0.032 256);
+    --muted-foreground: oklch(0.72 0.03 254.38);
+    --border: oklch(0.3068 0.0426 258.29);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 24px;
+    font-family: var(--font-sans);
+    background: var(--background); color: var(--foreground);
+  }
+  main { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; }
+  .lede { font-size: 13px; color: var(--muted-foreground); margin: 0 0 32px; max-width: 62ch; line-height: 1.6; }
+  section { margin-bottom: 36px; }
+  h2 { font-size: 13px; font-weight: 600; margin: 0 0 2px; }
+  .note { font-size: 12px; color: var(--muted-foreground); margin: 0 0 14px; max-width: 70ch; line-height: 1.6; }
+  .pair { display: flex; flex-wrap: wrap; gap: 14px; }
+  .cell {
+    flex: 1 1 300px; min-width: 260px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--card); padding: 16px;
+  }
+  .cell.dark { background: var(--background); }
+  .tag {
+    display: inline-block; margin-bottom: 12px;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--muted-foreground);
+  }
+  .tag b { color: var(--primary); font-weight: 600; }
+
+  /* ── 1. page title ─────────────────────────────────────────────── */
+  .t-app  { font-size: 24px; font-weight: 700; letter-spacing: -0.025em; margin: 0; }
+  .t-v3   { font-size: 20px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.25; margin: 0; }
+  .caseid { font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--muted-foreground); }
+
+  /* ── 2. dropdown menu ─────────────────────────────────────────── */
+  .menu { width: 232px; padding: 4px; border-radius: var(--radius); }
+  .menu.app { background: var(--popover); color: var(--popover-foreground); border: 1px solid var(--border);
+              box-shadow: 0 4px 6px -1px rgb(0 0 0 / .1), 0 2px 4px -2px rgb(0 0 0 / .1); }
+  .menu.v3  { background: var(--card);    color: var(--card-foreground);    border: 1px solid var(--border);
+              box-shadow: 0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1); }
+  .menu.app .row { border-radius: 2px;    padding: 6px 8px;  font-size: 14px; }
+  .menu.v3  .row { border-radius: 6px;    padding: 8px 10px; font-size: 13px; }
+  .row { display: flex; align-items: center; gap: 8px; cursor: default; }
+  .row:hover { background: var(--muted); }
+  .row svg { width: 16px; height: 16px; flex: none; color: var(--muted-foreground); }
+
+  /* ── 3. choicebox ─────────────────────────────────────────────── */
+  .choices { display: flex; flex-direction: column; gap: 8px; }
+  .choice {
+    position: relative; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 10px; background: var(--card);
+  }
+  .choice .lbl { font-size: 13px; font-weight: 500; }
+  .choice .sub { font-size: 11px; color: var(--muted-foreground); margin-top: 2px; }
+  .choice.sel-inline { border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent); }
+  .choice.sel-ring   { border-color: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 20%, transparent); }
+
+  code { font-family: var(--font-mono); font-size: 11px; background: var(--muted);
+         padding: 1px 5px; border-radius: 4px; }
+  .verdict { font-size: 12px; margin-top: 12px; padding-top: 12px;
+             border-top: 1px solid var(--border); color: var(--muted-foreground); line-height: 1.6; }
+  .verdict b { color: var(--foreground); }
+</style>
+
+<main>
+  <h1>CI coverage decision — the three style deltas</h1>
+  <p class="lede">
+    Fonts, spacing scale and every colour token are already identical between the two
+    trees, so nothing needs porting there. These are the only three places the copied
+    screen and this app disagree. Rendered with the app's real token values.
+  </p>
+
+  <!-- 1 -->
+  <section>
+    <h2>1 · Page title — keep v3's 20/600</h2>
+    <p class="note">
+      The app's <code>h1</code> is 24/700 and carries a customer name. This one carries a
+      sentence that shares its line with the case id and three status readings. v3 drops to
+      20/600 deliberately. <b>No change.</b>
+    </p>
+    <div class="pair">
+      <div class="cell">
+        <span class="tag">app <code>text-2xl font-bold</code></span>
+        <p class="t-app">Coverage decision — combined cause finding <span class="caseid">WR-2026-0417</span></p>
+      </div>
+      <div class="cell">
+        <span class="tag"><b>v3</b> <code>text-xl font-semibold</code></span>
+        <p class="t-v3">Coverage decision — combined cause finding <span class="caseid">WR-2026-0417</span></p>
+      </div>
+    </div>
+    <p class="verdict"><b>Action: none.</b> Page-scoped and argued in the source.</p>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2>2 · Dropdown menu — six classes on <code>MoreMenu</code></h2>
+    <p class="note">
+      v3 puts the menu on <code>bg-card</code> with <code>shadow-lg</code> and 13px rows at
+      <code>py-2 rounded-md</code>. Note <code>--card</code> and <code>--popover</code> are the
+      same white in light mode, so the surface delta only shows in dark — hence the second row.
+    </p>
+    <div class="pair">
+      <div class="cell">
+        <span class="tag">app — <code>bg-popover</code>, 14px, <code>py-1.5</code></span>
+        <div class="menu app">
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Request more evidence</div>
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg> Send to Engineering</div>
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/></svg> Put on hold</div>
+        </div>
+      </div>
+      <div class="cell">
+        <span class="tag"><b>v3</b> — <code>bg-card</code>, 13px, <code>py-2</code></span>
+        <div class="menu v3">
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Request more evidence</div>
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg> Send to Engineering</div>
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/></svg> Put on hold</div>
+        </div>
+      </div>
+    </div>
+    <div class="pair" style="margin-top:14px">
+      <div class="cell dark dark">
+        <span class="tag">app — dark, <code>--popover</code> 0.21</span>
+        <div class="menu app">
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Request more evidence</div>
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/></svg> Put on hold</div>
+        </div>
+      </div>
+      <div class="cell dark dark">
+        <span class="tag"><b>v3</b> — dark, <code>--card</code> 0.233</span>
+        <div class="menu v3">
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Request more evidence</div>
+          <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/></svg> Put on hold</div>
+        </div>
+      </div>
+    </div>
+    <p class="verdict">
+      <b>Action: six utility classes on <code>MoreMenu.tsx</code></b> —
+      <code>bg-card text-card-foreground border-border shadow-lg</code> on the content,
+      <code>rounded-md px-2.5 py-2 text-[13px]</code> on the items. One file.
+      Do <b>not</b> edit the shared <code>ui/dropdown-menu.tsx</code>: it would move every
+      menu in the app.
+    </p>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2>3 · Choicebox selected ring — port verbatim</h2>
+    <p class="note">
+      v3 writes the ring as an inline <code>boxShadow</code> because <code>ring-*</code> is dead
+      inside cartographer's prebuilt sheet. Here <code>ring-*</code> works — but so does the
+      inline shadow, and 18% vs 20% alpha is indistinguishable.
+    </p>
+    <div class="pair">
+      <div class="cell">
+        <span class="tag"><b>v3</b> inline <code>color-mix(… 18%)</code></span>
+        <div class="choices">
+          <div class="choice sel-inline"><div class="lbl">Partially approve</div><div class="sub">Split by cause attribution · $4,940.00</div></div>
+          <div class="choice"><div class="lbl">Approve in full</div><div class="sub">Provider funds it · $8,185.00</div></div>
+        </div>
+      </div>
+      <div class="cell">
+        <span class="tag">idiomatic <code>ring-[3px] ring-primary/20</code></span>
+        <div class="choices">
+          <div class="choice sel-ring"><div class="lbl">Partially approve</div><div class="sub">Split by cause attribution · $4,940.00</div></div>
+          <div class="choice"><div class="lbl">Approve in full</div><div class="sub">Provider funds it · $8,185.00</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="verdict">
+      <b>Action: none — copy as-is.</b> Rewriting it makes the file diverge from its source,
+      so the next re-sync silently reintroduces it. Leave a note that the workaround is inert
+      here.
+    </p>
+  </section>
+</main>

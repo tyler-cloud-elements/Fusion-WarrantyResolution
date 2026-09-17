@@ -8,12 +8,10 @@ import {
   ChevronDown,
   Highlighter,
   Pencil,
-  Plus,
   Scale,
-  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { INK, Label, TYPE } from "@/components/coverage/primitives";
+import { INK, Label, TONE, TYPE } from "@/components/coverage/primitives";
 import { CallDot, RankBars } from "@/components/coverage/LabelledSelect";
 import { moneyExact, timeOnly } from "@/lib/warranty/format";
 import { CALL_OPTIONS, IMPORTANCE_OPTIONS, RESOLUTIONS } from "@/lib/coverage/fixture";
@@ -77,17 +75,76 @@ function ValueGlyph({ value }: { value: string | null }) {
 }
 
 /**
- * What KIND of move it was, for the three that have no "from" to compare against.
+ * WHAT KIND OF CHANGE IT WAS — one badge per row, in a column of its own.
  *
- * Keyed off `to` because that is where `changesSince` puts them: an added item, a
- * removed one and a rewritten rationale are all `from: null`, so the arrow and the
- * before-value never render and the row would otherwise open on bare text.
+ * `+` green for something filed, `−` red for something removed, `○` amber for
+ * everything that moved. Three types over six kinds of row, and the third is the
+ * common one, which is the right way round: a filed decision mostly consists of
+ * things that shifted, and an addition or a removal is the exception worth
+ * spotting.
+ *
+ * **It replaced an inline glyph that typed only half the rows.** A `Plus`, a
+ * `Trash2` or a `Pencil` sat in the value cell keyed off `to`, which meant only
+ * the three entries with no `from` were marked — a resolution change, a refund
+ * change and both evidence moves carried no type at all and had to be inferred
+ * from the arrow. Every row is typed now, and one marker replaces the other rather
+ * than joining it.
+ *
+ * **It also took the emphasis off the value.** `to` was `font-semibold`, which is
+ * how the row used to say "this is the new one". The badge says it, so the value
+ * renders at normal weight and only `subject` stays bold — the row's identity
+ * rather than its change.
+ *
+ * ## The hue is in the rim and the wash, and the ink is neutral
+ *
+ * Straight off `TONE` (../primitives.tsx), whose note carries the argument and the
+ * numbers. Briefly: a hued glyph on a tint of its own hue measures **1.78:1** for
+ * the amber one, and solid fills fail too — 4.25:1 for success and 3.92:1 for
+ * destructive against white, both under AA, and worse in dark. `foreground` on a
+ * wash is 13.2–14.7:1 and is the only treatment that passes on all three.
+ *
+ * The rim and wash are a step stronger than `ToneChip`'s because this is an 18px
+ * square rather than a text pill, and a `/30` rim on it is close to invisible.
+ *
+ * **THE GLYPH IS THE PRIMARY CUE AND THE COLOUR AGREES WITH IT**, which is not a
+ * compromise. The three washes are near-identical in luminance — `+` against `○`
+ * is 1.06:1 — so they differ in hue alone, and in greyscale or to a red-green
+ * deficient reader the fills are the same. A badge that carried the meaning in
+ * colour alone would have been unreadable to those readers; `+` / `○` / `−` is
+ * legible without any colour at all.
+ *
+ * `○` U+25CB rather than a capital O: at 11px the letter is a beat away from a
+ * zero and sits on a different optical weight from the two symmetrical strokes it
+ * pairs with. `−` U+2212 rather than a hyphen, for the same reason — a hyphen is
+ * short and rides high against the `+`.
  */
-function MoveGlyph({ change }: { change: Change }) {
-  if (change.to === "Added") return <Plus className="size-3.5 shrink-0 text-success" />;
-  if (change.to === "Removed") return <Trash2 className="size-3.5 shrink-0 text-destructive" />;
-  if (change.to === "Rewritten") return <Pencil className="size-3.5 shrink-0 text-muted-foreground" />;
-  return null;
+const CHANGE_KIND = {
+  added: { tone: "ok", glyph: "+", label: "added" },
+  removed: { tone: "bad", glyph: "\u2212", label: "removed" },
+  modified: { tone: "warn", glyph: "\u25CB", label: "modified" },
+} as const;
+
+function kindOf(change: Change): keyof typeof CHANGE_KIND {
+  if (change.to === "Added") return "added";
+  if (change.to === "Removed") return "removed";
+  return "modified";
+}
+
+function ChangeBadge({ change }: { change: Change }) {
+  const { tone, glyph, label } = CHANGE_KIND[kindOf(change)];
+  return (
+    <span
+      // The row's own text says what moved and to what; this says which of the
+      // three kinds it is, and a screen reader needs that in words.
+      aria-label={label}
+      className={cn(
+        "inline-grid size-[18px] shrink-0 place-items-center rounded-md border text-[11px] leading-none font-bold",
+        TONE[tone],
+      )}
+    >
+      <span aria-hidden>{glyph}</span>
+    </span>
+  );
 }
 
 /**
@@ -363,10 +420,15 @@ export function FiledRecord({
                  that no longer sits alone on its line. */
               <div
                 key={`${c.part}-${i}`}
-                className="grid grid-cols-[14px_88px_minmax(0,1fr)] items-center gap-x-2.5 border-b border-border/50 px-3.5 py-2 transition-colors last:border-0 hover:bg-muted/40"
+                // A COLUMN FOR THE BADGE, not an inline chip at the head of the
+                // value cell. Inline it would sit at a different x on every row,
+                // because `subject` lengths differ — and scanning the column is the
+                // whole point of a type marker.
+                className="grid grid-cols-[14px_88px_20px_minmax(0,1fr)] items-center gap-x-2.5 border-b border-border/50 px-3.5 py-2 transition-colors last:border-0 hover:bg-muted/40"
               >
                 <PartIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
                 <span className={cn(TYPE.small, "text-muted-foreground")}>{c.part}</span>
+                <ChangeBadge change={c} />
                 <span className={cn(TYPE.small, "flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1")}>
                   {/* The subject leads, because on an evidence row "Low → High" is
                       meaningless until you know which row moved. */}
@@ -380,9 +442,10 @@ export function FiledRecord({
                       <ArrowRight className="size-3 shrink-0 text-muted-foreground" aria-hidden />
                     </>
                   ) : null}
-                  <MoveGlyph change={c} />
                   <ValueGlyph value={c.to} />
-                  <span className="font-semibold">{c.to}</span>
+                  {/* Normal weight — the badge in the column to the left carries
+                      the emphasis this used to. */}
+                  <span>{c.to}</span>
                   {/* AFTER the figure, because it reads as a verdict on the move
                       rather than as part of the value: "$4,940.00, and that is
                       up". Only the refund sets it — the store's note says why. */}

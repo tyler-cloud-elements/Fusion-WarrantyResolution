@@ -1,0 +1,398 @@
+<meta charset="utf-8">
+<title>Decision — unselected start</title>
+<style>
+  :root{
+    --background:oklch(1 0 89.88); --foreground:oklch(0.2394 0.0455 252.45);
+    --card:oklch(1 0 89.88); --muted:oklch(0.963 0.0062 255.48);
+    --muted-foreground:oklch(0.4594 0.028 264.25); --border:oklch(0.9229 0.0065 252.13);
+    --primary:oklch(0.64 0.115 208); --primary-foreground:oklch(1 0 89.88);
+    --success:oklch(0.57 0.105 152); --destructive:oklch(0.62 0.15 18);
+    --insight-100:oklch(0.92 0.05 277); --insight-600:oklch(0.56 0.20 277);
+    --insight-800:oklch(0.38 0.13 278);
+    --radius:0.625rem; --font-sans:Inter,ui-sans-serif,sans-serif,system-ui;
+    --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  .dark{
+    --background:oklch(0.21 0.03 258.5); --foreground:oklch(0.985 0 0);
+    --card:oklch(0.233 0.036 254.7); --muted:oklch(0.2648 0.0329 254.38);
+    --muted-foreground:oklch(0.72 0.03 254.38); --border:oklch(0.3068 0.0426 258.29);
+    --primary:oklch(0.69 0.112 207); --primary-foreground:oklch(0.166 0.0283 203.34);
+    --success:oklch(0.7 0.12 152); --destructive:oklch(0.68 0.155 18);
+    --insight-600:oklch(0.70 0.19 277); --insight-800:oklch(0.38 0.13 278);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 24px;font-family:var(--font-sans);
+       background:var(--background);color:var(--foreground)}
+  main{max-width:1060px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
+  .lede{font-size:13px;color:var(--muted-foreground);margin:0 0 30px;max-width:70ch;line-height:1.6}
+  section{margin-bottom:38px}
+  h2{font-size:13px;font-weight:600;margin:0 0 2px}
+  .note{font-size:12px;color:var(--muted-foreground);margin:0 0 14px;max-width:78ch;line-height:1.6}
+  .tag{display:block;margin-bottom:10px;font-family:var(--font-mono);font-size:10px;
+       letter-spacing:.04em;text-transform:uppercase;color:var(--muted-foreground)}
+  .tag b{color:var(--insight-600);font-weight:600}
+  .tag i{color:var(--success);font-style:normal;font-weight:600}
+  code{font-family:var(--font-mono);font-size:11px;background:var(--muted);padding:1px 5px;border-radius:4px}
+  .verdict{font-size:12px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border);
+           color:var(--muted-foreground);line-height:1.6}
+  .verdict b{color:var(--foreground)}
+
+  /* ── the card ─────────────────────────────────────────────── */
+  .card{border:1px solid var(--border);border-radius:12px;background:var(--card);
+        padding:20px;display:flex;flex-direction:column;gap:16px;margin-bottom:14px}
+  .wrap.dark{background:var(--background);padding:16px;border-radius:12px}
+
+  .head{display:flex;align-items:center;gap:20px}
+  .head-l{min-width:0;flex:1}
+  .head-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600}
+  .head-title svg{width:16px;height:16px;color:var(--muted-foreground)}
+  .head-value{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px}
+  .pos{font-size:18px;font-weight:600;letter-spacing:-.025em;line-height:1.2}
+  .pos.none{color:var(--muted-foreground)}
+  .rec-name{font-size:13px;font-weight:600}
+  .dot{width:6px;height:6px;border-radius:999px;flex:none}
+  .dot.deny{background:var(--destructive)} .dot.partial{background:var(--primary)}
+  .dot.approve{background:var(--success)}
+  .stamp{font-size:12px;color:var(--muted-foreground)}
+  .score{display:flex;width:124px;flex:none;flex-direction:column;align-items:flex-end;gap:2px}
+  .score .n{font-size:18px;font-weight:600;letter-spacing:-.025em;line-height:1.2;font-variant-numeric:tabular-nums}
+  .score .c{font-size:12px;color:var(--muted-foreground)}
+  .score .bar{margin-top:4px;height:3px;width:100%;border-radius:2px;background:var(--muted);overflow:hidden}
+  .score .bar i{display:block;height:100%;width:87%;background:color-mix(in oklab,var(--muted-foreground) 60%,transparent)}
+  .score.dim .n,.score.dim .c{opacity:.5}
+  .score.dim .bar i{background:color-mix(in oklab,var(--muted-foreground) 35%,transparent)}
+  .rule{height:1px;background:var(--border)}
+
+  /* badges */
+  .badge{display:inline-flex;flex:none;align-items:center;gap:5px;border-radius:999px;
+         padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap}
+  .badge svg{width:12px;height:12px;flex:none}
+  .badge.agent{background:var(--insight-100);color:var(--foreground)}
+  .badge.agent svg{color:var(--insight-600)}
+  .dark .badge.agent{background:var(--insight-800);color:#fff}
+  .dark .badge.agent svg{color:#fff}
+  .badge.human{background:var(--muted);color:var(--foreground)}
+  .badge.human svg{color:var(--muted-foreground)}
+  /* the card's copy, one rung down so it sits inside a choice rather than beside a heading */
+  .badge.sm{padding:1px 6px;font-size:10.5px;gap:4px}
+  .badge.sm svg{width:11px;height:11px}
+  .badge.onteal{background:color-mix(in oklab,var(--primary-foreground) 88%,transparent);color:var(--primary)}
+  .badge.onteal svg{color:var(--primary)}
+
+  /* ── resolution cards ─────────────────────────────────────── */
+  .lbl{font-size:12px;font-weight:400;color:var(--muted-foreground)}
+  .row{display:flex;gap:12px;align-items:stretch;margin-top:8px}
+  .ch{position:relative;display:flex;min-width:0;flex:1;flex-direction:column;
+      border-radius:12px;border:1px solid var(--border);background:var(--card);
+      cursor:pointer;transition:background-color .15s,border-color .15s,box-shadow .15s}
+  .ch .in{display:flex;min-width:0;align-items:flex-start;gap:10px;padding:14px}
+  .ch .mk{margin-top:1px;display:grid;width:16px;height:16px;flex:none;place-items:center;
+          border:1.5px solid var(--border);border-radius:999px;transition:border-color .15s}
+  .ch .mk i{display:block;width:8px;height:8px;border-radius:999px;background:var(--primary);
+            transform:scale(0);transition:transform .15s}
+  .ch .tx{min-width:0;flex:1}
+  .ch .t{display:flex;min-width:0;flex-wrap:wrap;align-items:center;gap:6px}
+  .ch .t span.n{font-size:13px;font-weight:600}
+  .ch .d{margin-top:2px;display:block;font-size:12px;color:var(--muted-foreground)}
+
+  /* NOW — card ground, border-only selection */
+  .now .ch{background:var(--card)}
+  .now .ch.sel{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 18%,transparent)}
+  .now .ch.sel .mk{border-color:var(--primary)} .now .ch.sel .mk i{transform:scale(1)}
+
+  /* OPTION A — muted ground, tinted selection */
+  .optA .ch{background:var(--muted);border-color:var(--border)}
+  .optA .ch:hover{background:color-mix(in oklab,var(--muted) 70%,transparent)}
+  .optA .ch.sel{background:color-mix(in oklab,var(--primary) 10%,transparent);border-color:var(--primary);
+                box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 18%,transparent)}
+  .optA .ch.sel .mk{border-color:var(--primary)} .optA .ch.sel .mk i{transform:scale(1)}
+
+  /* OPTION B — muted ground, solid selection */
+  .optB .ch{background:var(--muted);border-color:transparent}
+  .optB .ch:hover{background:color-mix(in oklab,var(--muted) 70%,transparent)}
+  .optB .ch.sel{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+  .optB .ch.sel .d{color:color-mix(in oklab,var(--primary-foreground) 80%,transparent)}
+  .optB .ch.sel .mk{border-color:var(--primary-foreground)}
+  .optB .ch.sel .mk i{background:var(--primary-foreground);transform:scale(1)}
+
+  /* ── submit bar ───────────────────────────────────────────── */
+  .bar{display:flex;align-items:center;gap:12px;border-top:1px solid color-mix(in oklab,var(--border) 70%,transparent);padding-top:14px}
+  .more{display:grid;width:32px;height:32px;flex:none;place-items:center;border-radius:8px;
+        border:1px solid var(--border);color:var(--muted-foreground);font-size:14px}
+  .bar p{margin:0;min-width:0;flex:1;font-size:12px;line-height:1.6;color:var(--muted-foreground)}
+  .bar p b{font-weight:600;color:var(--foreground)}
+  .sub{display:flex;flex:none;align-items:center;gap:10px;border-radius:10px;border:0;
+       background:var(--primary);color:var(--primary-foreground);padding:14px 24px;cursor:pointer}
+  .sub.off{opacity:.5;cursor:not-allowed}
+  .sub .stk{display:flex;min-width:0;flex-direction:column;align-items:flex-start;gap:2px}
+  .sub .a{font-size:13px;font-weight:600;line-height:1.2}
+  .sub .b{font-size:12px;line-height:1.2;opacity:.85;font-variant-numeric:tabular-nums}
+  .sub .sp{width:16px;height:16px;flex:none;visibility:hidden}
+</style>
+
+<svg style="display:none">
+  <symbol id="ai" viewBox="0 0 24 24"><path fill="currentColor" d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"/></symbol>
+  <symbol id="usr" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5" fill="currentColor" stroke="none"/><path d="M20 21a8 8 0 0 0-16 0" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+</svg>
+
+<main>
+<h1>Decision — opening with nothing selected</h1>
+<p class="lede">
+  The card no longer opens holding a decision nobody made. The recommendation is still
+  stated twice on purpose: the head says what the agent proposes, the card it belongs to
+  wears the badge. Submit stays dim until a person picks one.
+</p>
+
+<!-- ══ 1 · the head, three states ══════════════════════════════ -->
+<section>
+  <h2>1 · The head, in all three states</h2>
+  <p class="note">
+    One wrapping row in every state, so the head cannot change height on the first click
+    and reflow the card under the pointer. The confidence stays at full strength while
+    nothing is selected — it is the agent's confidence in its own proposal, and nothing
+    has contradicted it yet.
+  </p>
+
+  <div class="card">
+    <span class="tag"><i>initial</i> — nothing selected</span>
+    <div class="head">
+      <div class="head-l">
+        <div class="head-title"><svg><use href="#scale"/></svg> Decision</div>
+        <div class="head-value">
+          <span class="pos none">No resolution selected</span>
+          <span class="badge agent sm"><svg><use href="#ai"/></svg>Agent recommended</span>
+          <span class="rec-name">Deny coverage</span>
+          <span class="dot deny"></span>
+        </div>
+      </div>
+      <div class="score"><span class="n">87%</span><span class="c">Confidence score</span><span class="bar"><i></i></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">then — <b>Deny</b> picked, which is what the agent wanted</span>
+    <div class="head">
+      <div class="head-l">
+        <div class="head-title"><svg><use href="#scale"/></svg> Decision</div>
+        <div class="head-value">
+          <span class="pos">Deny coverage</span>
+          <span class="dot deny"></span>
+          <span class="badge agent"><svg><use href="#ai"/></svg>Agent recommended</span>
+        </div>
+      </div>
+      <div class="score"><span class="n">87%</span><span class="c">Confidence score</span><span class="bar"><i></i></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">or — <b>Approve partial + goodwill</b> picked</span>
+    <div class="head">
+      <div class="head-l">
+        <div class="head-title"><svg><use href="#scale"/></svg> Decision</div>
+        <div class="head-value">
+          <span class="pos">Approve partial coverage + goodwill</span>
+          <span class="dot partial"></span>
+          <span class="badge human"><svg><use href="#usr"/></svg>Human override</span>
+          <span class="stamp">· updated 10:50 AM</span>
+        </div>
+      </div>
+      <div class="score dim"><span class="n">87%</span><span class="c">Confidence score</span><span class="bar"><i></i></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">or — <b>Approve</b> picked</span>
+    <div class="head">
+      <div class="head-l">
+        <div class="head-title"><svg><use href="#scale"/></svg> Decision</div>
+        <div class="head-value">
+          <span class="pos">Approve full coverage</span>
+          <span class="dot approve"></span>
+          <span class="badge human"><svg><use href="#usr"/></svg>Human override</span>
+        </div>
+      </div>
+      <div class="score dim"><span class="n">87%</span><span class="c">Confidence score</span><span class="bar"><i></i></span></div>
+    </div>
+  </div>
+
+  <p class="verdict">
+    <b>The alternative was two stacked rows</b> — "No resolution selected" on its own
+    line with the recommendation beneath it. It reads a little clearer in isolation and
+    costs the card a line that disappears on the first click, which is the reflow this
+    row avoids. Say the word if you would rather have the clarity.
+  </p>
+</section>
+
+<!-- ══ 2 · resolution cards ════════════════════════════════════ -->
+<section>
+  <h2>2 · The resolution cards — now, and two ways forward</h2>
+  <p class="note">
+    Today all three sit on <code>bg-card</code>, the same surface as the panel holding
+    them, so they read as regions rather than controls. Both options fill the unselected
+    state with <code>bg-muted</code>; they differ in how the selected one is drawn.
+  </p>
+
+  <div class="card now">
+    <span class="tag">now — card ground, border-only selection, Deny preselected, no badge</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+  </div>
+
+  <div class="card optA">
+    <span class="tag"><i>option A</i> — muted ground, tinted selection · <b>recommended</b> · initial state, nothing selected</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="badge agent sm"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+  </div>
+
+  <div class="card optA">
+    <span class="tag"><i>option A</i> — Deny picked · the badge stays where the agent put it</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="badge agent sm"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+  </div>
+
+  <div class="card optA">
+    <span class="tag"><i>option A</i> — Partial picked · the badge is now the only thing saying what the agent wanted</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="badge agent sm"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+  </div>
+
+  <div class="card optB">
+    <span class="tag"><i>option B</i> — muted ground, solid selection, matching Submit · Partial picked</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="badge agent sm"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+  </div>
+
+  <div class="card optB">
+    <span class="tag"><i>option B</i> — Deny picked, so the badge lands on teal and has to change colour</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="badge onteal sm"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+  </div>
+
+  <p class="verdict">
+    <b>Why A.</b> B is the literal reading of "in line with the submit button", and the two
+    cards above show what it costs: the radio marker, the description and the badge all have
+    to invert on the one card that is selected, the insight tint has to leave the badge —
+    which is the hue this app uses to mean "agent" everywhere — and a solid teal card sits
+    200px above a solid teal Submit, so the choice competes with the control that files it.
+    A gives you the filled ground and a clearly-pressed state without any of that.
+  </p>
+</section>
+
+<!-- ══ 3 · submit bar ═════════════════════════════════════════ -->
+<section>
+  <h2>3 · The submit bar</h2>
+  <p class="note">
+    The sentence is a two-way switch today. With nothing selected it would say "No change
+    in position." beside a dead button, which reads as a broken control rather than a step
+    not yet taken — so it gets a third value in the same slot and the same voice.
+  </p>
+  <div class="card">
+    <span class="tag"><i>initial</i> — disabled, and the sentence says why</span>
+    <div class="bar">
+      <span class="more">···</span>
+      <p><b>No resolution selected.</b></p>
+      <button class="sub off"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+  <div class="card">
+    <span class="tag">Deny picked — the agent's own position</span>
+    <div class="bar">
+      <span class="more">···</span>
+      <p><b>No change in position.</b></p>
+      <button class="sub"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+  <div class="card">
+    <span class="tag">Partial picked — a departure, counted</span>
+    <div class="bar">
+      <span class="more">···</span>
+      <p><b>Change in position</b> · 2 of 4 parts: resolution, refund.</p>
+      <button class="sub"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+  <p class="verdict">
+    <b>And a bug this would otherwise ship.</b> <code>departuresOf</code> computes
+    <code>s.resolution !== s.agent.outcome</code>, so <code>"" !== "Denied"</code> makes the
+    bar read <i style="font-style:normal;color:var(--foreground)">"Change in position · 1 of
+    4 parts: resolution."</i> at mount, before anybody has done anything. The plan's §5 guards it.
+  </p>
+</section>
+
+<!-- ══ 4 · dark ═══════════════════════════════════════════════ -->
+<section>
+  <h2>4 · Dark</h2>
+  <p class="note">
+    <code>--primary-50</code> and <code>--primary-100</code> are re-declared in
+    <code>.dark</code> with their light values, so the tint has to be
+    <code>bg-primary/10</code> — an alpha on the theme-aware token — and not
+    <code>bg-primary-100</code>, which would paint a pale blue block on a dark card.
+  </p>
+  <div class="wrap dark dark">
+    <div class="card">
+      <span class="tag"><i>option A</i> — initial, dark</span>
+      <div class="head">
+        <div class="head-l">
+          <div class="head-title"><svg><use href="#scale"/></svg> Decision</div>
+          <div class="head-value">
+            <span class="pos none">No resolution selected</span>
+            <span class="badge agent sm"><svg><use href="#ai"/></svg>Agent recommended</span>
+            <span class="rec-name">Deny coverage</span>
+            <span class="dot deny"></span>
+          </div>
+        </div>
+        <div class="score"><span class="n">87%</span><span class="c">Confidence score</span><span class="bar"><i></i></span></div>
+      </div>
+      <div class="rule"></div>
+      <div class="optA">
+        <span class="lbl">Resolution</span>
+        <div class="row">
+          <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+          <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="badge agent sm"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+          <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+        </div>
+      </div>
+      <div class="bar">
+        <span class="more">···</span>
+        <p><b>No resolution selected.</b></p>
+        <button class="sub off"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+      </div>
+    </div>
+    <div class="card optA">
+      <span class="tag"><i>option A</i> — Deny picked, dark</span>
+      <span class="lbl">Resolution</span>
+      <div class="row">
+        <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+        <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="badge agent sm"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+        <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+      </div>
+    </div>
+  </div>
+</section>
+</main>

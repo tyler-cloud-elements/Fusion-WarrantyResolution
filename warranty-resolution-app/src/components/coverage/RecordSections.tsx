@@ -435,7 +435,12 @@ export function DocumentsSection({ caseId }: { caseId: string }) {
  * icon, and without a spacer their `Open` buttons would sit 32px right of the
  * other four. An empty `size-7` keeps one column of `Open` down the whole list.
  *
- * **`bg-app-text text-app-card` on the content, or it is invisible.**
+ * **No `bg-app-text` / `text-app-card` on the content.** Those were the embedding
+ * host's paired tokens and neither exists here — and since `cn` is tailwind-merge,
+ * passing `bg-app-text` deleted the base `bg-foreground` rather than adding
+ * anything, which is why every tooltip on this screen rendered with no background
+ * at all. The shared component's own `bg-foreground text-background` is correct in
+ * this app.
  * `TooltipContent` paints `bg-foreground text-background` and portals to
  * `document.body`, outside the `.wrc` theme root, where `text-background` does not
  * resolve — the same trap the evidence selectors and the recommendation tag both
@@ -465,7 +470,7 @@ function DocumentRow({ doc }: { doc: ReturnType<typeof documentsForCase>[number]
                 <Info className="size-4" aria-hidden />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-72 bg-app-text text-app-card">
+            <TooltipContent side="top" className="max-w-72">
               {doc.readOff}
             </TooltipContent>
           </Tooltip>

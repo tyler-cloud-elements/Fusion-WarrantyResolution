@@ -112,15 +112,21 @@ function VerdictTag({ verdict }: { verdict: NonNullable<CaseAction["verdict"]> }
   return (
     <Tooltip>
       <TooltipTrigger asChild>{chip}</TooltipTrigger>
-      {/* `bg-app-text text-app-card`, and it is a workaround for the shared
-          component rather than a preference. `TooltipContent` (../ui/tooltip.tsx)
-          paints `bg-foreground text-background` and PORTALS to `document.body` —
-          outside the `.wrc` root — where `bg-foreground` resolves and
-          `text-background` does not emit at all, so the label inherits the shell's
-          near-black ink onto a near-black panel. `app-text` / `app-card` are the
-          shell's own paired tokens: both resolve out there and they invert together
-          in the dark theme. Same fix, same reasoning as `RecommendedTag`. */}
-      <TooltipContent side="top" className="max-w-60 bg-app-text text-app-card">
+      {/* NO `bg-app-text` / `text-app-card` HERE, and the absence is the fix.
+          Every tooltip in this folder arrived carrying that pair, with a note saying
+          the shared `TooltipContent` was illegible without it. That was true of the
+          host this screen was embedded in: there, the content portals to
+          `document.body` outside a `.wrc` theme root, and `text-background` did not
+          emit at all out there, so the label inherited near-black ink onto a
+          near-black panel. `app-text` / `app-card` were the SHELL'S paired tokens
+          and the only two that resolved.
+
+          Neither token exists in this app — and `cn` is tailwind-merge, so passing
+          `bg-app-text` did not add a background, it DELETED the base
+          `bg-foreground` and put nothing in its place. Every tooltip on this screen
+          was rendering with no background at all. Removed, the base
+          `bg-foreground text-background` applies and needs no help. */}
+      <TooltipContent side="top" className="max-w-60">
         {detail}
       </TooltipContent>
     </Tooltip>

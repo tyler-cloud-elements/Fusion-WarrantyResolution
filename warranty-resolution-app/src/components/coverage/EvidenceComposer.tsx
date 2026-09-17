@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CallDot, LabelledSelect, RankBars } from "@/components/coverage/LabelledSelect";
-import { COL, COL_HINT } from "@/components/coverage/evidenceColumns";
+import { COL } from "@/components/coverage/evidenceColumns";
 import {
   CALL_OPTIONS,
   IMPORTANCE_OPTIONS,
@@ -195,9 +195,9 @@ export function EvidenceComposer({
           className={cn(FIELD, "min-w-0 flex-1")}
         />
         {/* `width={0}` — the trigger sizes itself from the inside out and the cell
-            holds the column edge, exactly as on a finished row. The `hint`s are the
-            shared ones, so hovering a heading, a row's control or this one answers
-            the same question. */}
+            holds the column edge, exactly as on a finished row. No hint: these
+            carried the same one the column heads do, and the heads keep it
+            (../EvidenceList.tsx). */}
         <span className={cn("flex shrink-0 justify-end", COL.relevance)}>
           <LabelledSelect
             compact
@@ -208,7 +208,6 @@ export function EvidenceComposer({
             icon={(v) => <RankBars value={v} />}
             width={0}
             ariaLabel="Relevance"
-            hint={COL_HINT.relevance}
           />
         </span>
         <span className={cn("flex shrink-0 justify-end", COL.decision)}>
@@ -221,7 +220,6 @@ export function EvidenceComposer({
             icon={(v) => <CallDot value={v} />}
             width={0}
             ariaLabel="Decision"
-            hint={COL_HINT.decision}
           />
         </span>
       </div>

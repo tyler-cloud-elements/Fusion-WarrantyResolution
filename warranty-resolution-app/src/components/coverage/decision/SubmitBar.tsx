@@ -50,6 +50,7 @@ export function SubmitBar({
   more,
   departures,
   evidenceCount,
+  unselected,
   disabled,
   busy,
   onSubmit,
@@ -58,6 +59,20 @@ export function SubmitBar({
   more: ReactNode;
   departures: Departures;
   evidenceCount: number;
+  /**
+   * No resolution picked yet, which is how the card opens.
+   *
+   * THE SENTENCE NEEDS THIS, and it is the only reason the prop exists. It was a
+   * two-way switch — change in position, or no change — and both readings assume a
+   * position. With none picked it said "No change in position." beside a button
+   * that cannot be pressed, which reads as a broken control rather than as a step
+   * not yet taken. Third value, same slot, same voice.
+   *
+   * Separate from `disabled` even though the button is disabled on this path too:
+   * `disabled` is also true for a missing rationale and while a submit is in
+   * flight, and neither of those is this.
+   */
+  unselected: boolean;
   disabled: boolean;
   busy: boolean;
   onSubmit: () => void;
@@ -68,7 +83,11 @@ export function SubmitBar({
     <div className="flex items-center gap-3 border-t border-border/70 pt-3.5">
       {more}
       <p className={cn(TYPE.small, "m-0 min-w-0 flex-1 leading-relaxed text-muted-foreground")}>
-        {departed ? (
+        {unselected ? (
+          // FIRST, because it outranks the other two: until a resolution is picked
+          // there is no position for them to be a reading of.
+          <b className="font-semibold text-foreground">No resolution selected.</b>
+        ) : departed ? (
           <>
             <b className="font-semibold text-foreground">Change in position</b> ·{" "}
             {departures.parts} of 4 parts: {listOf(namesOf(departures))}.
@@ -95,12 +114,58 @@ export function SubmitBar({
         // as broken rather than working. Dim still means "not yet"; full strength
         // plus a spinner means "going".
         className={cn(
-          // THE BOX GROWS A LITTLE, ON PURPOSE. It was pinned at 48px so the
-          // 15px label could not push it out; that pin is gone and the padding
-          // opens instead — `py-2.5` and `px-5` against the old `py-2`/`px-4`.
-          // `h-auto` is back so the height is the content's, which is what lets
-          // the two-line stack set it rather than a magic number.
-          "h-auto shrink-0 flex-row items-center gap-2.5 px-5 py-2.5",
+          // THE BOX GROWS, AND THE PADDING IS WHAT GROWS IT. It was pinned at
+          // 48px so the label could not push it out; that pin is gone and the
+          // padding opens instead — `py-3.5`/`px-6` against `py-2.5`/`px-5`,
+          // which against the original `py-2`/`px-4` is the second opening.
+          // `h-auto` so the height is the content's, which is what lets the
+          // two-line stack set it rather than a magic number.
+          //
+          // THE PADDING HAD TO CARRY THIS ALONE, because the type went DOWN in
+          // the same change: the label came off 15px to meet the resolution
+          // cards at 13 (see the stack below). Height is `py` × 2 + the stack,
+          // and the stack lost ~2px, so anything less than `py-3.5` would have
+          // read as the button shrinking.
+          "h-auto shrink-0 flex-row items-center gap-2.5 px-6 py-3.5",
+          /**
+           * THE PRIMARY BUTTON, which is the `default` variant and therefore no
+           * class at all — this note exists because it was briefly two other things.
+           *
+           * It was filled with a slate, first to match a picked resolution card and
+           * then a step darker than one, while the cards were carrying filled
+           * selections. The cards no longer fill (../../ui/choicebox.tsx), so the
+           * reason is gone: this is the one action on the page and it wears the
+           * app's action colour, as every other primary button does.
+           *
+           * **Its ink is white on `--primary`, which measures 3.19:1.** That is
+           * under the 4.5 an AA pass wants for 13px semibold — and it is the
+           * `default` variant's behaviour app-wide, not something this screen
+           * introduced. Fixing it belongs in `ui/button.tsx` (a darker
+           * `--primary-700` fill would clear it) rather than in one button behind a
+           * flag, so it is recorded here and left alone.
+           */
+          /**
+           * A PRESSED STATE, because the base button has none.
+           *
+           * `ui/button.tsx` carries `hover:bg-primary/90` and stops there, so a
+           * press on this control produced no feedback at all until the spinner
+           * arrived — and that is 500ms later, deliberately
+           * (../decision/DecisionSection.tsx stages it so the section does not
+           * change shape under the pointer). Half a second of nothing on the one
+           * button that files the decision reads as a click that missed.
+           *
+           * Two cues, because one was not enough on a 61px block: the fill takes a
+           * step past `hover:bg-primary/90`, and the whole button drops 1px.
+           * `transition-all` is already on the base, so both animate.
+           *
+           * SCOPED HERE rather than added to the variant. That file is every button
+           * in the app, and a press state is worth having everywhere — but not as a
+           * side effect of a change to one screen behind a flag.
+           *
+           * `disabled:pointer-events-none` on the base means neither cue can fire
+           * while the button is dim or in flight, which is what should happen.
+           */
+          "active:translate-y-px active:bg-primary/80",
           busy && "disabled:opacity-100",
         )}
       >
@@ -120,18 +185,51 @@ export function SubmitBar({
             BOTH lines and centred against them, and it is the arrangement that
             can widen the button. That is worth stating because the earlier note
             claimed it could not: inside line 1 it cannot, since the payload line
-            governs the width at 233px and line 1 has 187px of slack to swallow
-            anything added to it. Out here the spinner is not competing with that
-            slack — it is added to the stack's full width, so the button grows by
-            the icon and the gap, and only while it is spinning. */}
-        {busy && <Loader2 className="size-4 shrink-0 animate-spin" aria-hidden />}
+            governs the width and line 1 has slack to swallow anything added to
+            it. Out here the spinner is added to the stack's full width instead.
+
+            **THE SLOT IS ALWAYS HELD, AND THAT IS THE FIX, NOT A DETAIL.** Out
+            here the spinner used to be mounted only while `busy`, so pressing
+            Submit widened the button by the icon plus the gap — 26px of reflow
+            on the one control whose job is to look pressed rather than to move.
+            The earlier note recorded that growth approvingly; it was a bug with
+            a rationale. `invisible` keeps the box in the layout and takes it out
+            of the paint, so idle, disabled and busy measure identically.
+
+            The empty gutter this leaves when idle is the price, and it is the
+            right way round: a fixed 16px inset reads as an icon slot, whereas a
+            button that jumps as it commits reads as a mis-click. */}
+        <Loader2
+          aria-hidden
+          className={cn("size-4 shrink-0 animate-spin", !busy && "invisible")}
+        />
 
         <span className="flex min-w-0 flex-col items-start gap-0.5">
-          <span className="text-[15px] leading-tight font-semibold">Submit</span>
+          {/* 13px SEMIBOLD, and it is now one rung ABOVE the resolution cards'
+              titles rather than level with them (../../ui/choicebox.tsx). It was
+              15, which made the act two rungs louder than the three things it
+              acts on; both files then met at 13 so neither out-shouted the other.
+              The cards have since dropped to 12 — three choices should not weigh
+              as much as the single control that files them — so this keeps 13 and
+              the one-rung gap is deliberate. Changing this means changing that.
+
+              `leading-tight` stays. The two lines are a stack inside a control,
+              not prose, and the button's height is measured off them. */}
+          <span className="text-[13px] leading-tight font-semibold">Submit</span>
           {/* The payload, named. Not a count of what changed — that is the
               sentence's job — but what goes when this is pressed, which is all
-              four parts on every path. */}
-          <span className="text-[10.5px] leading-tight font-normal opacity-85">
+              four parts on every path.
+
+              `text-xs` (12px) — the rung the cards' own descriptions use, up
+              from an off-scale 10.5. It sits one step under the label exactly as
+              a card's description sits under its title, so the pair reads as the
+              same object in a different colour.
+
+              `tabular-nums` because the count changes under the reviewer: a
+              proportional digit set re-measures the line on the way from 9 to
+              10 items, which is the same reflow the spinner slot above exists to
+              stop. */}
+          <span className="text-xs leading-tight font-normal tabular-nums opacity-85">
             Resolution, refund, rationale and {evidenceCount}{" "}
             {evidenceCount === 1 ? "evidence item" : "evidence items"}
           </span>

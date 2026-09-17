@@ -1,0 +1,239 @@
+<meta charset="utf-8">
+<title>Resolution cards — fill and size</title>
+<style>
+  :root{
+    --background:oklch(1 0 89.88); --foreground:oklch(0.2394 0.0455 252.45);
+    --card:oklch(1 0 89.88); --muted:oklch(0.963 0.0062 255.48);
+    --muted-foreground:oklch(0.4594 0.028 264.25); --border:oklch(0.9229 0.0065 252.13);
+    --primary:oklch(0.64 0.115 208); --primary-foreground:oklch(1 0 89.88);
+    --secondary:oklch(0.9593 0.0069 247.9); --secondary-foreground:oklch(0.2394 0.0455 252.45);
+    --badge:oklch(0.5995 0.0199 253.42); --badge-foreground:oklch(1 0 89.88);
+    --insight-100:oklch(0.92 0.05 277); --insight-600:oklch(0.56 0.20 277); --insight-800:oklch(0.38 0.13 278);
+    --font-sans:Inter,ui-sans-serif,sans-serif,system-ui; --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  .dark{
+    --background:oklch(0.21 0.03 258.5); --foreground:oklch(0.985 0 0);
+    --card:oklch(0.233 0.036 254.7); --muted:oklch(0.2648 0.0329 254.38);
+    --muted-foreground:oklch(0.72 0.03 254.38); --border:oklch(0.3068 0.0426 258.29);
+    --primary:oklch(0.69 0.112 207); --primary-foreground:oklch(0.166 0.0283 203.34);
+    --secondary:oklch(0.3927 0.0289 240.86); --secondary-foreground:oklch(0.9416 0.0145 244.72);
+    --badge:oklch(0.7196 0.0135 255.53); --badge-foreground:oklch(0.166 0.0283 203.34);
+    --insight-600:oklch(0.70 0.19 277);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 24px;font-family:var(--font-sans);background:var(--background);color:var(--foreground)}
+  main{max-width:1040px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
+  .lede{font-size:13px;color:var(--muted-foreground);margin:0 0 28px;max-width:70ch;line-height:1.6}
+  section{margin-bottom:36px}
+  h2{font-size:13px;font-weight:600;margin:0 0 2px}
+  .note{font-size:12px;color:var(--muted-foreground);margin:0 0 14px;max-width:78ch;line-height:1.6}
+  code{font-family:var(--font-mono);font-size:11px;background:var(--muted);padding:1px 5px;border-radius:4px}
+  .panel{border:1px solid var(--border);border-radius:12px;background:var(--card);padding:18px;margin-bottom:12px}
+  .wrap.dark{background:var(--background);padding:16px;border-radius:12px}
+  .tag{display:block;margin-bottom:10px;font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-foreground)}
+  .tag b{color:var(--insight-600);font-weight:600} .tag i{color:oklch(0.57 0.105 152);font-style:normal;font-weight:600}
+  .tag s{color:oklch(0.62 0.15 18);text-decoration:none;font-weight:600}
+  .verdict{font-size:12px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border);color:var(--muted-foreground);line-height:1.6}
+  .verdict b{color:var(--foreground)}
+  table{border-collapse:collapse;font-size:12px;width:100%;margin:6px 0 0}
+  th,td{text-align:right;padding:5px 10px;border-bottom:1px solid var(--border)}
+  th:first-child,td:first-child{text-align:left}
+  th{font-weight:600;color:var(--muted-foreground);font-size:11px}
+  td.bad{color:oklch(0.62 0.15 18);font-weight:600} td.ok{color:oklch(0.57 0.105 152);font-weight:600}
+
+  .lbl{font-size:12px;color:var(--muted-foreground)}
+  .row{display:flex;gap:12px;align-items:stretch;margin-top:8px}
+  .ch{position:relative;display:flex;min-width:0;flex:1;flex-direction:column;
+      border:1px solid transparent;background:var(--muted);cursor:pointer;
+      transition:background-color .15s,border-color .15s,color .15s}
+  .ch .in{display:flex;min-width:0;align-items:flex-start}
+  .ch .mk{display:grid;flex:none;place-items:center;border:1.5px solid color-mix(in oklab,var(--muted-foreground) 45%,transparent);border-radius:999px}
+  .ch .mk i{display:block;border-radius:999px;background:var(--primary);transform:scale(0)}
+  .ch .tx{min-width:0;flex:1}
+  .ch .t{display:flex;min-width:0;flex-wrap:wrap;align-items:center;gap:6px}
+  .ch .d{display:block;color:var(--muted-foreground)}
+
+  /* CURRENT METRICS — p-3.5 / 13px / 12px / rounded-xl / 16px marker */
+  .big .ch{border-radius:14px}
+  .big .in{gap:10px;padding:14px}
+  .big .mk{width:16px;height:16px;margin-top:1px}
+  .big .mk i{width:8px;height:8px}
+  .big .t span.n{font-size:13px;font-weight:600}
+  .big .d{margin-top:2px;font-size:12px}
+
+  /* PROPOSED METRICS — px-3 py-2.5 / 12px / 11px / rounded-lg / 14px marker */
+  .sm .ch{border-radius:10px}
+  .sm .in{gap:9px;padding:10px 12px}
+  .sm .mk{width:14px;height:14px;margin-top:1px}
+  .sm .mk i{width:7px;height:7px}
+  .sm .t span.n{font-size:12px;font-weight:600}
+  .sm .d{margin-top:1px;font-size:11px}
+
+  /* ── the fills ── */
+  .f-primary .ch.sel{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+  .f-primary .ch.sel .d{color:color-mix(in oklab,var(--primary-foreground) 80%,transparent)}
+  .f-primary .ch.sel .mk{border-color:var(--primary-foreground)} .f-primary .ch.sel .mk i{background:var(--primary-foreground);transform:scale(1)}
+  .f-secondary .ch.sel{background:var(--secondary);border-color:var(--secondary-foreground);color:var(--secondary-foreground)}
+  .f-secondary .ch.sel .mk{border-color:var(--secondary-foreground)} .f-secondary .ch.sel .mk i{background:var(--secondary-foreground);transform:scale(1)}
+  .f-badge .ch.sel{background:var(--badge);border-color:var(--badge);color:var(--badge-foreground)}
+  .f-badge .ch.sel .d{color:color-mix(in oklab,var(--badge-foreground) 80%,transparent)}
+  .f-badge .ch.sel .mk{border-color:var(--badge-foreground)} .f-badge .ch.sel .mk i{background:var(--badge-foreground);transform:scale(1)}
+  .f-slate .ch.sel{background:var(--muted-foreground);border-color:var(--muted-foreground);color:var(--background)}
+  .f-slate .ch.sel .d{color:color-mix(in oklab,var(--background) 80%,transparent)}
+  .f-slate .ch.sel .mk{border-color:var(--background)} .f-slate .ch.sel .mk i{background:var(--background);transform:scale(1)}
+  .f-fg .ch.sel{background:var(--foreground);border-color:var(--foreground);color:var(--background)}
+  .f-fg .ch.sel .d{color:color-mix(in oklab,var(--background) 80%,transparent)}
+  .f-fg .ch.sel .mk{border-color:var(--background)} .f-fg .ch.sel .mk i{background:var(--background);transform:scale(1)}
+
+  /* badge chip */
+  .bdg{display:inline-flex;flex:none;align-items:center;gap:4px;border-radius:999px;padding:1px 6px;
+       font-size:10.5px;font-weight:600;white-space:nowrap;background:var(--insight-100);color:var(--foreground)}
+  .bdg svg{width:11px;height:11px;flex:none;color:var(--insight-600)}
+  .dark .bdg{background:var(--insight-800);color:#fff} .dark .bdg svg{color:#fff}
+  .sel .bdg{background:var(--background);color:var(--foreground)} .sel .bdg svg{color:var(--muted-foreground)}
+  .f-primary .sel .bdg{background:var(--primary-foreground);color:var(--primary)} .f-primary .sel .bdg svg{color:var(--primary)}
+
+  /* submit, for side-by-side scale */
+  .bar{display:flex;align-items:center;gap:12px;margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+  .bar p{margin:0;flex:1;font-size:12px;color:var(--muted-foreground)} .bar p b{color:var(--foreground);font-weight:600}
+  .sub{display:flex;flex:none;align-items:center;gap:10px;border:0;border-radius:10px;
+       background:var(--primary);color:var(--primary-foreground);padding:14px 24px;cursor:pointer}
+  .sub .stk{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+  .sub .a{font-size:13px;font-weight:600;line-height:1.25}
+  .sub .b{font-size:12px;line-height:1.25;opacity:.85}
+  .sub .sp{width:16px;height:16px;flex:none;visibility:hidden}
+</style>
+<svg style="display:none"><symbol id="ai" viewBox="0 0 24 24"><path fill="currentColor" d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"/></symbol></svg>
+
+<main>
+<h1>Resolution cards — a non-primary fill, and a smaller box</h1>
+<p class="lede">
+  Two answers. Yes, the app has a <code>secondary</code> filled button variant — but it
+  cannot carry this selected state, and the numbers say why. And the cards are measurably
+  bigger than Submit: 91px against 61px, on a 14px radius against 10px.
+</p>
+
+<!-- 1 -->
+<section>
+  <h2>1 · Why <code>bg-secondary</code> cannot do it</h2>
+  <p class="note">
+    <code>--secondary</code> is <code>oklch(0.9593 …)</code> and <code>--muted</code> is
+    <code>oklch(0.963 …)</code>. In light mode those are the same colour to three decimal
+    places, so a selected <code>bg-secondary</code> card against unselected
+    <code>bg-muted</code> ones separates at <b>1.01:1</b> — invisible.
+  </p>
+  <div class="panel big f-secondary">
+    <span class="tag"><s>bg-secondary</s> — middle card selected. It is selected.</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="bdg"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+  </div>
+</section>
+
+<!-- 2 -->
+<section>
+  <h2>2 · The candidates, measured</h2>
+  <table>
+    <tr><th>selected fill</th><th>light: separation</th><th>light: ink</th><th>dark: separation</th><th>dark: ink</th></tr>
+    <tr><td><code>secondary</code></td><td class="bad">1.01</td><td>—</td><td class="bad">1.62</td><td>—</td></tr>
+    <tr><td><code>primary</code> (what is live now)</td><td>2.87</td><td class="bad">3.19</td><td>5.76</td><td class="ok">6.67</td></tr>
+    <tr><td><code>badge</code></td><td>3.55</td><td class="bad">3.95</td><td class="ok">6.16</td><td class="bad">2.38</td></tr>
+    <tr><td><b>muted-foreground</b></td><td class="ok">6.43</td><td class="ok">7.15</td><td class="ok">6.18</td><td class="ok">7.16</td></tr>
+    <tr><td><code>foreground</code></td><td>14.8</td><td class="ok">16.5</td><td>14.7</td><td class="ok">17.0</td></tr>
+  </table>
+  <p class="verdict">
+    <b>The live teal fill fails AA.</b> White on <code>--primary</code> in light mode is
+    <b>3.19:1</b> — under the 4.5 that 13px semibold needs. That is a real defect in what
+    I shipped an hour ago, and it is the strongest argument for changing the fill rather
+    than just recolouring it for taste.
+  </p>
+</section>
+
+<!-- 3 -->
+<section>
+  <h2>3 · <code>bg-muted-foreground</code> — the recommendation</h2>
+  <p class="note">
+    A filled slate, from the same family as the unselected <code>bg-muted</code> ground —
+    so the selected card reads as the same control filled in, rather than as a
+    different-coloured object. 7.15:1 ink in both themes, 6.4:1 separation, and nothing
+    about it competes with the teal action.
+  </p>
+  <div class="panel sm f-slate">
+    <span class="tag"><i>recommended</i> — <code>bg-muted-foreground</code> · <code>text-background</code> · new smaller metrics</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="bdg"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+    <div class="bar"><p><b>No change in position.</b></p>
+      <button class="sub"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button></div>
+  </div>
+  <div class="panel sm f-fg">
+    <span class="tag">alternative — <code>bg-foreground</code>, heavier</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="bdg"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section>
+  <h2>4 · The size — 91px down to about 63px</h2>
+  <p class="note">
+    The type was never bigger: the title is already 13/600, exactly Submit's label, and the
+    description 12px, exactly Submit's payload line. What made them loom is the box — 14px
+    padding all round, a 14px radius against Submit's 10, and a 16px marker. Both come down
+    a rung, and the type follows so the action is unambiguously the loudest thing.
+  </p>
+  <table>
+    <tr><th></th><th>padding</th><th>radius</th><th>title</th><th>description</th><th>marker</th><th>height</th></tr>
+    <tr><td>Submit</td><td>14 / 24</td><td>10px</td><td>13 / 600</td><td>12px</td><td>16px</td><td>61px</td></tr>
+    <tr><td>cards, now</td><td>14</td><td class="bad">14px</td><td>13 / 600</td><td>12px</td><td>16px</td><td class="bad">91px</td></tr>
+    <tr><td><b>cards, proposed</b></td><td class="ok">10 / 12</td><td class="ok">10px</td><td class="ok">12 / 600</td><td class="ok">11px</td><td class="ok">14px</td><td class="ok">≈63px</td></tr>
+  </table>
+  <div class="panel big f-slate">
+    <span class="tag">now — 14px padding, 14px radius, 13/12 type</span>
+    <span class="lbl">Resolution</span>
+    <div class="row">
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+      <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="bdg"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+      <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+    </div>
+    <div class="bar"><p><b>No change in position.</b></p>
+      <button class="sub"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button></div>
+  </div>
+  <p class="verdict">
+    <b>This reverses a note in the code, deliberately.</b> The choicebox and the submit bar
+    both carry comments explaining that they were brought onto one 13px rung so neither
+    out-shouted the other. The cards drop a rung below it now, which is the same argument
+    resolved the other way: three choices should not weigh as much as the one control that
+    files them.
+  </p>
+</section>
+
+<!-- 5 -->
+<section>
+  <h2>5 · Dark</h2>
+  <div class="wrap dark dark">
+    <div class="panel sm f-slate">
+      <span class="tag"><i>recommended</i> — dark</span>
+      <span class="lbl">Resolution</span>
+      <div class="row">
+        <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve</span></span><span class="d">Fund entirely</span></span></span></label>
+        <label class="ch sel"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Deny</span><span class="bdg"><svg><use href="#ai"/></svg>Agent recommended</span></span><span class="d">Waive to customer</span></span></span></label>
+        <label class="ch"><span class="in"><span class="mk"><i></i></span><span class="tx"><span class="t"><span class="n">Approve partial + goodwill</span></span><span class="d">Split cost</span></span></span></label>
+      </div>
+      <div class="bar"><p><b>No change in position.</b></p>
+        <button class="sub"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button></div>
+    </div>
+  </div>
+</section>
+</main>

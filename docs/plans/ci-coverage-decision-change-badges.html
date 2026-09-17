@@ -1,0 +1,268 @@
+<meta charset="utf-8">
+<title>What changed — change-type badges</title>
+<style>
+  :root{
+    --background:oklch(1 0 89.88); --foreground:oklch(0.2394 0.0455 252.45);
+    --card:oklch(1 0 89.88); --muted:oklch(0.963 0.0062 255.48);
+    --muted-foreground:oklch(0.4594 0.028 264.25); --border:oklch(0.9229 0.0065 252.13);
+    --primary:oklch(0.64 0.115 208); --success:oklch(0.57 0.105 152);
+    --warning:oklch(0.8 0.1401 80.82); --warning-foreground:oklch(0.166 0.0283 203.34);
+    --destructive:oklch(0.62 0.15 18); --insight-600:oklch(0.56 0.20 277);
+    --font-sans:Inter,ui-sans-serif,sans-serif,system-ui; --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  .dark{
+    --background:oklch(0.21 0.03 258.5); --foreground:oklch(0.985 0 0);
+    --card:oklch(0.233 0.036 254.7); --muted:oklch(0.2648 0.0329 254.38);
+    --muted-foreground:oklch(0.72 0.03 254.38); --border:oklch(0.3068 0.0426 258.29);
+    --primary:oklch(0.69 0.112 207); --success:oklch(0.7 0.12 152);
+    --warning:oklch(0.6889 0.1401 80.82); --destructive:oklch(0.68 0.155 18);
+    --insight-600:oklch(0.70 0.19 277);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 24px;font-family:var(--font-sans);background:var(--background);color:var(--foreground)}
+  main{max-width:1040px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
+  .lede{font-size:13px;color:var(--muted-foreground);margin:0 0 28px;max-width:72ch;line-height:1.6}
+  section{margin-bottom:36px}
+  h2{font-size:13px;font-weight:600;margin:0 0 2px}
+  .note{font-size:12px;color:var(--muted-foreground);margin:0 0 14px;max-width:80ch;line-height:1.6}
+  code{font-family:var(--font-mono);font-size:11px;background:var(--muted);padding:1px 5px;border-radius:4px}
+  .tag{display:block;margin-bottom:10px;font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-foreground)}
+  .tag b{color:var(--insight-600);font-weight:600} .tag i{color:var(--success);font-style:normal;font-weight:600}
+  .tag s{color:var(--destructive);text-decoration:none;font-weight:600}
+  .verdict{font-size:12px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border);color:var(--muted-foreground);line-height:1.6}
+  .verdict b{color:var(--foreground)}
+  .pair{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+  .col{flex:1 1 440px;min-width:400px}
+  .wrap.dark{background:var(--background);padding:16px;border-radius:12px}
+  table.m{border-collapse:collapse;font-size:12px;width:100%}
+  table.m th,table.m td{text-align:right;padding:5px 10px;border-bottom:1px solid var(--border)}
+  table.m th:first-child,table.m td:first-child{text-align:left}
+  table.m th{font-size:11px;font-weight:600;color:var(--muted-foreground)}
+  td.bad{color:var(--destructive);font-weight:600} td.ok{color:var(--success);font-weight:600}
+
+  /* ── the panel ── */
+  .panel{overflow:hidden;border-radius:12px;border:1px solid var(--border);background:var(--card)}
+  .ph{display:flex;align-items:baseline;gap:8px;border-bottom:1px solid color-mix(in oklab,var(--border) 60%,transparent);padding:8px 14px;font-size:13px;font-weight:600}
+
+  /* NOW — 3 columns, MoveGlyph inline, bold value */
+  .rNow{display:grid;grid-template-columns:14px 88px minmax(0,1fr);align-items:center;column-gap:10px;
+        padding:8px 14px;border-bottom:1px solid color-mix(in oklab,var(--border) 50%,transparent);font-size:12px}
+  /* AFTER — 4 columns, badge in its own */
+  .r{display:grid;grid-template-columns:14px 88px 20px minmax(0,1fr);align-items:center;column-gap:10px;
+     padding:8px 14px;border-bottom:1px solid color-mix(in oklab,var(--border) 50%,transparent);font-size:12px}
+  .r:last-child,.rNow:last-child{border-bottom:0}
+  .r:hover,.rNow:hover{background:color-mix(in oklab,var(--muted) 40%,transparent)}
+  .pico{width:14px;height:14px;color:var(--muted-foreground)}
+  .part{color:var(--muted-foreground)}
+  .val{min-width:0;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .subj{font-weight:600}
+  .was{color:var(--muted-foreground);text-decoration:line-through}
+  .isBold{font-weight:600}           /* now */
+  .is{font-weight:400}               /* after */
+  .detail{color:var(--muted-foreground)}
+  svg.arrow{width:12px;height:12px;color:var(--muted-foreground);flex:none}
+  svg.mv{width:13px;height:13px;flex:none}
+  svg.mv.add{color:var(--success)} svg.mv.del{color:var(--destructive)} svg.mv.edit{color:var(--muted-foreground)}
+  svg.mv.up{color:var(--success)} svg.mv.down{color:var(--muted-foreground)} svg.mv.ok{color:var(--success)}
+
+  /* ── THE BADGE ── rim + wash carry the hue, ink is foreground */
+  .b{display:inline-grid;place-items:center;width:18px;height:18px;flex:none;
+     border:1px solid;border-radius:6px;font-size:11px;line-height:1;font-weight:700;
+     color:var(--foreground);font-family:var(--font-sans)}
+  .b.add{border-color:color-mix(in oklab,var(--success) 45%,transparent);background:color-mix(in oklab,var(--success) 15%,transparent)}
+  .b.mod{border-color:color-mix(in oklab,var(--warning) 45%,transparent);background:color-mix(in oklab,var(--warning) 15%,transparent)}
+  .b.rem{border-color:color-mix(in oklab,var(--destructive) 45%,transparent);background:color-mix(in oklab,var(--destructive) 15%,transparent)}
+  /* rejected variants, for the comparison */
+  .b.hued.add{color:var(--success)} .b.hued.mod{color:var(--warning)} .b.hued.rem{color:var(--destructive)}
+  .b.solid{border-color:transparent;color:#fff}
+  .b.solid.add{background:var(--success)} .b.solid.rem{background:var(--destructive)}
+  .b.solid.mod{background:var(--warning);color:var(--warning-foreground)}
+
+  /* value glyphs */
+  .bars{display:inline-flex;align-items:flex-end;gap:1.5px;height:10px;flex:none}
+  .bars i{display:block;width:3px;border-radius:1px;background:var(--border)}
+  .bars i.on{background:var(--foreground)}
+  .bars i:nth-child(1){height:4px}.bars i:nth-child(2){height:7px}.bars i:nth-child(3){height:10px}
+  .dash{display:inline-flex;width:12px;height:10px;align-items:flex-end;flex:none}
+  .dash i{display:block;height:3px;width:100%;border-radius:1px;background:var(--border)}
+  .call{font-size:11px;font-weight:800;line-height:1;flex:none}
+  .call.a{color:var(--success)} .call.d{color:var(--destructive)}
+  .empty{margin:0;padding:10px 14px;font-size:12px;display:flex;align-items:flex-start;gap:8px;
+         color:color-mix(in oklab,var(--foreground) 75%,transparent)}
+  .grey{filter:grayscale(1)}
+  .key{border-collapse:collapse;font-size:12px}
+  .key td{padding:6px 12px 6px 0;vertical-align:middle}
+</style>
+
+<svg style="display:none">
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <symbol id="scale" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+    <symbol id="banknote" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+    <symbol id="pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+    <symbol id="highlighter" viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></symbol>
+    <symbol id="arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+    <symbol id="arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+    <symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  </g>
+</svg>
+
+<main>
+<h1>What changed — a badge per change type</h1>
+<p class="lede">
+  Green <code>+</code>, yellow <code>O</code>, red <code>−</code>, in a column of their
+  own before the value. The badge replaces the inline <code>Plus</code> /
+  <code>Trash2</code> / <code>Pencil</code> rather than joining it, and takes over the
+  emphasis the bold value was carrying.
+</p>
+
+<!-- 1 -->
+<section>
+  <h2>1 · Before and after, the same six changes</h2>
+  <p class="note">
+    Note what the left side does <em>not</em> mark: the resolution, the refund and
+    both evidence moves get no type indicator at all today — only the three rows with
+    no <code>from</code> do. Every row is typed on the right.
+  </p>
+  <div class="pair">
+    <div class="col">
+      <span class="tag">now</span>
+      <div class="panel">
+        <div class="ph">What changed</div>
+        <div class="rNow"><svg class="pico"><use href="#scale"/></svg><span class="part">Resolution</span><span class="val"><span class="was">Deny coverage</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="isBold">Approve partial coverage + goodwill</span></span></div>
+        <div class="rNow"><svg class="pico"><use href="#banknote"/></svg><span class="part">Refund</span><span class="val"><span class="was">$0.00</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="isBold">$4,940.00</span><svg class="mv up"><use href="#arrow-up"/></svg><span class="detail">· within the $5,000.00 authority</span></span></div>
+        <div class="rNow"><svg class="pico"><use href="#pencil"/></svg><span class="part">Rationale</span><span class="val"><svg class="mv edit"><use href="#pencil"/></svg><span class="isBold">Rewritten</span><span class="detail">· replaced when the position moved</span></span></div>
+        <div class="rNow"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="val"><span class="subj">Renewal within 3 months ·</span><span class="bars"><i class="on"></i><i></i><i></i></span><span class="was">Low</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="isBold">High</span></span></div>
+        <div class="rNow"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="val"><span class="subj">No goodwill drawn this year ·</span><svg class="mv add"><use href="#plus"/></svg><span class="isBold">Added</span></span></div>
+        <div class="rNow"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="val"><span class="subj">Defect in warranty ·</span><svg class="mv del"><use href="#trash"/></svg><span class="isBold">Removed</span></span></div>
+      </div>
+    </div>
+    <div class="col">
+      <span class="tag"><b>after</b> — badge in its own column, value unbolded</span>
+      <div class="panel">
+        <div class="ph">What changed</div>
+        <div class="r"><svg class="pico"><use href="#scale"/></svg><span class="part">Resolution</span><span class="b mod">○</span><span class="val"><span class="was">Deny coverage</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">Approve partial coverage + goodwill</span></span></div>
+        <div class="r"><svg class="pico"><use href="#banknote"/></svg><span class="part">Refund</span><span class="b mod">○</span><span class="val"><span class="was">$0.00</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">$4,940.00</span><svg class="mv up"><use href="#arrow-up"/></svg><span class="detail">· within the $5,000.00 authority</span></span></div>
+        <div class="r"><svg class="pico"><use href="#pencil"/></svg><span class="part">Rationale</span><span class="b mod">○</span><span class="val"><span class="is">Rewritten</span><span class="detail">· replaced when the position moved</span></span></div>
+        <div class="r"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="b mod">○</span><span class="val"><span class="subj">Renewal within 3 months ·</span><span class="bars"><i class="on"></i><i></i><i></i></span><span class="was">Low</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="is">High</span></span></div>
+        <div class="r"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="b add">+</span><span class="val"><span class="subj">No goodwill drawn this year ·</span><span class="is">Added</span></span></div>
+        <div class="r"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="b rem">−</span><span class="val"><span class="subj">Defect in warranty ·</span><span class="is">Removed</span></span></div>
+      </div>
+    </div>
+  </div>
+  <p class="verdict">
+    <b>A column, not an inline chip.</b> Inline at the head of the value cell the badge
+    would sit at a different x on every row, because <code>subject</code> lengths
+    differ — and scanning the column is the entire point of a type marker.
+  </p>
+</section>
+
+<!-- 2 -->
+<section>
+  <h2>2 · Why the ink is <code>foreground</code> and not the hue</h2>
+  <p class="note">
+    <code>primitives.tsx</code> already settled this for the folder: <code>CHIP_TONE</code>
+    puts the hue in the rim and the wash and keeps the ink at <code>text-foreground</code>.
+    The measurements say why, and the yellow one says it loudest.
+  </p>
+  <div class="pair">
+    <div class="col">
+      <table class="m">
+        <tr><th>badge treatment</th><th>light</th><th>dark</th></tr>
+        <tr><td>hued glyph on its wash — <b>success</b></td><td class="bad">3.78</td><td class="ok">5.61</td></tr>
+        <tr><td>hued glyph on its wash — <b>warning</b></td><td class="bad">1.78</td><td class="ok">5.17</td></tr>
+        <tr><td>hued glyph on its wash — <b>destructive</b></td><td class="bad">3.48</td><td class="ok">4.79</td></tr>
+        <tr><td>solid hue + white ink — success</td><td class="bad">4.25</td><td class="bad">2.54</td></tr>
+        <tr><td>solid hue + white ink — destructive</td><td class="bad">3.92</td><td class="bad">3.10</td></tr>
+        <tr><td><b>foreground ink on a 15% wash</b></td><td class="ok">13.2–14.7</td><td class="ok">11.7–12.6</td></tr>
+      </table>
+    </div>
+    <div class="col">
+      <span class="tag"><s>rejected</s> — hued glyph. The yellow is 1.78:1.</span>
+      <div class="panel" style="padding:12px 14px">
+        <span class="b hued add">+</span> <span class="b hued mod">○</span> <span class="b hued rem">−</span>
+      </div>
+      <span class="tag" style="margin-top:14px"><s>rejected</s> — solid fills. Success 4.25, destructive 3.92, both under 4.5.</span>
+      <div class="panel" style="padding:12px 14px">
+        <span class="b solid add">+</span> <span class="b solid mod">○</span> <span class="b solid rem">−</span>
+      </div>
+      <span class="tag" style="margin-top:14px"><i>chosen</i> — rim + wash, <code>foreground</code> ink</span>
+      <div class="panel" style="padding:12px 14px">
+        <span class="b add">+</span> <span class="b mod">○</span> <span class="b rem">−</span>
+      </div>
+    </div>
+  </div>
+  <p class="verdict">
+    <b>The hue is the SECOND cue, on purpose.</b> The three washes are near-identical in
+    luminance — <code>+</code> against <code>○</code> is 1.06:1 — so they differ in hue
+    alone. In greyscale, or to a reader with a red-green deficiency, the fills are the
+    same: <span class="grey"><span class="b add">+</span> <span class="b mod">○</span>
+    <span class="b rem">−</span></span> — and the glyph still answers. Asking the colour
+    to carry the meaning alone would have been the defect; the glyph you asked for is
+    what prevents it.
+  </p>
+</section>
+
+<!-- 3 -->
+<section>
+  <h2>3 · Two glyph choices</h2>
+  <p class="note">
+    You wrote <code>O</code>. At 11px a capital O is a beat from a zero and sits on a
+    different optical weight from <code>+</code> and <code>−</code>, which are both
+    symmetrical strokes. Either is one character.
+  </p>
+  <div class="pair">
+    <div class="col">
+      <span class="tag">literal — <code>O</code>, <code>-</code> hyphen</span>
+      <div class="panel">
+        <div class="r"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="b add">+</span><span class="val"><span class="subj">No goodwill drawn this year ·</span><span class="is">Added</span></span></div>
+        <div class="r"><svg class="pico"><use href="#scale"/></svg><span class="part">Resolution</span><span class="b mod" style="font-family:var(--font-sans)">O</span><span class="val"><span class="was">Deny coverage</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">Approve partial + goodwill</span></span></div>
+        <div class="r"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="b rem">-</span><span class="val"><span class="subj">Defect in warranty ·</span><span class="is">Removed</span></span></div>
+      </div>
+    </div>
+    <div class="col">
+      <span class="tag"><i>recommended</i> — <code>○</code> U+25CB, <code>−</code> U+2212</span>
+      <div class="panel">
+        <div class="r"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="b add">+</span><span class="val"><span class="subj">No goodwill drawn this year ·</span><span class="is">Added</span></span></div>
+        <div class="r"><svg class="pico"><use href="#scale"/></svg><span class="part">Resolution</span><span class="b mod">○</span><span class="val"><span class="was">Deny coverage</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">Approve partial + goodwill</span></span></div>
+        <div class="r"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="b rem">−</span><span class="val"><span class="subj">Defect in warranty ·</span><span class="is">Removed</span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section>
+  <h2>4 · The mapping, and the empty state</h2>
+  <table class="key">
+    <tr><td><span class="b add">+</span></td><td>an evidence item the reviewer filed</td><td><code>to === "Added"</code></td></tr>
+    <tr><td><span class="b rem">−</span></td><td>an evidence item removed</td><td><code>to === "Removed"</code></td></tr>
+    <tr><td><span class="b mod">○</span></td><td>resolution, refund, rationale, a relevance move, a call move</td><td>the remainder</td></tr>
+  </table>
+  <p class="note" style="margin-top:14px">
+    No store change — <code>changesSince</code> already produces everything the test
+    needs. The empty state is untouched: no change of type has happened, so no badge
+    applies.
+  </p>
+  <div class="panel" style="max-width:520px">
+    <div class="ph">What changed</div>
+    <p class="empty"><svg class="mv ok" style="margin-top:2px"><use href="#check"/></svg><span>The resolution, the refund, the rationale and all 3 evidence items are as the case opened.</span></p>
+  </div>
+</section>
+
+<!-- 5 -->
+<section>
+  <h2>5 · Dark</h2>
+  <div class="wrap dark dark">
+    <div class="panel">
+      <div class="ph">What changed</div>
+      <div class="r"><svg class="pico"><use href="#scale"/></svg><span class="part">Resolution</span><span class="b mod">○</span><span class="val"><span class="was">Deny coverage</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">Approve partial coverage + goodwill</span></span></div>
+      <div class="r"><svg class="pico"><use href="#banknote"/></svg><span class="part">Refund</span><span class="b mod">○</span><span class="val"><span class="was">$0.00</span><svg class="arrow"><use href="#arrow-right"/></svg><span class="is">$4,940.00</span><svg class="mv up"><use href="#arrow-up"/></svg></span></div>
+      <div class="r"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="b add">+</span><span class="val"><span class="subj">No goodwill drawn this year ·</span><span class="is">Added</span></span></div>
+      <div class="r"><svg class="pico"><use href="#highlighter"/></svg><span class="part">Evidence</span><span class="b rem">−</span><span class="val"><span class="subj">Defect in warranty ·</span><span class="is">Removed</span></span></div>
+    </div>
+  </div>
+</section>
+</main>

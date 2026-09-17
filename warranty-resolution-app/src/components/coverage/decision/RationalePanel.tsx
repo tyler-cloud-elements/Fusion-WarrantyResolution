@@ -313,11 +313,11 @@ export function RationalePanel({
                 <Highlighter className="size-3.5" aria-hidden />
               </button>
             </TooltipTrigger>
-            {/* `bg-app-text text-app-card` OR IT RENDERS DARK ON DARK —
-                `TooltipContent` portals to `document.body`, outside the `.wrc`
-                theme root, where `text-background` does not emit at all. Same
-                fix as ../LabelledSelect.tsx and the recommendation tag. */}
-            <TooltipContent side="top" className="bg-app-text text-app-card">
+            {/* No `bg-app-text` / `text-app-card`: they were the embedding host's
+                tokens, neither exists here, and passing them through tailwind-merge
+                deleted the base `bg-foreground` instead of adding a background.
+                See the longer note in ../RecordSections.tsx. */}
+            <TooltipContent side="top">
               {showMarks ? "Hide changes" : "Show changes"}
             </TooltipContent>
           </Tooltip>

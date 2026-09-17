@@ -29,13 +29,16 @@ import { templateFor } from "@/components/coverage/evidence-capture/evidence-tem
  *
  * One reading column, read straight down, in two open sections and three folded
  * ones: **the case** — who and what, the claim, why it reached a person, and the
- * finding established about it — then **the decision**, with the evidence it rests
- * on underneath it; then history, this customer and the documents, folded.
+ * finding established about it — then **the decision**, which runs the evidence it
+ * rests on, then the amount and the reasoning, then the call; then history, this
+ * customer and the documents, folded.
  *
- * The decision used to be the fourth of seven blocks, below the evidence. It leads
- * its own section now, and the evidence sits under it — which is what puts the
- * agent's reassessment in view while the rows causing it are being edited
- * (../../components/coverage/decision/DecisionSection.tsx has the argument).
+ * The decision used to be the fourth of seven blocks on a page of its own. It owns
+ * a section now, and that section reads in the order the decision is reached rather
+ * than leading with the answer — the head still carries the standing position, so
+ * the answer is two ranks from the top for anyone who wants it without the reading
+ * (../../components/coverage/decision/DecisionSection.tsx has the argument, and the
+ * note on the evidence block says what the order costs).
  *
  * ./DecisionConsolePage.tsx renders the previous screen, decides which of the two
  * runs, and is where the case and the action are read — so this page takes both as

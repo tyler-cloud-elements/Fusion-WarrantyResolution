@@ -464,7 +464,22 @@ export function KeyValueGrid({ rows }: { rows: [string, ReactNode][] }) {
  * value below appears here verbatim, and each was measured on the running page
  * before it was used: `/10` and `/30` resolve for every tone below.
  */
-const CHIP_TONE = {
+/**
+ * THE FOLDER'S CHIP HUES — exported, so there is one definition of them.
+ *
+ * `ToneChip` below is the main consumer, and the filed record's change badges are
+ * the second (./decision/FiledRecord.tsx). Those carry the same three status
+ * meanings at a very different size, and a private copy of this map over there
+ * would be a second source of the folder's colour language, free to drift from
+ * this one.
+ *
+ * THE HUE IS IN THE RIM AND THE WASH AND THE INK IS `foreground`, which is the
+ * part worth not re-deriving: status ink on a tint of itself is the contrast trap
+ * `Pill` has a long note about, and it is worst on `warn` — a warning-coloured
+ * glyph on a warning wash measures 1.78:1 in light mode. The ink stays neutral and
+ * the colour stays around it.
+ */
+export const TONE = {
   brand: "border-primary/30 bg-primary/10 text-foreground",
   ok: "border-success/30 bg-success/10 text-foreground",
   bad: "border-destructive/30 bg-destructive/10 text-foreground",
@@ -480,7 +495,7 @@ export function ToneChip({
   className,
   children,
 }: {
-  tone: keyof typeof CHIP_TONE;
+  tone: keyof typeof TONE;
   className?: string;
   children: ReactNode;
 }) {
@@ -489,7 +504,7 @@ export function ToneChip({
       className={cn(
         TYPE.small,
         "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-[3px] font-medium whitespace-nowrap",
-        CHIP_TONE[tone],
+        TONE[tone],
         className,
       )}
     >
@@ -522,7 +537,7 @@ export function Pill({
   children,
   className,
 }: {
-  tone: keyof typeof CHIP_TONE;
+  tone: keyof typeof TONE;
   children: ReactNode;
   className?: string;
 }) {

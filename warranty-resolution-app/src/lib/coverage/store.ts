@@ -477,7 +477,18 @@ export interface Departures {
 }
 
 export function departuresOf(s: CoverageState, limit: number): Departures {
-  const resolution = s.resolution !== s.agent.outcome;
+  /**
+   * NOT HAVING PICKED ONE IS NOT A DEPARTURE.
+   *
+   * The comparison answers "is the position on screen the agent's, or yours".
+   * With nothing on screen the question has no answer yet — and `"" !==
+   * "Denied"` is true, so without this the submit bar read "Change in position ·
+   * 1 of 4 parts: resolution." at mount, before the reviewer had done anything.
+   *
+   * `refund` needs no such guard while the refund opens at the agent's own figure
+   * (see the initialiser): it starts equal and so starts undeparted.
+   */
+  const resolution = s.resolution !== "" && s.resolution !== s.agent.outcome;
   const refund = s.refund !== Math.min(s.agent.refund, limit);
   const rationale = s.reason.trim() !== s.agent.reason.trim();
   const evidence = s.evidence.filter((e) => e.addedByReviewer || e.touchedByReviewer).length;
@@ -675,7 +686,34 @@ export function useCoverageDecision(action: CaseAction, fixture: CoverageFixture
       evidence: fixture.evidence,
       nextEvidenceNo: 1,
       refund: Math.min(agent.refund, ctx.limit),
-      resolution: agent.outcome,
+      /**
+       * NOTHING IS SELECTED AT MOUNT, and that is the point of the screen.
+       *
+       * This seeded from `agent.outcome`, so the card opened with the agent's
+       * recommendation already picked: the head announced a position, the
+       * matching option carried the selection ring, and Submit was live. A
+       * reviewer who pressed it without touching anything filed a decision they
+       * never actively made, and the only thing distinguishing "the agent
+       * proposes this" from "I have decided this" was a word in the head.
+       *
+       * The recommendation has not gone quiet — the head names it and the option
+       * it belongs to wears the badge (../../components/coverage/decision/
+       * DecisionSection.tsx). It has stopped standing in the answer's place.
+       *
+       * `""` is a state this store already modelled: `mode.edit` with no
+       * preselect sets exactly this, and the section has always guarded
+       * `resolution !== ""` before calling anything an override. What is new is
+       * only that the card now OPENS here.
+       *
+       * THE REFUND ABOVE STAYS AT THE AGENT'S FIGURE, and is not zeroed to match.
+       * `mode.edit` pairs `""` with `refund: 0`, but that was a reviewer clearing
+       * the dock to start again — a different act. At mount the money on screen
+       * is what the recommendation COSTS, which is half of what the reviewer is
+       * being asked to judge, and blanking it would hide the proposal while still
+       * asking about it. On this case the two coincide anyway: the recommendation
+       * is Deny, whose vendor total is $0.00.
+       */
+      resolution: "",
       mode: "rest",
       reason: agent.reason,
       reasonReviewed: false,

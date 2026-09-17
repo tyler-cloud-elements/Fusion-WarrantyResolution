@@ -6,7 +6,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MENU, TYPE } from "@/components/coverage/primitives";
 import { cn } from "@/lib/utils";
 import type { EvidenceCall, Importance } from "@/lib/coverage/fixture";
@@ -53,7 +52,6 @@ export function LabelledSelect<V extends string>({
   valueClassName,
   ariaLabel,
   placeholder = "Choose",
-  hint,
   compact = false,
 }: {
   caption: string;
@@ -74,15 +72,6 @@ export function LabelledSelect<V extends string>({
   ariaLabel: string;
   /** What the trigger reads when `value` is `null`. */
   placeholder?: string;
-  /**
-   * WHAT THE FIELD IS FOR, on a delayed hover. Omit and no tooltip is wired.
-   *
-   * The axis, not its values — the scale is on screen already, so "High, medium or
-   * low" would be reading the control aloud. `ariaLabel` above still carries the
-   * label and the row; this is a description, and Radix wires it as one, so a screen
-   * reader gets the two separately rather than one run-together string.
-   */
-  hint?: string;
   /**
    * THE ROW VARIANT — no caption, no box, 32px tall.
    *
@@ -111,128 +100,112 @@ export function LabelledSelect<V extends string>({
         <span className={cn(TYPE.label, "pl-0.5 text-muted-foreground")}>{caption}</span>
       )}
       <DropdownMenu>
-        {/* THE TOOLTIP WRAPS THE TRIGGER, and both of those words matter.
-            `TooltipTrigger asChild` forwards onto `DropdownMenuTrigger`, so one
-            element is both — a wrapper element would put a box around the control
-            and break the row's gap. And `delayDuration` goes on `Tooltip`, not on a
-            provider: `Tooltip` hardcodes a bare `TooltipProvider` at
-            `delayDuration = 0` (../ui/tooltip.tsx) and spreads its own props onto
-            Radix's Root, where a per-tooltip value beats the provider's. */}
-        <Tooltip delayDuration={1200}>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger
-              aria-label={ariaLabel}
-              /* A FLOOR, and the content decides the rest. `minWidth` rather than
-                 `width`, and not `w-full`: a percentage width would sever the box
-                 from its own content and settle it on the floor, which is the bug
-                 the sizer was invented to patch. Sized from the inside out, the
-                 label and the chevron set the width between them. */
-              style={{ minWidth: width }}
-              className={cn(
-                "group flex cursor-pointer items-center gap-2 text-left whitespace-nowrap transition-[background-color,border-color,box-shadow] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                compact
-                  ? cn(
-                      // A REAL RIM AT REST. It carried `border-transparent`, which
-                      // left a value with a chevron beside it — nothing separating
-                      // "this is the answer" from "this is a label". The rim is also
-                      // what stops it reading as one of the filed record's
-                      // read-only badges, which are the same shape without it.
-                      // 28px and 12.5px against the row's 14px: a control set
-                      // slightly under the text it sits beside reads as chrome
-                      // rather than as another sentence.
-                      // 12px at 600 — a step under the row's 14px name and the same size as the
-                      // finding's `✓ On us` pills, which are this control's
-                      // nearest peers on the page. 12.5/600 read as a second
-                      // sentence beside the name rather than as chrome.
-                      // WEIGHT 500, NOT 600 — the size was never the problem.
-                      // At 12px these are the smallest text on the card, but at 600
-                      // they out-weighed the 14px/500 evidence row name they belong
-                      // to, so the control read as more important than its own
-                      // subject. 500 puts them a step under the name and matches the
-                      // fact labels in the record sections.
-                      "h-7 rounded-lg border px-2 text-[12px] font-medium hover:bg-accent",
-                      // THE OPEN STATE IS THE INPUTS', NOT THE BRAND'S. It was
-                      // `border-primary` + `ring-primary/20` — the saturated teal,
-                      // which against a 28px control reads as a dark slab and made
-                      // this the only control on the card that lights up in the
-                      // brand colour when you touch it. Every text input here uses
-                      // `border-ring` + `ring-[3px] ring-ring/50` on focus, and so
-                      // does this component's own non-compact variant two lines
-                      // down — the compact one had simply drifted.
-                      // `ring-ring`, WITH NO OPACITY MODIFIER — the modifier is what
-                      // was painting this black.
-                      //
-                      // Measured in the running app: `ring-2 ring-ring/25` and a bare
-                      // `ring-2` emit byte-identical shadows,
-                      // `lab(11.5667 -1.68552 -15.6442) 0 0 0 2px` — the near-black
-                      // text ink. So the colour utility is not emitting and `ring-2`
-                      // falls back to `currentColor`. Same for `ring-primary/25`, for
-                      // `ring-[var(--ring)]` and for `ring-[color-mix(...)]`: in this
-                      // build only the plain, unmodified colour utilities produce a
-                      // ring at all. `ring-ring` alone gives
-                      // `lab(59.1517 -32.5418 -19.995)`, which is the teal it was
-                      // always meant to be.
-                      //
-                      // Softness therefore comes from WIDTH, not opacity: 2px of the
-                      // real colour, which is also what makes it a visible focus
-                      // indicator rather than a hairline.
-                      "data-[state=open]:border-ring data-[state=open]:ring-2 data-[state=open]:ring-ring",
-                      current ? "border-border" : "border-dashed border-border",
-                    )
-                  : // The composer's variant. 13px rather than the row's 12: it stands
-                    // alone under a textarea with a caption over it, where 12 reads as
-                    // a hint. `h-9` stays — a field beside a field should look like one.
-                    "h-9 rounded-lg border border-border bg-background px-2.5 text-[13px] hover:bg-accent data-[state=open]:border-ring data-[state=open]:ring-2 data-[state=open]:ring-ring",
-              )}
-            >
-              {/* NO EMPTY ICON SLOT. Holding the 18px reserved so the label would
-                  not shift on selection sounded careful and looked broken: the
-                  placeholder started a centimetre in from the border with nothing in
-                  front of it, which reads as a value whose icon failed to load
-                  rather than as a field nobody has answered. */}
-              {current && (
-                <span className="inline-flex shrink-0 items-center justify-center">
-                  {icon(current.value)}
-                </span>
-              )}
-              {/* ONE LABEL, NO GHOSTS.
-                  A grid of every option rendered `invisible` used to sit here,
-                  holding the box at the width of its longest label. It did stop the
-                  reflow and it is what put ~90px of nothing between `Approve` and
-                  its chevron — see the note at the top. What survives from it is
-                  `leading-[1.35]`: the trigger's own line-height is tight enough to
-                  clip a descender under `overflow: hidden`, measured as
-                  `scrollHeight` 15 against `clientHeight` 14, so the text keeps its
-                  own line box. `whitespace-nowrap` is on the trigger, so there is
-                  nothing left to truncate against. */}
-              <span
-                className={cn(
-                  "leading-[1.35]",
-                  current ? valueClassName?.(current.value) : "font-normal text-muted-foreground",
-                )}
-              >
-                {current ? current.label : placeholder}
-              </span>
-              <ChevronDown
-                aria-hidden
-                className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
-              />
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          {hint && (
-            /* `bg-app-text text-app-card` OR IT RENDERS DARK ON DARK.
-               `TooltipContent` paints `bg-foreground text-background` and portals to
-               `document.body`, outside the `.wrc` theme root — where
-               `text-background` does not emit at all, so the label inherits the
-               shell's near-black ink onto a near-black panel. These two are the
-               shell's own paired tokens, both of which resolve out there and which
-               invert together. The recommendation tag beside the strip hit this
-               first (./decision/DecisionSection.tsx) and this is the same fix. */
-            <TooltipContent side="top" className="max-w-64 bg-app-text text-app-card">
-              {hint}
-            </TooltipContent>
+        {/* NO TOOLTIP ON THE TRIGGER, and that is a removal.
+            Every one of these carried one, naming the axis — "How much weight this
+            evidence carries in the decision" — on a 1200ms dwell. The COLUMN HEAD
+            already says it, off the same `COL_HINT` constant (../EvidenceList.tsx),
+            and it says it once for the whole column instead of once per row. With
+            three rows and a composer that is up to eight triggers repeating one
+            sentence, each of them a hover target that delays the menu the reviewer
+            was reaching for. */}
+        <DropdownMenuTrigger
+          aria-label={ariaLabel}
+          /* A FLOOR, and the content decides the rest. `minWidth` rather than
+             `width`, and not `w-full`: a percentage width would sever the box
+             from its own content and settle it on the floor, which is the bug
+             the sizer was invented to patch. Sized from the inside out, the
+             label and the chevron set the width between them. */
+          style={{ minWidth: width }}
+          className={cn(
+            "group flex cursor-pointer items-center gap-2 text-left whitespace-nowrap transition-[background-color,border-color,box-shadow] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+            compact
+              ? cn(
+                  // A REAL RIM AT REST. It carried `border-transparent`, which
+                  // left a value with a chevron beside it — nothing separating
+                  // "this is the answer" from "this is a label". The rim is also
+                  // what stops it reading as one of the filed record's
+                  // read-only badges, which are the same shape without it.
+                  // 28px and 12.5px against the row's 14px: a control set
+                  // slightly under the text it sits beside reads as chrome
+                  // rather than as another sentence.
+                  // 12px at 600 — a step under the row's 14px name and the same size as the
+                  // finding's `✓ On us` pills, which are this control's
+                  // nearest peers on the page. 12.5/600 read as a second
+                  // sentence beside the name rather than as chrome.
+                  // WEIGHT 500, NOT 600 — the size was never the problem.
+                  // At 12px these are the smallest text on the card, but at 600
+                  // they out-weighed the 14px/500 evidence row name they belong
+                  // to, so the control read as more important than its own
+                  // subject. 500 puts them a step under the name and matches the
+                  // fact labels in the record sections.
+                  "h-7 rounded-lg border px-2 text-[12px] font-medium hover:bg-accent",
+                  // THE OPEN STATE IS THE INPUTS', NOT THE BRAND'S. It was
+                  // `border-primary` + `ring-primary/20` — the saturated teal,
+                  // which against a 28px control reads as a dark slab and made
+                  // this the only control on the card that lights up in the
+                  // brand colour when you touch it. Every text input here uses
+                  // `border-ring` + `ring-[3px] ring-ring/50` on focus, and so
+                  // does this component's own non-compact variant two lines
+                  // down — the compact one had simply drifted.
+                  // `ring-ring`, WITH NO OPACITY MODIFIER — the modifier is what
+                  // was painting this black.
+                  //
+                  // Measured in the running app: `ring-2 ring-ring/25` and a bare
+                  // `ring-2` emit byte-identical shadows,
+                  // `lab(11.5667 -1.68552 -15.6442) 0 0 0 2px` — the near-black
+                  // text ink. So the colour utility is not emitting and `ring-2`
+                  // falls back to `currentColor`. Same for `ring-primary/25`, for
+                  // `ring-[var(--ring)]` and for `ring-[color-mix(...)]`: in this
+                  // build only the plain, unmodified colour utilities produce a
+                  // ring at all. `ring-ring` alone gives
+                  // `lab(59.1517 -32.5418 -19.995)`, which is the teal it was
+                  // always meant to be.
+                  //
+                  // Softness therefore comes from WIDTH, not opacity: 2px of the
+                  // real colour, which is also what makes it a visible focus
+                  // indicator rather than a hairline.
+                  "data-[state=open]:border-ring data-[state=open]:ring-2 data-[state=open]:ring-ring",
+                  current ? "border-border" : "border-dashed border-border",
+                )
+              : // The composer's variant. 13px rather than the row's 12: it stands
+                // alone under a textarea with a caption over it, where 12 reads as
+                // a hint. `h-9` stays — a field beside a field should look like one.
+                "h-9 rounded-lg border border-border bg-background px-2.5 text-[13px] hover:bg-accent data-[state=open]:border-ring data-[state=open]:ring-2 data-[state=open]:ring-ring",
           )}
-        </Tooltip>
+        >
+          {/* NO EMPTY ICON SLOT. Holding the 18px reserved so the label would
+              not shift on selection sounded careful and looked broken: the
+              placeholder started a centimetre in from the border with nothing in
+              front of it, which reads as a value whose icon failed to load
+              rather than as a field nobody has answered. */}
+          {current && (
+            <span className="inline-flex shrink-0 items-center justify-center">
+              {icon(current.value)}
+            </span>
+          )}
+          {/* ONE LABEL, NO GHOSTS.
+              A grid of every option rendered `invisible` used to sit here,
+              holding the box at the width of its longest label. It did stop the
+              reflow and it is what put ~90px of nothing between `Approve` and
+              its chevron — see the note at the top. What survives from it is
+              `leading-[1.35]`: the trigger's own line-height is tight enough to
+              clip a descender under `overflow: hidden`, measured as
+              `scrollHeight` 15 against `clientHeight` 14, so the text keeps its
+              own line box. `whitespace-nowrap` is on the trigger, so there is
+              nothing left to truncate against. */}
+          <span
+            className={cn(
+              "leading-[1.35]",
+              current ? valueClassName?.(current.value) : "font-normal text-muted-foreground",
+            )}
+          >
+            {current ? current.label : placeholder}
+          </span>
+          <ChevronDown
+            aria-hidden
+            className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
+          />
+        </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className={MENU.content} style={{ minWidth: width }}>
           {options.map((o) => (
             <DropdownMenuItem

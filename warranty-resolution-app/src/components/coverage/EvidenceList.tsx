@@ -113,7 +113,7 @@ function ColumnHead({ width, hint, children }: { width: string; hint: string; ch
           {children}
         </span>
       </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-60 bg-app-text text-app-card">
+      <TooltipContent side="top" className="max-w-60">
         {hint}
       </TooltipContent>
     </Tooltip>
@@ -292,10 +292,11 @@ function Row({
            What changed is that it now sits in a fixed cell (`COL` above), so its
            own width no longer decides where the column is.
 
-           The `hint`s name the AXIS, not its values, and they are shared with the
-           column headings so a reviewer gets the same sentence whichever they
-           hover. The scale is already on screen in the menu and in the bars, so
-           listing it would be reading the control aloud. */
+           NO HINT ON THE CONTROLS. They each carried one naming the axis, off the
+           same `COL_HINT` the column heads use — which meant one sentence repeated
+           on every row, on hover targets that sat in front of the menu the reviewer
+           was reaching for. The heading says it once for the column
+           (`ColumnHead` above, which keeps its tooltip). */
         <>
           {/* FIXED CELL, CONTROL RIGHT-ALIGNED IN IT. The cell holds the column
               edge; the trigger keeps its own width and its own styling — nothing
@@ -310,7 +311,6 @@ function Row({
               icon={(v) => <RankBars value={v} />}
               width={0}
               ariaLabel={`Relevance — ${e.name}`}
-              hint={COL_HINT.relevance}
             />
           </span>
           <span className={cn("flex shrink-0 justify-end", COL.decision)}>
@@ -323,7 +323,6 @@ function Row({
               icon={(v) => <CallDot value={v} />}
               width={0}
               ariaLabel={`Decision — ${e.name}`}
-              hint={COL_HINT.decision}
             />
           </span>
         </>

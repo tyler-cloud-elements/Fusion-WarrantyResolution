@@ -176,6 +176,57 @@ function PositionTag({ override }: { override: boolean }) {
 }
 
 /**
+ * THE AGENT'S PICK, MARKED ON THE OPTION ITSELF.
+ *
+ * Nothing is selected when the card opens, so the reviewer needs to know which of
+ * the three the agent chose before choosing anything — and the head saying it is
+ * not enough on its own: the head is a summary two ranks up, and the decision is
+ * made down here among the cards.
+ *
+ * **This reverses a deliberate removal, and both halves of that argument are
+ * answered rather than ignored.** The note that stood where this chip is now
+ * rendered said:
+ *
+ *   > NO BADGE. The recommended option used to carry a "Recommended" chip here,
+ *   > which said a second time what the head already says at the top of the card —
+ *   > and went on saying it about a card the reviewer had already moved off,
+ *   > because the tag marked the AGENT'S pick while the selection ring marked
+ *   > theirs.
+ *
+ * *Said a second time* — it did, while Deny was preselected, because the head and
+ * the card were then reporting the same selection. They are no longer the same
+ * thing: the head reports the DECISION and this marks the PROPOSAL. In the opening
+ * state the two coincide in content but not in role, and the moment a reviewer
+ * picks anything the head moves and this stays put.
+ *
+ * *Went on saying it about a card the reviewer had moved off* — that was the bug
+ * when this was the only marker of the agent's pick and the head was ambiguous
+ * about whose position it held. It is the intended behaviour now: after an override
+ * the head says "Human override" and this chip is the only thing left on screen
+ * saying which option the agent wanted, which is precisely what a reviewer
+ * re-reading their own override needs.
+ *
+ * **One dress in both states.** It briefly inverted, because the selected card
+ * filled with a solid colour the insight tint could not sit on. The cards keep one
+ * ground now and mark selection with their rim (../../ui/choicebox.tsx), so the
+ * chip is legible whether or not its card is picked — and a marker that changed
+ * colour when the reviewer clicked elsewhere was claiming something about the
+ * selection, which is not what it reports.
+ *
+ * A rung under `PositionTag`'s 11px, because this sits INSIDE a choice next to its
+ * name rather than beside a heading, and at 11 it competed with the option's own
+ * title.
+ */
+function RecommendedChip() {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-insight-100 px-1.5 py-px text-[10.5px] font-semibold whitespace-nowrap text-foreground dark:bg-insight-800 dark:text-white">
+      <AiMark className="size-[11px] shrink-0 text-insight-600 dark:text-white" />
+      Agent recommended
+    </span>
+  );
+}
+
+/**
  * THE DECISION'S HEAD — the section's name, what it stands at, and how sure the
  * agent was. Three facts, two ranks, no box.
  *
@@ -227,13 +278,28 @@ function PositionTag({ override }: { override: boolean }) {
  */
 function DecisionHead({
   position,
+  recommendation,
   direction,
   overridden,
   confidence,
   stamp,
 }: {
-  /** The resolution the card stands at — the pick, or the recommendation. */
-  position: string;
+  /**
+   * The resolution the card stands at, or NULL before anybody has picked one.
+   *
+   * It used to be a string on every path, because the card opened on the agent's
+   * recommendation and there was always a position to name. Nothing is selected
+   * at mount now (../../../lib/coverage/store.ts), and a head that printed the
+   * recommendation into this slot would be doing exactly what that change exists
+   * to stop: standing a proposal in the answer's place.
+   */
+  position: string | null;
+  /**
+   * What the agent proposes, for the state where that is the only thing on the
+   * table. Passed on every path but read only when `position` is null — the two
+   * selected states say whose call it is with the tag instead.
+   */
+  recommendation: string;
   /** A `bg-*` class for the direction dot, from `directionRule`. */
   direction: string;
   /**
@@ -287,14 +353,56 @@ function DecisionHead({
             confidence beside it were the two largest things on the card and
             6.5px above the control that files the decision. 18 keeps it the
             head's subject without reading as display type. */}
-        <span className="min-w-0 truncate text-lg leading-tight font-semibold tracking-tight">
-          {position}
-        </span>
-        <span
-          aria-hidden
-          className={cn("size-1.5 shrink-0 rounded-full transition-colors duration-200", direction)}
-        />
-        <PositionTag override={overridden} />
+        {position === null ? (
+          /**
+           * NOTHING PICKED YET — the absence at the head's own rung, then what the
+           * agent proposes at the rung below it.
+           *
+           * The 18px slot is the head's subject, so "no resolution selected" goes
+           * there rather than into a caption: the subject is missing, and saying so
+           * quietly somewhere else would leave the largest line on the card naming
+           * a position nobody had chosen. `muted-foreground` is what makes it read
+           * as an absence rather than as a value called "none".
+           *
+           * The recommendation follows, tag first: the tag says whose it is and the
+           * name says what it is, which is the order the two selected states use in
+           * reverse. Reversed here on purpose — with no decision to lead with, the
+           * attribution IS the lead.
+           *
+           * ONE ROW, NOT TWO. Stacking "no resolution selected" over the
+           * recommendation reads a shade clearer in isolation and costs the head a
+           * line that vanishes on the first click — which reflows the whole card
+           * under the pointer that just clicked it. Wrapping is the same
+           * information and the same height.
+           *
+           * The direction dot belongs to the RECOMMENDATION here, and sits after
+           * its name rather than after the 18px line. In the selected states the
+           * dot qualifies the decision; there is no decision yet, so it qualifies
+           * the only position on screen.
+           */
+          <>
+            <span className="min-w-0 truncate text-lg leading-tight font-semibold tracking-tight text-muted-foreground">
+              No resolution selected
+            </span>
+            <PositionTag override={false} />
+            <span className="min-w-0 truncate text-[13px] font-semibold">{recommendation}</span>
+            <span
+              aria-hidden
+              className={cn("size-1.5 shrink-0 rounded-full transition-colors duration-200", direction)}
+            />
+          </>
+        ) : (
+          <>
+            <span className="min-w-0 truncate text-lg leading-tight font-semibold tracking-tight">
+              {position}
+            </span>
+            <span
+              aria-hidden
+              className={cn("size-1.5 shrink-0 rounded-full transition-colors duration-200", direction)}
+            />
+            <PositionTag override={overridden} />
+          </>
+        )}
         {/* The agent's stamp sits with the position rather than with the title:
             it reports on THIS line — "the thing you are looking at was rewritten
             a moment ago" — and a card title is not a place for a clock. */}
@@ -416,7 +524,9 @@ export function DecisionSection({
   const { text: typing, updatedAt: agentUpdatedAt } = useReassessment(signature, state.reason);
 
   const submit = () => {
-    if (reasonMissing || busy) return;
+    // The selection guard is here as well as on the button, because the button is
+    // not the only way in: Enter on a focused control reaches this directly.
+    if (!state.resolution || reasonMissing || busy) return;
     setBusy(true);
     // A beat of "Submitting…", so the press has a visible result before the section
     // changes shape under the pointer.
@@ -483,8 +593,11 @@ export function DecisionSection({
           what the section is, the 20px line says what the decision stands at, and
           the score sits in the right rail. Two ranks, one object. */}
       <DecisionHead
-        position={fullName(overridden ? state.resolution : recommended)}
-        direction={directionRule(overridden ? state.resolution : recommended)}
+        // Null until a person picks one, which is what puts the head into its
+        // "nothing selected" state rather than having it name the recommendation.
+        position={state.resolution ? fullName(state.resolution) : null}
+        recommendation={fullName(recommended)}
+        direction={directionRule(state.resolution || recommended)}
         /* THE PILL STAYS AND CHANGES ITS WORD. It used to leave on the first
            override, on the reasoning that the marker on the Deny card below still
            said which option was recommended — but that marker has gone (see the
@@ -497,38 +610,38 @@ export function DecisionSection({
       />
 
       {/* The seam the panel's rim used to provide. The head is two ranks of type
-          with no box around it, so without this the resolutions read as a third
-          rank of the same block. */}
+          with no box around it, so without this whatever opens the body reads as
+          a third rank of the same block. */}
       <div className="h-px bg-border" />
 
-      {/* ── the three resolutions ── */}
-      <div>
-        <Label>Resolution</Label>
-        <ChoiceboxGroup
-          className="mt-2"
-          name={`resolution-${action.id}`}
-          value={state.resolution}
-          onValueChange={(outcome) => dispatch({ type: "resolution.pick", outcome })}
-          ariaLabel="Resolution"
-        >
-          {RESOLUTIONS.map((r) => (
-            <ChoiceboxItem
-              key={r.outcome}
-              name={`resolution-${action.id}`}
-              value={r.outcome}
-              selected={state.resolution === r.outcome}
-              title={shortName(r.outcome)}
-              description={r.note}
-              /* NO BADGE. The recommended option used to carry a "Recommended"
-                 chip here, which said a second time what the head says 60px above
-                 — and went on saying it about a card the reviewer had already
-                 moved off, because the tag marked the AGENT'S pick while the
-                 selection ring marked theirs. The head now carries the only
-                 claim about whose position this is. */
-            />
-          ))}
-        </ChoiceboxGroup>
-      </div>
+      {/* ── THE EVIDENCE, WHICH OPENS THE BODY ───────────────────────────────
+          The body now runs in the order the decision is actually reached: what
+          the case rests on, then the amount and the reasoning, then the call.
+          The evidence leads because it is the input — a reviewer reads the rows
+          before settling the split, and settling the split before reading them
+          is the order the screen used to ask for.
+
+          It is the section's third position for these rows. They began ABOVE
+          this card, banded with the finding (`CaseInfo`, now gone); then under
+          the decision, so that the agent's reassessment sat in view while the
+          rows causing it were edited.
+
+          **THAT SECOND ARGUMENT IS PARTLY GIVEN UP HERE, AND IT IS WORTH
+          KNOWING WHICH PART.** Weighting a row or filing one makes the agent
+          move: the head strip's position and rule change, the refund changes,
+          the rationale is rewritten, a timestamp appears. The head strip is
+          still ABOVE these rows and still answers in view. The refund and the
+          rationale are now BELOW them, so those two answers land off screen for
+          a reviewer working the rows near the top of a long list — which is the
+          cost the previous order was paying to avoid. The head carrying the
+          position, the direction rule and the `updated` stamp is what keeps the
+          loop legible anyway.
+
+          `state.evidence` and `dispatch` were already props of this component —
+          the reducer feeds the recommendation strip from the same list — so this
+          needs no new plumbing and the composer, the row actions and the
+          `addedByReviewer` chip behave exactly as they did. */}
+      <EvidenceList evidence={state.evidence} dispatch={dispatch} addedByName={deciderName} />
 
       {/* ── amount · rationale ──
           FLEX WITH A FIXED MONEY COLUMN, NOT A RATIO — and the ratio was the first
@@ -565,27 +678,37 @@ export function DecisionSection({
         />
       </div>
 
-      {/* ── THE EVIDENCE, UNDER THE DECISION IT FEEDS ────────────────────────
-          It used to sit ABOVE this card, banded with the finding
-          (`CaseInfo`, now gone). Two things follow from moving it here, and the
-          second is the reason.
-
-          The stated one: the decision is the first thing in this section rather
-          than the fourth thing on the page.
-
-          The one that matters more: **the reassessment is now visible while it
-          is being caused.** Weighting a row or filing one makes the agent move —
-          the strip's position and rule change, the refund changes, the rationale
-          is rewritten, a timestamp appears. All of that is rendered ABOVE these
-          rows. With the list above the card, every one of those answers landed
-          below the reader's scroll position, so the loop ran off screen and the
-          rows looked inert.
-
-          `state.evidence` and `dispatch` were already props of this component —
-          the reducer feeds the recommendation strip from the same list — so this
-          needs no new plumbing and the composer, the row actions and the
-          `addedByReviewer` chip behave exactly as they did. */}
-      <EvidenceList evidence={state.evidence} dispatch={dispatch} addedByName={deciderName} />
+      {/* ── the three resolutions ──
+          THE CALL THE REST OF THE BODY BUILDS TO, so it closes the body rather
+          than opening it: the rows it rests on and the amount it commits are
+          both above it, and the only thing under it is the control that files
+          it. The head still shows the standing position, so a reviewer who
+          wants the answer without the reading has it two ranks from the top. */}
+      <div>
+        <Label>Resolution</Label>
+        <ChoiceboxGroup
+          className="mt-2"
+          name={`resolution-${action.id}`}
+          value={state.resolution}
+          onValueChange={(outcome) => dispatch({ type: "resolution.pick", outcome })}
+          ariaLabel="Resolution"
+        >
+          {RESOLUTIONS.map((r) => (
+            <ChoiceboxItem
+              key={r.outcome}
+              name={`resolution-${action.id}`}
+              value={r.outcome}
+              selected={state.resolution === r.outcome}
+              title={shortName(r.outcome)}
+              description={r.note}
+              /* The agent's pick, marked where the choice is made. `RecommendedChip`
+                 above carries the argument, including why this reverses the note
+                 that used to stand here. */
+              badge={r.outcome === recommended ? <RecommendedChip /> : undefined}
+            />
+          ))}
+        </ChoiceboxGroup>
+      </div>
 
       {/* ── signing off ──
           LAST, and that is the change. The actions used to sit between the
@@ -597,7 +720,10 @@ export function DecisionSection({
         more={<MoreMenu onPick={onMoreAction} />}
         departures={departures}
         evidenceCount={state.evidence.length}
-        disabled={reasonMissing || busy}
+        // Nothing to file until somebody has made the call. The bar says so in
+        // words rather than leaving a dead button unexplained — ./SubmitBar.tsx.
+        unselected={!state.resolution}
+        disabled={!state.resolution || reasonMissing || busy}
         busy={busy}
         onSubmit={submit}
       />

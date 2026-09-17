@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { fileToDocument } from "./evidenceFiles";
-import { addCaseComment, addCaseEvidence } from "./useCases";
+import { CASE_LOG_KEY, addCaseComment, addCaseEvidence } from "./useCases";
 import { useRole } from "@/lib/role/useRole";
 import { isCaseLogConfigured, writeCaseNote } from "@/services/uipath/caseLogService";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
@@ -30,6 +31,7 @@ export function useCaseNotes(warrantyCase: WarrantyCase): CaseNotes {
   const { profile } = useRole();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   // A row is keyed on the Maestro instance GUID, so a case without one has
   // nothing to key on. Demo rows stay in session state rather than writing a row
@@ -64,6 +66,9 @@ export function useCaseNotes(warrantyCase: WarrantyCase): CaseNotes {
           comment: text || undefined,
           file: file ?? undefined,
         });
+        // Re-read, so what is on screen is what the entity holds rather than a
+        // local copy that happens to look the same.
+        void queryClient.invalidateQueries({ queryKey: CASE_LOG_KEY });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Data Fabric rejected the write");
         console.warn("Case note not written to Data Fabric:", err);
@@ -71,7 +76,7 @@ export function useCaseNotes(warrantyCase: WarrantyCase): CaseNotes {
         setPending(false);
       }
     },
-    [sdk, profile.name, profile.title, warrantyCase, writesToEntity],
+    [sdk, profile.name, profile.title, warrantyCase, writesToEntity, queryClient],
   );
 
   return { submit, pending, error, writesToEntity };

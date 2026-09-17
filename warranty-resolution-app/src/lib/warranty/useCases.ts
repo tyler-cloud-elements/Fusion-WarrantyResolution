@@ -28,12 +28,14 @@ import type {
   WarrantyCase,
 } from "./types";
 import { fetchActions, fetchCases } from "@/services/uipath/caseService";
+import { fetchCaseLog, isCaseLogConfigured } from "@/services/uipath/caseLogService";
 import { isCaseConfigured, isUiPathConfigured } from "@/services/uipath/config";
 import { useUiPath } from "@/services/uipath/UiPathProvider";
 import { useFlags } from "@/lib/flags";
 
 const CASES_KEY = ["warranty", "cases"] as const;
 const ACTIONS_KEY = ["warranty", "actions"] as const;
+export const CASE_LOG_KEY = ["warranty", "case-log"] as const;
 const STALE_TIME_MS = 30_000;
 
 export interface CasesResult {
@@ -142,8 +144,56 @@ export interface CaseResult {
  */
 export function useCase(caseId: string | undefined): CaseResult {
   const { cases, isLoading, isRefreshing, refresh } = useCases();
-  const warrantyCase = useMemo(() => cases.find((c) => c.id === caseId), [cases, caseId]);
+  const { sdk, isAuthenticated } = useUiPath();
+  const base = useMemo(() => cases.find((c) => c.id === caseId), [cases, caseId]);
+
+  // Comments and documents live in Data Fabric, not in the case instance, so
+  // they are a second read. Without it they survived only as session state and
+  // were gone on the next load.
+  const instanceId = base?.instanceId ?? "";
+  const logEnabled = Boolean(sdk) && isAuthenticated && isCaseLogConfigured() && Boolean(instanceId);
+  const log = useQuery({
+    queryKey: [...CASE_LOG_KEY, instanceId],
+    queryFn: () => fetchCaseLog(sdk!, instanceId),
+    enabled: logEnabled,
+    staleTime: STALE_TIME_MS,
+  });
+
+  const warrantyCase = useMemo(() => {
+    if (!base || !log.data) return base;
+    return {
+      ...base,
+      comments: mergeComments(base.comments, log.data.comments),
+      evidence: mergeDocuments(base.evidence, log.data.documents),
+    };
+  }, [base, log.data]);
+
   return { warrantyCase, isLoading, isRefreshing, refresh };
+}
+
+/**
+ * Written notes on top of authored ones.
+ *
+ * Matched on text alone. The same comment exists twice for a moment, once in
+ * session state from the click that made it and once from Data Fabric on the
+ * next read, and the two disagree about almost every other field: the session
+ * copy is signed by the acting persona, the row by the UiPath account that
+ * wrote it, and the ids and timestamps are both different. Text is the only
+ * thing they share.
+ */
+function mergeComments(authored: CaseComment[], written: CaseComment[]): CaseComment[] {
+  const seen = new Set(authored.map((c) => c.text.trim()));
+  const fresh = written.filter((c) => !seen.has(c.text.trim()));
+  return [...authored, ...fresh].sort((a, b) => Date.parse(a.time) - Date.parse(b.time));
+}
+
+/** Matched on title, since an upload's session id and its record id differ. */
+function mergeDocuments(
+  authored: EvidenceDocument[],
+  written: EvidenceDocument[],
+): EvidenceDocument[] {
+  const seen = new Set(authored.map((d) => d.title));
+  return [...written.filter((d) => !seen.has(d.title)), ...authored];
 }
 
 /** How often an open case re-reads itself. */

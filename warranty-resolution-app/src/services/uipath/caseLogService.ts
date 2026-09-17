@@ -1,5 +1,7 @@
 import { Entities } from "@uipath/uipath-typescript/entities";
+import type { EntityRecord } from "@uipath/uipath-typescript/entities";
 import type { UiPath } from "@uipath/uipath-typescript/core";
+import type { CaseComment, EvidenceDocument } from "@/lib/warranty/types";
 import { integrationConfig, isUiPathConfigured } from "./config";
 
 // Writes to the WarrantyCaseCommentOrDocument entity in Data Fabric: one row per
@@ -63,4 +65,99 @@ export async function writeCaseNote(sdk: UiPath, note: CaseNote): Promise<CaseNo
   // call atomic would throw away the part that succeeded.
   await entities.uploadAttachment(entityId, recordId, FIELD.document, note.file);
   return { recordId, fileAttached: true };
+}
+
+
+// ── Reading back ────────────────────────────────────────────────────────────
+
+/** How many rows to walk looking for one case's notes. */
+const PAGE = 200;
+const MAX_PAGES = 5;
+
+function text(record: EntityRecord, field: string): string {
+  const value = record[field];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/** An attachment column holds an object once a file is on the row, null before. */
+function attachmentName(record: EntityRecord): string | null {
+  const value = record[FIELD.document];
+  if (!value || typeof value !== "object") return null;
+  const name = (value as { name?: unknown }).name;
+  return typeof name === "string" && name ? name : "Attachment";
+}
+
+export interface CaseLog {
+  comments: CaseComment[];
+  documents: EvidenceDocument[];
+}
+
+/**
+ * Every note written against one case instance.
+ *
+ * The entity has no server-side filter, so rows come back whole and are matched
+ * here. A row can carry a comment, a document, or both, and contributes to
+ * whichever lists apply rather than being one or the other.
+ *
+ * Returns empty rather than throwing. A case that cannot reach Data Fabric
+ * should still open on what the app already has.
+ */
+export async function fetchCaseLog(sdk: UiPath, caseInstanceId: string): Promise<CaseLog> {
+  const entityId = integrationConfig.caseLogEntityId;
+  if (!entityId || !caseInstanceId) return { comments: [], documents: [] };
+
+  try {
+    const entities = new Entities(sdk);
+    // The cursor type is internal to the SDK, so it is carried rather than
+    // named: the first page asks for none, later pages hand back what they got.
+    const rows: EntityRecord[] = [];
+    let page = await entities.getAllRecords(entityId, { pageSize: PAGE });
+    rows.push(...page.items);
+    for (let i = 1; i < MAX_PAGES && page.hasNextPage && page.nextCursor; i++) {
+      page = await entities.getAllRecords(entityId, { pageSize: PAGE, cursor: page.nextCursor });
+      rows.push(...page.items);
+    }
+
+    const mine = rows.filter((r) => text(r, FIELD.caseId) === caseInstanceId);
+    const comments: CaseComment[] = [];
+    const documents: EvidenceDocument[] = [];
+
+    for (const row of mine) {
+      const when = typeof row.CreateTime === "string" ? row.CreateTime : new Date().toISOString();
+      const who = text(row, "CreatedBy") || "Unknown";
+
+      const body = text(row, FIELD.comment);
+      if (body) comments.push({ author: who, role: "", time: when, text: body });
+
+      const file = attachmentName(row);
+      if (file) {
+        documents.push({
+          // The record id, so a second read does not duplicate the row and the
+          // attachment can be downloaded against it.
+          id: row.Id,
+          kind: "pdf",
+          title: file,
+          addedAt: when,
+          addedBy: who,
+          helpful: null,
+        });
+      }
+    }
+
+    comments.sort((a, b) => Date.parse(a.time) - Date.parse(b.time));
+    documents.sort((a, b) => Date.parse(b.addedAt) - Date.parse(a.addedAt));
+    return { comments, documents };
+  } catch (err) {
+    console.warn("Could not read the case log from Data Fabric:", err);
+    return { comments: [], documents: [] };
+  }
+}
+
+/** The attachment on one note row. */
+export function downloadCaseNoteFile(sdk: UiPath, recordId: string): Promise<Blob> {
+  return new Entities(sdk).downloadAttachment(
+    integrationConfig.caseLogEntityId,
+    recordId,
+    FIELD.document,
+  );
 }

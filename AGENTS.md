@@ -367,6 +367,18 @@ Both surfaces go through `useCaseNotes`, so the three cases cannot drift apart. 
 composer takes an attachment; the Documents tab's upload is the same call with no comment; one
 file per note, since the entity holds one attachment per row.
 
+**They are read back on every case load.** Notes live in the entity, not on the case instance,
+so opening a case is a second query: `fetchCaseLog` pages the entity and keeps the rows whose
+`CaseId` matches this instance. Without it a comment survived only as session state and was gone
+on the next load. A row contributes to whichever list applies, so one carrying both a comment
+and a document appears in both.
+
+Written rows merge over the authored ones, matched **on comment text and document title alone**.
+For a moment the same note exists twice, once in session state from the click and once from the
+entity, and the two agree on almost nothing else: the session copy is signed by the acting
+persona while the row records the UiPath account that wrote it, and the ids and timestamps both
+differ. Text is the only field they share.
+
 **The screen updates first and the write follows.** A demo should not wait on a round trip, and
 a write that failed silently would leave the entity and the screen disagreeing with nobody the
 wiser, so a refusal appears under the composer: *"Saved on this case only. Data Fabric refused

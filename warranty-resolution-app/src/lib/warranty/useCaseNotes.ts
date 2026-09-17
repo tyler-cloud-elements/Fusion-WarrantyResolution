@@ -31,7 +31,11 @@ export function useCaseNotes(warrantyCase: WarrantyCase): CaseNotes {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const writesToEntity = isCaseLogConfigured() && isAuthenticated && Boolean(sdk);
+  // A row is keyed on the Maestro instance GUID, so a case without one has
+  // nothing to key on. Demo rows stay in session state rather than writing a row
+  // the entity cannot join back to anything.
+  const writesToEntity =
+    isCaseLogConfigured() && isAuthenticated && Boolean(sdk) && Boolean(warrantyCase.instanceId);
 
   const submit = useCallback(
     async ({ comment, file }: CaseNoteInput) => {
@@ -55,11 +59,8 @@ export function useCaseNotes(warrantyCase: WarrantyCase): CaseNotes {
       setPending(true);
       setError(null);
       try {
-        // The instance GUID is what the entity's CaseId column holds. A demo row
-        // has none, so its business id goes instead: a row that says
-        // WR-2026-0417 is more use than a row that says nothing.
         await writeCaseNote(sdk!, {
-          caseId: warrantyCase.instanceId || warrantyCase.id,
+          caseId: warrantyCase.instanceId,
           comment: text || undefined,
           file: file ?? undefined,
         });

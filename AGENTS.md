@@ -358,8 +358,10 @@ order: `insertRecordById` for the row, then `uploadAttachment` against the id it
 is no single call that does both, and a failed upload is reported as a failed upload rather
 than rolling back a comment that succeeded.
 
-`CaseId` is the Maestro instance GUID where there is one, and the business id otherwise. A demo
-row has no instance, and a row saying `WR-2026-0417` is more use than one saying nothing.
+`CaseId` is the Maestro **instance GUID**, never the business id. A case with no instance has
+nothing the entity can join back to, so a demo row keeps its notes in session state rather than
+writing a row keyed on `WR-2026-0417`. Under the overlay a row carries the live instance it is
+painted over, so notes on the hero case land against the real run.
 
 Both surfaces go through `useCaseNotes`, so the three cases cannot drift apart. The comment
 composer takes an attachment; the Documents tab's upload is the same call with no comment; one

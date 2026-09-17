@@ -17,7 +17,7 @@ const FIELD = {
 } as const;
 
 export interface CaseNote {
-  /** The case this belongs to. The Maestro instance GUID where there is one. */
+  /** Maestro case instance GUID. The entity keys on it, not the business id. */
   caseId: string;
   comment?: string;
   file?: File;
@@ -44,6 +44,7 @@ export function isCaseLogConfigured(): boolean {
 export async function writeCaseNote(sdk: UiPath, note: CaseNote): Promise<CaseNoteResult> {
   const entityId = integrationConfig.caseLogEntityId;
   if (!entityId) throw new Error("No case log entity configured");
+  if (!note.caseId) throw new Error("No case instance id to write against");
   if (!note.comment?.trim() && !note.file) throw new Error("Nothing to write");
 
   const entities = new Entities(sdk);

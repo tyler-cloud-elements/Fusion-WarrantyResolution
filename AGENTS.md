@@ -368,10 +368,23 @@ composer takes an attachment; the Documents tab's upload is the same call with n
 file per note, since the entity holds one attachment per row.
 
 **They are read back on every case load.** Notes live in the entity, not on the case instance,
-so opening a case is a second query: `fetchCaseLog` pages the entity and keeps the rows whose
-`CaseId` matches this instance. Without it a comment survived only as session state and was gone
-on the next load. A row contributes to whichever list applies, so one carrying both a comment
-and a document appears in both.
+so opening a case is a second query: `queryRecordsById` filtered server-side on `CaseId = `
+the instance GUID, sorted oldest first. Without it a comment survived only as session state and
+was gone on the next load. A row contributes to whichever list applies, so one carrying both a
+comment and a document appears in both.
+
+The query runs at `expansionLevel: 3`, because `CreatedBy` and `CaseDocument` are references
+rather than values. Unexpanded, every note is signed "Unknown" and every file is called
+"Attachment". Two shapes in the response are worth knowing: `CreatedBy` is a user object
+(`Name`, `Email`), and the attachment's keys are **capitalised** (`Name`, `Type`, `Size`) rather
+than the lower-cased spelling the SDK's types imply, so both are read. A long-text column also
+returns a size marker (`HasValue=true Length=512`) from a query instead of its contents; a row
+that comes back that way is re-read on its own to get the text.
+
+**A note carrying a document shows the file and opens it.** The row's record id goes on the
+evidence as `attachmentRecordId`, and `DocumentViewer` takes a loader rather than a URL: a
+bundled document is fetched, an entity attachment is downloaded through the SDK, which carries
+the token. Both then go through the same re-typed blob.
 
 Written rows merge over the authored ones, matched **on comment text and document title alone**.
 For a moment the same note exists twice, once in session state from the click and once from the

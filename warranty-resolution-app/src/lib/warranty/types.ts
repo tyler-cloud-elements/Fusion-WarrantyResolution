@@ -126,6 +126,8 @@ export interface EvidenceDocument {
   // ── The real document behind the summary ──────────────────────────────────
   /** Path under `public/`, served relative so it works at any mount point. */
   fileUrl?: string;
+  /** Entity record holding this as an attachment. Downloaded rather than fetched. */
+  attachmentRecordId?: string;
   pages?: number;
   /** Who issued it. A third party's document looks nothing like ours. */
   issuer?: string;
@@ -441,6 +443,8 @@ export interface CaseComment {
   role: string;
   time: string;
   text: string;
+  /** Set on notes read back from Data Fabric, where the row names an account. */
+  authorEmail?: string;
 }
 
 /** One clock on the case, at case, stage, or action level. */

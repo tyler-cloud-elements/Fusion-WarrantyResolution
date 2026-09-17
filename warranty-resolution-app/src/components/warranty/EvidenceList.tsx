@@ -145,6 +145,11 @@ export function HelpfulToggle({
   );
 }
 
+/** A row with something to open: a bundled file or an entity attachment. */
+function hasFile(document: EvidenceDocument): boolean {
+  return Boolean(document.fileUrl || document.attachmentRecordId);
+}
+
 export function EvidenceList({
   documents,
   onHelpful,
@@ -211,13 +216,13 @@ export function EvidenceList({
                   )}
                 </span>
               </button>
-              {/* The real document, full window. Only offered where there is a
-                  file behind the summary. */}
-              {document.fileUrl && (
+              {/* The real document, full window. Offered for a bundled file and
+                  for one attached to a Data Fabric row alike. */}
+              {hasFile(document) && (
                 <button
                   type="button"
-                  aria-label={`Open ${document.title}`}
-                  title="Open document"
+                  aria-label={`Preview ${document.title}`}
+                  title="Preview document"
                   onClick={(e) => {
                     e.stopPropagation();
                     setViewing(document.id);
@@ -237,7 +242,7 @@ export function EvidenceList({
             {isOpen && (
               <EvidenceBody
                 document={document}
-                onOpenDocument={document.fileUrl ? () => setViewing(document.id) : undefined}
+                onOpenDocument={hasFile(document) ? () => setViewing(document.id) : undefined}
               />
             )}
           </Card>

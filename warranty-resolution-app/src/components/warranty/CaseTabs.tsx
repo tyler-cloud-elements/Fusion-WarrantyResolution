@@ -456,6 +456,12 @@ export function CaseTabs({
                       {comment.role && (
                         <span className="text-xs text-muted-foreground">{comment.role}</span>
                       )}
+                      {/* A note read back from Data Fabric names the account
+                          that wrote it rather than a persona, so the address is
+                          the thing that identifies them. */}
+                      {!comment.role && comment.authorEmail && (
+                        <span className="text-xs text-muted-foreground">{comment.authorEmail}</span>
+                      )}
                       <span className="ml-auto text-xs text-muted-foreground">
                         {relativeTime(comment.time)}
                       </span>

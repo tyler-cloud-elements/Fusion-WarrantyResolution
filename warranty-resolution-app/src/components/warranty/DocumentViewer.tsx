@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, ExternalLink, FileText, Loader2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,8 @@ import {
 import { Label, Mono } from "@/components/warranty/CoverageConsole";
 import { HelpfulToggle } from "@/components/warranty/EvidenceList";
 import { assetUrl } from "@/lib/app-base";
+import { downloadCaseNoteFile } from "@/services/uipath/caseLogService";
+import { useUiPath } from "@/services/uipath/UiPathProvider";
 import { cn } from "@/lib/utils";
 import { relativeTime } from "@/lib/warranty/format";
 import type { EvidenceDocument, ExtractedField } from "@/lib/warranty/types";
@@ -39,23 +41,19 @@ import type { EvidenceDocument, ExtractedField } from "@/lib/warranty/types";
  * Locally this is a no-op beyond one extra fetch, since Vite already serves the
  * right type, and a correctly-typed body is reused as-is.
  */
-function usePdfUrl(href: string | undefined) {
+function usePdfUrl(load: (() => Promise<Blob>) | undefined, key: string) {
   const [url, setUrl] = useState<string>();
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     setUrl(undefined);
     setFailed(false);
-    if (!href) return;
+    if (!load) return;
 
     let objectUrl: string | undefined;
     let cancelled = false;
 
-    fetch(href)
-      .then((res) => {
-        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        return res.blob();
-      })
+    load()
       .then((blob) => {
         if (cancelled) return;
         objectUrl = URL.createObjectURL(
@@ -73,7 +71,10 @@ function usePdfUrl(href: string | undefined) {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [href]);
+    // Keyed on what identifies the document, since `load` is a new closure each
+    // render and would otherwise refetch on every one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   return { url, failed };
 }
@@ -125,12 +126,33 @@ export function DocumentViewer({
   const inferredCount = doc.extracted?.filter((f) => f.inferred).length ?? 0;
   // Resolved against the app mount point: a bare relative path would resolve
   // against the current route and 404 on anything deeper than the root.
+  const { sdk } = useUiPath();
+  // Resolved against the app mount point: a bare relative path would resolve
+  // against the current route and 404 on anything deeper than the root.
   const href = doc.fileUrl ? assetUrl(doc.fileUrl) : undefined;
-  const { url: pdfUrl, failed } = usePdfUrl(href);
+
+  // Two sources, one viewer. A bundled document is fetched; one attached to a
+  // Data Fabric row is downloaded through the SDK, which carries the token.
+  const load = useMemo(() => {
+    if (doc.attachmentRecordId && sdk) {
+      const recordId = doc.attachmentRecordId;
+      return () => downloadCaseNoteFile(sdk, recordId);
+    }
+    if (href) {
+      return async () => {
+        const res = await fetch(href);
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        return res.blob();
+      };
+    }
+    return undefined;
+  }, [doc.attachmentRecordId, href, sdk]);
+
+  const { url: pdfUrl, failed } = usePdfUrl(load, doc.attachmentRecordId ?? href ?? doc.id);
   // Everything the browser touches goes through the re-typed blob; the raw URL
   // is only a fallback for a fetch that never landed.
   const viewUrl = pdfUrl ?? (failed ? href : undefined);
-  const filename = doc.fileUrl?.split("/").pop();
+  const filename = doc.fileUrl?.split("/").pop() ?? doc.title;
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>

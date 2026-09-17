@@ -1,7 +1,8 @@
-import { Entities } from "@uipath/uipath-typescript/entities";
+import { Entities, QueryFilterOperator } from "@uipath/uipath-typescript/entities";
 import type { EntityRecord } from "@uipath/uipath-typescript/entities";
 import type { UiPath } from "@uipath/uipath-typescript/core";
 import type { CaseComment, EvidenceDocument } from "@/lib/warranty/types";
+import { extensionOf, kindFromName } from "@/lib/warranty/evidenceFiles";
 import { integrationConfig, isUiPathConfigured } from "./config";
 
 // Writes to the WarrantyCaseCommentOrDocument entity in Data Fabric: one row per
@@ -70,21 +71,68 @@ export async function writeCaseNote(sdk: UiPath, note: CaseNote): Promise<CaseNo
 
 // ── Reading back ────────────────────────────────────────────────────────────
 
-/** How many rows to walk looking for one case's notes. */
+/** Notes per case. More than this and the oldest are not shown. */
 const PAGE = 200;
-const MAX_PAGES = 5;
+
+/**
+ * A long-text column comes back from a query as a size marker rather than its
+ * contents, e.g. `HasValue=true Length=512`. Reading that record on its own
+ * returns the text.
+ */
+const SIZE_MARKER = /^HasValue=(true|false)\s+Length=\d+$/i;
 
 function text(record: EntityRecord, field: string): string {
   const value = record[field];
   return typeof value === "string" ? value.trim() : "";
 }
 
-/** An attachment column holds an object once a file is on the row, null before. */
-function attachmentName(record: EntityRecord): string | null {
+/**
+ * `CreatedBy` is a user object, not a name: `{ Name, Email, Id, … }`. Reading it
+ * as a string gets nothing, which is why every note came back as "Unknown".
+ * The nested fields need `expansionLevel` on the query to be populated at all.
+ */
+function person(record: EntityRecord, field: string): { name: string; email: string } {
+  const value = record[field];
+  if (!value || typeof value !== "object") {
+    return { name: typeof value === "string" ? value.trim() : "", email: "" };
+  }
+  const user = value as { Name?: unknown; Email?: unknown };
+  return {
+    name: typeof user.Name === "string" ? user.Name : "",
+    email: typeof user.Email === "string" ? user.Email : "",
+  };
+}
+
+interface Attachment {
+  name: string;
+  mimeType: string;
+  size: number;
+}
+
+/**
+ * The attachment column, absent until a file is on the row.
+ *
+ * Its keys are capitalised (`Name`, `Type`, `Size`), unlike the lower-cased
+ * shape the SDK's own types suggest, so both spellings are read.
+ */
+function attachment(record: EntityRecord): Attachment | null {
   const value = record[FIELD.document];
-  if (!value || typeof value !== "object") return null;
-  const name = (value as { name?: unknown }).name;
-  return typeof name === "string" && name ? name : "Attachment";
+  if (!value) return null;
+  if (typeof value === "string") {
+    return value.trim() ? { name: value.trim(), mimeType: "", size: 0 } : null;
+  }
+  if (typeof value !== "object") return null;
+
+  const file = value as Record<string, unknown>;
+  const pick = (...keys: string[]) => keys.map((k) => file[k]).find((v) => v != null);
+  const name = pick("Name", "name");
+  const mimeType = pick("Type", "type", "contentType");
+  const size = pick("Size", "size");
+  return {
+    name: typeof name === "string" && name ? name : "Attachment",
+    mimeType: typeof mimeType === "string" ? mimeType : "",
+    size: typeof size === "number" ? size : 0,
+  };
 }
 
 export interface CaseLog {
@@ -95,9 +143,8 @@ export interface CaseLog {
 /**
  * Every note written against one case instance.
  *
- * The entity has no server-side filter, so rows come back whole and are matched
- * here. A row can carry a comment, a document, or both, and contributes to
- * whichever lists apply rather than being one or the other.
+ * Filtered by the server on `CaseId` rather than read whole and matched here,
+ * so the tenant's other cases never come down the wire.
  *
  * Returns empty rather than throwing. A case that cannot reach Data Fabric
  * should still open on what the app already has.
@@ -108,43 +155,55 @@ export async function fetchCaseLog(sdk: UiPath, caseInstanceId: string): Promise
 
   try {
     const entities = new Entities(sdk);
-    // The cursor type is internal to the SDK, so it is carried rather than
-    // named: the first page asks for none, later pages hand back what they got.
-    const rows: EntityRecord[] = [];
-    let page = await entities.getAllRecords(entityId, { pageSize: PAGE });
-    rows.push(...page.items);
-    for (let i = 1; i < MAX_PAGES && page.hasNextPage && page.nextCursor; i++) {
-      page = await entities.getAllRecords(entityId, { pageSize: PAGE, cursor: page.nextCursor });
-      rows.push(...page.items);
-    }
+    const page = await entities.queryRecordsById(entityId, {
+      filterGroup: {
+        queryFilters: [
+          { fieldName: FIELD.caseId, operator: QueryFilterOperator.Equals, value: caseInstanceId },
+        ],
+      },
+      sortOptions: [{ fieldName: "CreateTime", isDescending: false }],
+      // CreatedBy and CaseDocument are references. Without expansion the author
+      // comes back empty and every note is signed "Unknown".
+      expansionLevel: 3,
+      pageSize: PAGE,
+    });
 
-    const mine = rows.filter((r) => text(r, FIELD.caseId) === caseInstanceId);
     const comments: CaseComment[] = [];
     const documents: EvidenceDocument[] = [];
 
-    for (const row of mine) {
+    for (const row of page.items) {
       const when = typeof row.CreateTime === "string" ? row.CreateTime : new Date().toISOString();
-      const who = text(row, "CreatedBy") || "Unknown";
+      const author = person(row, "CreatedBy");
+      const who = author.name || author.email || "Unknown";
 
-      const body = text(row, FIELD.comment);
-      if (body) comments.push({ author: who, role: "", time: when, text: body });
+      let body = text(row, FIELD.comment);
+      if (SIZE_MARKER.test(body)) {
+        const full = await entities.getRecordById(entityId, row.Id).catch(() => null);
+        body = full ? text(full, FIELD.comment) : "";
+      }
+      if (body) {
+        comments.push({ author: who, role: "", time: when, text: body, authorEmail: author.email });
+      }
 
-      const file = attachmentName(row);
+      const file = attachment(row);
       if (file) {
+        const sizeKb = file.size ? Math.max(1, Math.round(file.size / 1024)) : 0;
         documents.push({
-          // The record id, so a second read does not duplicate the row and the
-          // attachment can be downloaded against it.
           id: row.Id,
-          kind: "pdf",
-          title: file,
+          kind: kindFromName(file.name),
+          title: file.name,
+          // The same line an upload shows, so a note's document and a picked
+          // file read alike in the list.
+          verdict: sizeKb ? `${extensionOf(file.name)} · ${sizeKb} KB` : undefined,
           addedAt: when,
           addedBy: who,
           helpful: null,
+          // What the viewer downloads the bytes against.
+          attachmentRecordId: row.Id,
         });
       }
     }
 
-    comments.sort((a, b) => Date.parse(a.time) - Date.parse(b.time));
     documents.sort((a, b) => Date.parse(b.addedAt) - Date.parse(a.addedAt));
     return { comments, documents };
   } catch (err) {

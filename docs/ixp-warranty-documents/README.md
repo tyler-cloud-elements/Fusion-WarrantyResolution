@@ -1,6 +1,6 @@
 # Warranty case documents for IXP
 
-Seven illustrative documents built around the FUSION 2026 keynote use case, for the IXP workshop and any IXP
+Eight illustrative documents built around the FUSION 2026 keynote use case, for the IXP workshop and any IXP
 portion of the demo. All content is fictional. Cobalt Ridge Automation, Northstar Retail Distribution, and
 Meridian Industrial Services do not exist.
 
@@ -19,10 +19,22 @@ both a real part failure and unapproved third-party work done eleven days earlie
 | `warranty-SOP-v3.pdf` | The internal procedure governing warranty resolution | 3 |
 | `returned-part-inspection.pdf` | Laboratory report on the returned drive, unit 4 of 4 | 3 |
 | `claim-evidence-packet-combined.pdf` | Three of the above stacked into one file, unsplit | 7 |
+| `parts-substitution-form.pdf` | Cobalt Ridge's substitution approval request, filed after the fact | 2 |
 
 Each document uses a deliberately different layout, typeface, and structure, because layout variation between
 documents is the condition IXP is built for. The third-party report in particular looks nothing like a Cobalt
 Ridge document, which is the point.
+
+## The substitution form
+
+`parts-substitution-form.pdf` is the form clause 3.2 requires before a non-approved component goes in. On this
+case it was filed on 20 April, fourteen days after the drive was installed and three days after the line stopped,
+which is the whole difficulty: it records the substitution without qualifying it.
+
+Section F, the Cobalt Ridge Engineering determination, is left blank. That is the decision the Parts substitution
+review lane is being asked for, so the document is the lane's input rather than its conclusion. Section C is the
+useful extraction target: two boxes ticked out of eight, and the six unticked ones are each a reason the component
+does not meet the standard.
 
 ## What each one exercises
 
@@ -67,6 +79,10 @@ non-approved part and three controls changes, and the January service finding SF
 drive temperature *before* any third-party work happened. That last item is what makes the answer partial coverage
 rather than a clean denial, and it is the whole reason the case needs a person.
 
+**Was the substitution ever qualified?** The form's Section F is empty and Section B records no prior written
+qualification, while the installation date precedes the request date. Three fields across one document, and none
+of them says "unqualified" outright.
+
 **What did the non-approved part cost on its own?** $11,480 of a $13,307.50 total, which requires reading the
 table rather than the summary line.
 
@@ -90,5 +106,5 @@ the alarm window.
 
 ## Rebuilding
 
-The generator is `build_docs.py` in the session scratchpad. It writes HTML and prints to PDF through headless
+The generator is `build_docs.py` for the original seven and `build_psr.py` for the substitution form. It writes HTML and prints to PDF through headless
 Chrome, so any edit to the scenario can be reflected by editing the strings and rerunning it.

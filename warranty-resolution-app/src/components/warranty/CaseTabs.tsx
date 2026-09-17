@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, ListChecks } from "lucide-react";
+import { Activity, ListChecks, Paperclip } from "lucide-react";
 import { AiMark } from "@/components/ui/ai-mark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -27,8 +27,8 @@ import {
 } from "@/lib/warranty/activity";
 import { initialsOf, outcomeLabel, relativeTime } from "@/lib/warranty/format";
 import { formatRemaining } from "@/lib/warranty/sla";
-import { addCaseComment, useCaseActivity } from "@/lib/warranty/useCases";
-import { useRole } from "@/lib/role/useRole";
+import { useCaseActivity } from "@/lib/warranty/useCases";
+import { useCaseNotes } from "@/lib/warranty/useCaseNotes";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 
 const TAB_TRIGGER =
@@ -150,11 +150,13 @@ export function CaseTabs({
   onSaveCase?: (patch: Partial<WarrantyCase>) => void;
 }) {
   const rail = variant === "rail";
-  const { profile } = useRole();
 
   const [filter, setFilter] = useState<ActivityFilterKey>("all");
   const [range, setRange] = useState<ActivityRange>({ preset: "all" });
   const [draft, setDraft] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const notes = useCaseNotes(warrantyCase);
 
   const activity = useCaseActivity(warrantyCase);
   const filtered = filter === "all" ? activity : activity.filter((a) => matchesActivityFilter(a, filter));
@@ -164,16 +166,12 @@ export function CaseTabs({
     .sort((a, b) => b.elapsedMinutes / b.slaMinutes - a.elapsedMinutes / a.slaMinutes);
   const completedActions = actions.filter((a) => a.status === "Completed");
 
-  function addComment() {
-    const text = draft.trim();
-    if (!text) return;
-    addCaseComment(warrantyCase, {
-      author: profile.name,
-      role: profile.title,
-      time: new Date().toISOString(),
-      text,
-    });
+  async function addComment() {
+    if (!draft.trim() && !attachment) return;
+    const input = { comment: draft, file: attachment };
     setDraft("");
+    setAttachment(null);
+    await notes.submit(input);
   }
 
   const actionList =
@@ -467,17 +465,63 @@ export function CaseTabs({
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-2 border-t border-border pt-4">
-              <Input
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addComment()}
-                placeholder="Add a comment…"
-                className="flex-1"
-              />
-              <Button onClick={addComment} disabled={!draft.trim()}>
-                Comment
-              </Button>
+            <div className="flex flex-col gap-2 border-t border-border pt-4">
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    setAttachment(e.target.files?.[0] ?? null);
+                    e.target.value = "";
+                  }}
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fileRef.current?.click()}
+                  aria-label="Attach a document"
+                  title="Attach a document"
+                >
+                  <Paperclip className="size-4" />
+                </Button>
+                <Input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && void addComment()}
+                  placeholder={attachment ? "Say something about it…" : "Add a comment…"}
+                  className="flex-1"
+                />
+                {/* A document on its own is a note too, so the button is live
+                    with an attachment and no text. */}
+                <Button
+                  onClick={() => void addComment()}
+                  disabled={notes.pending || (!draft.trim() && !attachment)}
+                >
+                  {notes.pending ? "Saving…" : attachment && !draft.trim() ? "Attach" : "Comment"}
+                </Button>
+              </div>
+
+              {attachment && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Paperclip className="size-3" />
+                  <span className="min-w-0 truncate">{attachment.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachment(null)}
+                    className="shrink-0 text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+
+              {notes.error && (
+                <p className="rounded-md bg-warning/10 px-2 py-1.5 text-xs text-warning-foreground">
+                  <b className="font-semibold">Saved on this case only.</b> Data Fabric refused the
+                  write: {notes.error}
+                </p>
+              )}
             </div>
           </Card>
         </TabsContent>

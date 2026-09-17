@@ -347,6 +347,29 @@ stages, tasks and clocks) runs past any sensible total, and a fixed cap was thro
 answers that were still arriving. Partial text is kept rather than discarded: a stream that
 stalls after saying something useful has still said it.
 
+### Comments and documents
+
+Adding a comment, uploading a document, or doing both at once writes one row to the Data Fabric
+entity **WarrantyCaseCommentOrDocument** (`VITE_CASE_LOG_ENTITY_ID`, `8cdb0e32-…` on FUSION).
+Columns are `CaseId`, `CaseComment`, `CaseDocument`.
+
+A document is an attachment on a row rather than a row of its own, so the write is two calls in
+order: `insertRecordById` for the row, then `uploadAttachment` against the id it returns. There
+is no single call that does both, and a failed upload is reported as a failed upload rather
+than rolling back a comment that succeeded.
+
+`CaseId` is the Maestro instance GUID where there is one, and the business id otherwise. A demo
+row has no instance, and a row saying `WR-2026-0417` is more use than one saying nothing.
+
+Both surfaces go through `useCaseNotes`, so the three cases cannot drift apart. The comment
+composer takes an attachment; the Documents tab's upload is the same call with no comment; one
+file per note, since the entity holds one attachment per row.
+
+**The screen updates first and the write follows.** A demo should not wait on a round trip, and
+a write that failed silently would leave the entity and the screen disagreeing with nobody the
+wiser, so a refusal appears under the composer: *"Saved on this case only. Data Fabric refused
+the write: …"*. Signed out, nothing is attempted and nothing is claimed.
+
 ## The decision screens
 
 The Actions queue **collapses to a rail**, with a toggle in its header and a rail carrying the open

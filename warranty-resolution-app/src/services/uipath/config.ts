@@ -73,6 +73,8 @@ export const caseConfig = {
 
 export const integrationConfig = {
   evidenceEntityId: env("VITE_EVIDENCE_ENTITY_ID"),
+  /** WarrantyCaseCommentOrDocument: comments and uploads are written here. */
+  caseLogEntityId: env("VITE_CASE_LOG_ENTITY_ID"),
   evidenceWebhookUrl: env("VITE_EVIDENCE_WEBHOOK_URL"),
   assistantAgentId: env("VITE_ASSISTANT_AGENT_ID"),
   assistantFolderId: env("VITE_ASSISTANT_FOLDER_ID"),

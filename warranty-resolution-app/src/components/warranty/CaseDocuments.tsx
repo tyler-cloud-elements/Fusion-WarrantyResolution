@@ -4,51 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { WidgetHeader } from "@/components/warranty/WidgetHeader";
 import { EvidenceList } from "@/components/warranty/EvidenceList";
-import { useRole } from "@/lib/role/useRole";
-import { addCaseEvidence, markEvidenceHelpful } from "@/lib/warranty/useCases";
-import type { EvidenceDocument, WarrantyCase } from "@/lib/warranty/types";
+import { markEvidenceHelpful } from "@/lib/warranty/useCases";
+import { useCaseNotes } from "@/lib/warranty/useCaseNotes";
+import type { WarrantyCase } from "@/lib/warranty/types";
 
 // Documents on a warranty case ARE its evidence: the service report, the
 // configuration baseline, the controls audit, the customer's photos. So this tab
 // is the evidence list plus an upload, rather than a second parallel store.
 
-const EXTENSION_KIND: Record<string, EvidenceDocument["kind"]> = {
-  pdf: "pdf",
-  log: "log",
-  txt: "log",
-  csv: "log",
-  zip: "zip",
-  jpg: "image",
-  jpeg: "image",
-  png: "image",
-  heic: "image",
-};
-
-function fileToDocument(file: File, uploadedBy: string): EvidenceDocument {
-  const dot = file.name.lastIndexOf(".");
-  const extension = dot > 0 ? file.name.slice(dot + 1).toLowerCase() : "";
-  const sizeKb = Math.max(1, Math.round(file.size / 1024));
-  return {
-    id: `up-${file.name}-${file.size}`,
-    kind: EXTENSION_KIND[extension] ?? "pdf",
-    title: file.name,
-    verdict: `${extension.toUpperCase() || "FILE"} · ${sizeKb} KB`,
-    addedAt: new Date().toISOString(),
-    addedBy: uploadedBy,
-    isNew: true,
-    helpful: null,
-  };
-}
-
 function UploadButton({ warrantyCase }: { warrantyCase: WarrantyCase }) {
-  const { profile } = useRole();
   const inputRef = useRef<HTMLInputElement>(null);
+  const notes = useCaseNotes(warrantyCase);
 
   function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    if (files.length > 0) {
-      addCaseEvidence(warrantyCase, files.map((f) => fileToDocument(f, profile.name)));
-    }
+    // One note per file: the entity holds one attachment per row.
+    for (const file of Array.from(e.target.files ?? [])) void notes.submit({ file });
     // Reset so picking the same file again still fires onChange.
     e.target.value = "";
   }

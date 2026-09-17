@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { WidgetHeader } from "@/components/warranty/WidgetHeader";
 import { ActivityDateFilter, ActivityFeed, ActivityFilters } from "@/components/warranty/ActivityFeed";
 import { CaseDetailsTab } from "@/components/warranty/CaseDetailsTab";
+import { DocumentViewer } from "@/components/warranty/DocumentViewer";
 import { CaseDocumentsTab, CaseDocumentsWidget } from "@/components/warranty/CaseDocuments";
 import { ExecutionTrail } from "@/components/warranty/ExecutionTrail";
 import { SlaPanel } from "@/components/warranty/SlaPanel";
@@ -155,6 +156,7 @@ export function CaseTabs({
   const [range, setRange] = useState<ActivityRange>({ preset: "all" });
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const notes = useCaseNotes(warrantyCase);
 
@@ -467,10 +469,39 @@ export function CaseTabs({
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">{comment.text}</p>
+                    {/* Filed on the same row, so it belongs with the comment
+                        rather than only in the Documents tab. */}
+                    {comment.attachment && (
+                      <button
+                        type="button"
+                        onClick={() => setViewingDoc(comment.attachment!.recordId)}
+                        className="mt-1.5 flex max-w-full items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      >
+                        <Paperclip className="size-3 shrink-0" />
+                        <span className="min-w-0 truncate">{comment.attachment.title}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
+            {viewingDoc && (
+              <DocumentViewer
+                document={
+                  warrantyCase.evidence.find((d) => d.attachmentRecordId === viewingDoc) ?? {
+                    id: viewingDoc,
+                    kind: "pdf",
+                    title: "Attachment",
+                    addedAt: new Date().toISOString(),
+                    addedBy: "",
+                    helpful: null,
+                    attachmentRecordId: viewingDoc,
+                  }
+                }
+                onClose={() => setViewingDoc(null)}
+              />
+            )}
+
             <div className="flex flex-col gap-2 border-t border-border pt-4">
               <div className="flex items-center gap-2">
                 <input

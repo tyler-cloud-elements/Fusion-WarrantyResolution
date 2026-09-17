@@ -381,10 +381,19 @@ than the lower-cased spelling the SDK's types imply, so both are read. A long-te
 returns a size marker (`HasValue=true Length=512`) from a query instead of its contents; a row
 that comes back that way is re-read on its own to get the text.
 
-**A note carrying a document shows the file and opens it.** The row's record id goes on the
-evidence as `attachmentRecordId`, and `DocumentViewer` takes a loader rather than a URL: a
-bundled document is fetched, an entity attachment is downloaded through the SDK, which carries
-the token. Both then go through the same re-typed blob.
+**A note carrying a document shows the file and opens it.** The row is one note, so the comment
+renders its attachment inline as a clip and a name, and clicking it opens the same viewer the
+Documents tab uses. The file also appears as evidence, since it is one.
+
+`DocumentViewer` takes a loader rather than a URL: a bundled document is fetched, an entity
+attachment is downloaded through the SDK, which carries the token. Both go through the same
+re-typed blob. Every gate inside it keys on **whether there is a file**, not on whether there is
+a `fileUrl` — keyed on the URL, an attachment that had downloaded perfectly well still rendered
+"No file attached". A download that fails now says so rather than spinning, since an attachment
+has no raw URL to fall back on the way a bundled file does.
+
+On a merge collision the **written row wins**. The session copy made by the click has no
+attachment and is signed by the persona; the row has both the file and the account.
 
 Written rows merge over the authored ones, matched **on comment text and document title alone**.
 For a moment the same note exists twice, once in session state from the click and once from the

@@ -149,6 +149,9 @@ export function DocumentViewer({
   }, [doc.attachmentRecordId, href, sdk]);
 
   const { url: pdfUrl, failed } = usePdfUrl(load, doc.attachmentRecordId ?? href ?? doc.id);
+  // Whether there is a document at all, which is not the same as having a URL:
+  // an entity attachment has only a record id until its bytes arrive.
+  const hasFile = Boolean(load);
   // Everything the browser touches goes through the re-typed blob; the raw URL
   // is only a fallback for a fetch that never landed.
   const viewUrl = pdfUrl ?? (failed ? href : undefined);
@@ -189,7 +192,7 @@ export function DocumentViewer({
           </span>
         )}
 
-        {href && (
+        {hasFile && (
           <>
             {/* Held back until the blob exists: pointed at the raw URL this
                 button downloads the file rather than opening it. */}
@@ -206,11 +209,18 @@ export function DocumentViewer({
                 </>
               )}
             </Button>
-            <Button variant="outline" size="sm" asChild>
-              <a href={viewUrl ?? href} download={filename}>
-                <Download className="size-4" />
-                Download
-              </a>
+            <Button variant="outline" size="sm" asChild={!!(viewUrl ?? href)} disabled={!(viewUrl ?? href)}>
+              {viewUrl ?? href ? (
+                <a href={viewUrl ?? href} download={filename}>
+                  <Download className="size-4" />
+                  Download
+                </a>
+              ) : (
+                <>
+                  <Download className="size-4" />
+                  Download
+                </>
+              )}
             </Button>
           </>
         )}
@@ -228,7 +238,7 @@ export function DocumentViewer({
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* The page */}
         <div className="min-h-0 flex-1 bg-muted/40 p-3">
-          {href ? (
+          {hasFile ? (
             viewUrl ? (
               <object
                 data={viewUrl}
@@ -249,6 +259,15 @@ export function DocumentViewer({
                   </Button>
                 </div>
               </object>
+            ) : failed ? (
+              /* A bundled file has a raw URL to fall back on; an attachment has
+                 nothing but the failed download, so say so rather than spin. */
+              <div className="flex h-full flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card p-8 text-center">
+                <FileText className="size-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {doc.title} could not be loaded.
+                </p>
+              </div>
             ) : (
               /* Fetching the bytes. A frame rather than a spinner alone, so the
                  pane keeps its shape and the page doesn't jump when it lands. */

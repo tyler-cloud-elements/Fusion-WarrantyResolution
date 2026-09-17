@@ -182,9 +182,14 @@ export function useCase(caseId: string | undefined): CaseResult {
  * thing they share.
  */
 function mergeComments(authored: CaseComment[], written: CaseComment[]): CaseComment[] {
-  const seen = new Set(authored.map((c) => c.text.trim()));
-  const fresh = written.filter((c) => !seen.has(c.text.trim()));
-  return [...authored, ...fresh].sort((a, b) => Date.parse(a.time) - Date.parse(b.time));
+  // On a collision the written row wins. It is the record: it names the account
+  // rather than the persona, and it carries the attachment, which the session
+  // copy made by the click never had.
+  const byText = new Map(written.map((c) => [c.text.trim(), c]));
+  const merged = authored.map((c) => byText.get(c.text.trim()) ?? c);
+  const kept = new Set(merged.map((c) => c.text.trim()));
+  const fresh = written.filter((c) => !kept.has(c.text.trim()));
+  return [...merged, ...fresh].sort((a, b) => Date.parse(a.time) - Date.parse(b.time));
 }
 
 /** Matched on title, since an upload's session id and its record id differ. */

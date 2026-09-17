@@ -176,16 +176,26 @@ export async function fetchCaseLog(sdk: UiPath, caseInstanceId: string): Promise
       const author = person(row, "CreatedBy");
       const who = author.name || author.email || "Unknown";
 
+      const file = attachment(row);
+
       let body = text(row, FIELD.comment);
       if (SIZE_MARKER.test(body)) {
         const full = await entities.getRecordById(entityId, row.Id).catch(() => null);
         body = full ? text(full, FIELD.comment) : "";
       }
       if (body) {
-        comments.push({ author: who, role: "", time: when, text: body, authorEmail: author.email });
+        comments.push({
+          author: who,
+          role: "",
+          time: when,
+          text: body,
+          authorEmail: author.email,
+          // The row is one note. A comment filed with a document says so rather
+          // than leaving the reader to spot it in the Documents tab.
+          attachment: file ? { title: file.name, recordId: row.Id } : undefined,
+        });
       }
 
-      const file = attachment(row);
       if (file) {
         const sizeKb = file.size ? Math.max(1, Math.round(file.size / 1024)) : 0;
         documents.push({

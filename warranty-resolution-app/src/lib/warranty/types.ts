@@ -445,6 +445,8 @@ export interface CaseComment {
   text: string;
   /** Set on notes read back from Data Fabric, where the row names an account. */
   authorEmail?: string;
+  /** A document filed with the comment. The two share one row in the entity. */
+  attachment?: { title: string; recordId: string };
 }
 
 /** One clock on the case, at case, stage, or action level. */

@@ -156,6 +156,7 @@ export function RationalePanel({
   editedAt,
   edited,
   mine,
+  readOnly = false,
   onChange,
 }: {
   /**
@@ -170,6 +171,22 @@ export function RationalePanel({
   edited: boolean;
   /** Is the live text the reviewer's own, rather than the agent's latest draft? */
   mine: boolean;
+  /**
+   * THE RATIONALE AS SIGNED — and the revisions stay readable.
+   *
+   * Set on the filed decision (./FiledRecord.tsx), which used to print the final
+   * paragraph in a bordered box of its own and nothing else. That dropped the
+   * revision history, and on a filed decision the history is MORE interesting than
+   * on a live one: this fixture's agent rewrites the paragraph when the position
+   * moves, and the record's manifest reports only "Rationale · Rewritten". The
+   * picker, the marks toggle and the revisions all still work; the caret is what
+   * goes.
+   *
+   * The panel already had exactly this state for reading a superseded revision, so
+   * this adds a second reason for it rather than a second implementation of it —
+   * see `Field`'s `readOnly` below.
+   */
+  readOnly?: boolean;
   onChange: (value: string) => void;
 }) {
   /** A superseded revision being read, or `null` for the live field. */
@@ -240,12 +257,22 @@ export function RationalePanel({
        picker is touched. */
     <div className="flex min-w-0 flex-1 flex-col rounded-xl border border-border bg-card px-3.5 py-3">
       <div className="mb-3 flex min-h-[24px] flex-wrap items-center justify-between gap-2">
+        {/* THE REQUIRED MARK GOES WHEN THE DECISION IS FILED. "Required" is an
+            instruction to somebody who still has to fill it in; over a signed
+            paragraph it is a demand the reader cannot act on, and the field it
+            points at no longer takes a caret. The heading keeps its rank either
+            way, so nothing moves. */}
         <span className={cn(TYPE.body, "font-semibold")}>
-          Rationale{" "}
-          <span className="text-destructive" aria-hidden>
-            *
-          </span>
-          <span className="sr-only">(required)</span>
+          Rationale
+          {!readOnly && (
+            <>
+              {" "}
+              <span className="text-destructive" aria-hidden>
+                *
+              </span>
+              <span className="sr-only">(required)</span>
+            </>
+          )}
         </span>
 
         {/* THE HEADER DOES NOT REACT TO THE AGENT WRITING.
@@ -395,7 +422,11 @@ export function RationalePanel({
         // takes about half a second, writes only the words that changed, and
         // locking the field for it made the panel change shape to report a change
         // the field was already showing.
-        readOnly={viewing !== null}
+        // TWO READ-ONLY REASONS AGAIN, and the second is not the one that was
+        // removed. A superseded revision being read, or the decision being filed.
+        // Both are "this text is not yours to change right now"; neither is the
+        // mid-rewrite lock, which stays gone for the reason below.
+        readOnly={viewing !== null || readOnly}
         height={viewing ? boxH : null}
         onHeight={viewing ? undefined : setBoxH}
         onChange={onChange}
@@ -663,8 +694,12 @@ function Field({
 
       <textarea
         ref={ref}
-        required
-        aria-required
+        // Same reasoning as the heading's mark: a read-only field cannot be filled
+        // in, so claiming it must be is a constraint nothing can satisfy — and
+        // `required` on a read-only control is a validation state a form would
+        // report and a screen reader would announce.
+        required={!readOnly}
+        aria-required={!readOnly}
         aria-label="Rationale for the resolution"
         value={value}
         readOnly={readOnly}

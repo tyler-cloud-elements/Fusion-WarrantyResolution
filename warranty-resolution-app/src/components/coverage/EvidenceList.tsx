@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import { Band, FoldRow, Mono, Rows, TYPE } from "@/components/coverage/primitives";
 import { Button } from "@/components/ui/button";
@@ -124,9 +124,14 @@ export function EvidenceList({
   evidence,
   dispatch,
   addedByName,
+  readOnly = false,
 }: {
   evidence: EvidenceItem[];
-  dispatch: (e: CoverageEvent) => void;
+  /**
+   * Optional ONLY because a read-only list has nothing to dispatch. Every live
+   * caller passes it, and every path that would use it is behind `!readOnly`.
+   */
+  dispatch?: (e: CoverageEvent) => void;
   /**
    * WHOSE ROWS THE MARKED ONES ARE — the signed-in reviewer, passed in.
    *
@@ -138,6 +143,24 @@ export function EvidenceList({
    * which is correct — the demo's whole point is that the record says who.
    */
   addedByName: string;
+  /**
+   * THE LIST AS FILED — same band, same columns, same rows, no controls.
+   *
+   * Used by the filed decision (./decision/FiledRecord.tsx), which used to draw its
+   * own flat copy of this list. That copy had drifted: 64px and 84px control
+   * columns against this file's 136 and 160, no column headings, and the two values
+   * printed as words where the record's own manifest 200px below prints them as
+   * `RankBars` and `CallDot`. One list, rendered two ways, disagreeing with itself.
+   *
+   * **The rows still OPEN.** Freezing the list was right — a record that can be
+   * edited after it is signed is not a record — but freezing it was never meant to
+   * mean hiding what each item rested on, which is the question somebody coming
+   * back to a filed decision arrives with.
+   *
+   * What goes: the two selects become their values, the Edit/Remove pair in the
+   * opened body, and the composer with its "Add evidence" trigger.
+   */
+  readOnly?: boolean;
 }) {
   const [composer, setComposer] = useState<{ mode: "add" } | { mode: "edit"; id: string } | null>(
     null,
@@ -156,16 +179,33 @@ export function EvidenceList({
           The headings earn the slot because they are the only thing up here that
           has to align with something below it. The trigger does not, so it goes
           back to the foot. */}
-      <Band title="Evidence" aside={<ColumnHeads />} />
+      {/* THE HEADINGS STAY IN BOTH STATES. They are captions over two fixed cells,
+          and the cells are still there when what sits in them is a value rather
+          than a control — the filed copy dropped them, which is how a reader lost
+          the only thing naming those two columns. The count joins them on a filed
+          list, where the list's length is a fact about what was submitted. */}
+      <Band
+        title="Evidence"
+        aside={
+          <span className="flex items-center gap-3">
+            {readOnly && (
+              <span className={cn(TYPE.small, "shrink-0 text-muted-foreground")}>
+                {evidence.length} {evidence.length === 1 ? "item" : "items"}
+              </span>
+            )}
+            <ColumnHeads />
+          </span>
+        }
+      />
       <div>
         {evidence.map((e) =>
-          composer?.mode === "edit" && composer.id === e.id ? (
+          !readOnly && composer?.mode === "edit" && composer.id === e.id ? (
             <div key={e.id} className="[&+*]:border-t [&+*]:border-t-border">
               <EvidenceComposer
                 initial={draftFrom(e)}
                 submitLabel="Save"
                 onCommit={(item) => {
-                  dispatch({ type: "evidence.update", id: e.id, patch: item });
+                  dispatch?.({ type: "evidence.update", id: e.id, patch: item });
                   close();
                 }}
                 onCancel={close}
@@ -177,6 +217,7 @@ export function EvidenceList({
               item={e}
               dispatch={dispatch}
               addedByName={addedByName}
+              readOnly={readOnly}
               onEdit={() => setComposer({ mode: "edit", id: e.id })}
             />
           ),
@@ -187,7 +228,10 @@ export function EvidenceList({
           quiet win of moving the headings up: the form opens exactly where the
           button was pressed and exactly where the row it makes will live. While
           the trigger sat in the title bar the two were ~150px apart. */}
-      {composer?.mode === "add" ? (
+      {/* NO FOOT ON A FILED LIST. The trigger and the form are the one thing on
+          this card you can press, and there is nothing to add to a decision that
+          has been signed. */}
+      {readOnly ? null : composer?.mode === "add" ? (
         <div className="border-t border-border">
           <EvidenceComposer
             /* "Add", not "Add evidence". The card is called Evidence, the button
@@ -196,7 +240,7 @@ export function EvidenceList({
                anybody reaches this button. */
             submitLabel="Add"
             onCommit={(item) => {
-              dispatch({ type: "evidence.create", item });
+              dispatch?.({ type: "evidence.create", item });
               close();
             }}
             onCancel={close}
@@ -223,15 +267,41 @@ export function EvidenceList({
   );
 }
 
+/**
+ * ONE FILED VALUE — the glyph the live select shows, and its own word.
+ *
+ * The SAME vocabulary the live trigger uses and the same the record's `What changed`
+ * manifest uses: `RankBars` for a rank, `CallDot` for a call. The copy this replaces
+ * printed "High" and "✓ Approve" as text, so one card spoke about relevance in two
+ * grammars depending on which block you were reading.
+ *
+ * `null` on either half is a real state — an item can be committed with neither
+ * judgement made (`Importance | null` in ../../lib/coverage/fixture.ts) — and an
+ * em-dash says "not decided" where an empty cell would read as a rendering fault.
+ *
+ * `font-semibold` at 12px matches the compact trigger's own label, so the value sits
+ * at the weight it sat at while it was still a control.
+ */
+function FiledValue({ glyph, label }: { glyph: ReactNode; label: string | null }) {
+  return (
+    <span className={cn(TYPE.small, "flex items-center gap-1.5 font-semibold")}>
+      {glyph}
+      <span className={label ? undefined : "text-muted-foreground"}>{label ?? "—"}</span>
+    </span>
+  );
+}
+
 function Row({
   item: e,
   dispatch,
   addedByName,
+  readOnly = false,
   onEdit,
 }: {
   item: EvidenceItem;
-  dispatch: (ev: CoverageEvent) => void;
+  dispatch?: (ev: CoverageEvent) => void;
   addedByName: string;
+  readOnly?: boolean;
   onEdit: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -300,30 +370,49 @@ function Row({
         <>
           {/* FIXED CELL, CONTROL RIGHT-ALIGNED IN IT. The cell holds the column
               edge; the trigger keeps its own width and its own styling — nothing
-              about the control changed, only where it is allowed to sit. */}
+              about the control changed, only where it is allowed to sit.
+
+              READ-ONLY USES THE SAME TWO CELLS, which is the whole point: the
+              column edges do not move between the live list and the filed one, so
+              the headings above keep sitting over their values. Only the trigger's
+              chrome goes. */}
           <span className={cn("flex shrink-0 justify-end", COL.relevance)}>
-            <LabelledSelect
-              compact
-              caption="Relevance"
-              value={e.importance}
-              options={IMPORTANCE_OPTIONS}
-              onChange={(importance) => dispatch({ type: "evidence.set", id: e.id, patch: { importance } })}
-              icon={(v) => <RankBars value={v} />}
-              width={0}
-              ariaLabel={`Relevance — ${e.name}`}
-            />
+            {readOnly ? (
+              <FiledValue
+                glyph={e.importance ? <RankBars value={e.importance} /> : null}
+                label={IMPORTANCE_OPTIONS.find((o) => o.value === e.importance)?.label ?? null}
+              />
+            ) : (
+              <LabelledSelect
+                compact
+                caption="Relevance"
+                value={e.importance}
+                options={IMPORTANCE_OPTIONS}
+                onChange={(importance) => dispatch?.({ type: "evidence.set", id: e.id, patch: { importance } })}
+                icon={(v) => <RankBars value={v} />}
+                width={0}
+                ariaLabel={`Relevance — ${e.name}`}
+              />
+            )}
           </span>
           <span className={cn("flex shrink-0 justify-end", COL.decision)}>
-            <LabelledSelect
-              compact
-              caption="Decision"
-              value={e.call}
-              options={CALL_OPTIONS}
-              onChange={(call) => dispatch({ type: "evidence.set", id: e.id, patch: { call } })}
-              icon={(v) => <CallDot value={v} />}
-              width={0}
-              ariaLabel={`Decision — ${e.name}`}
-            />
+            {readOnly ? (
+              <FiledValue
+                glyph={e.call ? <CallDot value={e.call} /> : null}
+                label={CALL_OPTIONS.find((o) => o.value === e.call)?.label ?? null}
+              />
+            ) : (
+              <LabelledSelect
+                compact
+                caption="Decision"
+                value={e.call}
+                options={CALL_OPTIONS}
+                onChange={(call) => dispatch?.({ type: "evidence.set", id: e.id, patch: { call } })}
+                icon={(v) => <CallDot value={v} />}
+                width={0}
+                ariaLabel={`Decision — ${e.name}`}
+              />
+            )}
           </span>
         </>
       }
@@ -345,7 +434,10 @@ function Row({
           item's content, and the content is what has just been opened — which
           also makes them findable, where a hover-only control on a 44px line
           never would be. */}
-      {e.addedByReviewer && (
+      {/* `!readOnly`: the body still opens on a filed record, and it still shows
+          the note, what the item backs and where it came from — but a signed row
+          cannot be edited or removed. */}
+      {!readOnly && e.addedByReviewer && (
         <div className="mt-2.5 flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={onEdit}>
             <Pencil aria-hidden /> Edit
@@ -355,7 +447,7 @@ function Row({
           <Button
             variant="destructive-outline"
             size="sm"
-            onClick={() => dispatch({ type: "evidence.remove", id: e.id })}
+            onClick={() => dispatch?.({ type: "evidence.remove", id: e.id })}
           >
             <Trash2 aria-hidden /> Remove
           </Button>

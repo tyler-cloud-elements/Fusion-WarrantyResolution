@@ -17,6 +17,7 @@ import {
   EVIDENCE_UPLOAD_EVENT,
 } from "./demoData";
 import { activityFor } from "./activity";
+import { renameDeep } from "./ciPersona";
 import { mergeAction, mergeCases, overlayActions, overlayCases } from "./overlay";
 import type {
   ActivityItem,
@@ -53,7 +54,7 @@ export interface CasesResult {
 
 export function useCases(): CasesResult {
   const { sdk, isAuthenticated, isLoading: authLoading } = useUiPath();
-  const { useMocks, overlayMocks } = useFlags();
+  const { useMocks, overlayMocks, ciCoverageDecision } = useFlags();
   const queryClient = useQueryClient();
 
   // Live is the default. The demo dataset is what you get when the flag asks for
@@ -90,8 +91,25 @@ export function useCases(): CasesResult {
       base = [];
     }
 
-    return base.map((c) => (overrides[c.id] ? { ...c, ...overrides[c.id] } : c));
-  }, [query.data, overrides, useMocks, overlayMocks, enabled]);
+    const resolved = base.map((c) => (overrides[c.id] ? { ...c, ...overrides[c.id] } : c));
+    /**
+     * THE CI BUILD'S CAST CHANGE, applied here because here is where the data
+     * enters the app.
+     *
+     * With `ciCoverageDecision` on the warranty lead is Scott Florentino, on every
+     * screen and not only the flagged one. This memo and the actions memo below are
+     * the two places the whole dataset passes through — `useCase` finds in this
+     * list, `useAction` and `useActionsForCase` in that one, `useCaseActivity`
+     * builds from a case it is handed — so renaming twice covers everything
+     * downstream, free text included.
+     *
+     * A `displayName()` helper at each render site was the alternative and it is
+     * the wrong shape: the name is not only in fields called `owner` and
+     * `assignee`, it is inside the reassessment card's prose and inside effect
+     * details written as sentences. See ./ciPersona.ts.
+     */
+    return ciCoverageDecision ? renameDeep(resolved) : resolved;
+  }, [query.data, overrides, useMocks, overlayMocks, enabled, ciCoverageDecision]);
 
   const refresh = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: CASES_KEY });
@@ -240,7 +258,7 @@ export interface ActionsResult {
 
 export function useActionsResult(): ActionsResult {
   const { sdk, isAuthenticated } = useUiPath();
-  const { useMocks, overlayMocks } = useFlags();
+  const { useMocks, overlayMocks, ciCoverageDecision } = useFlags();
   const { cases, isLoading: casesLoading } = useCases();
   const completions = useCompletions();
 
@@ -277,11 +295,13 @@ export function useActionsResult(): ActionsResult {
       });
     }
 
-    return base.map((action) => {
+    const resolved = base.map((action) => {
       const completion = completions[action.id];
       return completion ? { ...action, ...completion } : action;
     });
-  }, [query.data, completions, enabled, overlayMocks, cases]);
+    // The second of the two renames — see the note in the cases memo above.
+    return ciCoverageDecision ? renameDeep(resolved) : resolved;
+  }, [query.data, completions, enabled, overlayMocks, cases, ciCoverageDecision]);
 
   // Two waits in series: actions can only be fetched once the cases they hang
   // off are known, so this query has not even started while cases are loading.

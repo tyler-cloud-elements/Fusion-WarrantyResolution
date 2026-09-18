@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TYPE } from "@/components/coverage/primitives";
 import type { Departures } from "@/lib/coverage/store";
@@ -53,6 +53,7 @@ export function SubmitBar({
   unselected,
   disabled,
   busy,
+  filed = false,
   onSubmit,
 }: {
   /** The `···` menu. A slot, so this file needs to know nothing about its actions. */
@@ -75,6 +76,20 @@ export function SubmitBar({
   unselected: boolean;
   disabled: boolean;
   busy: boolean;
+  /**
+   * THE DECISION IS FILED, AND THIS IS ITS RESTING STATE.
+   *
+   * The bar used to be unmounted at this point: filing replaced the whole card
+   * body with the record (../decision/DecisionSection.tsx), so the one control the
+   * reviewer had just pressed vanished from under their pointer, and the press was
+   * confirmed 600-odd pixels up at a stamp the new record had pushed off screen.
+   * It stays now, in this state.
+   *
+   * OUTRANKS the other three in every branch below. `unselected`, `disabled` and
+   * `busy` all describe a control that has not fired yet; this one describes one
+   * that has, so nothing can be true of both.
+   */
+  filed?: boolean;
   onSubmit: () => void;
 }) {
   const departed = departures.parts > 0;
@@ -83,9 +98,23 @@ export function SubmitBar({
     <div className="flex items-center gap-3 border-t border-border/70 pt-3.5">
       {more}
       <p className={cn(TYPE.small, "m-0 min-w-0 flex-1 leading-relaxed text-muted-foreground")}>
-        {unselected ? (
-          // FIRST, because it outranks the other two: until a resolution is picked
-          // there is no position for them to be a reading of.
+        {filed ? (
+          // PAST TENSE, NOT A NEW FACT. `Filed` takes the bold lead the other three
+          // readings give their first clause, and the count follows it lowercased —
+          // so the row still answers "what went, and did anybody move it" without
+          // the stamp above having to be read first.
+          //
+          // No timestamp. The stamp prints one, and two clocks on one card are two
+          // places to disagree.
+          <>
+            <b className="font-semibold text-foreground">Filed</b>
+            {departed
+              ? ` · change in position, ${departures.parts} of 4 parts: ${listOf(namesOf(departures))}.`
+              : " · no change in position."}
+          </>
+        ) : unselected ? (
+          // Then this, because it outranks the last two: until a resolution is
+          // picked there is no position for them to be a reading of.
           <b className="font-semibold text-foreground">No resolution selected.</b>
         ) : departed ? (
           <>
@@ -97,9 +126,13 @@ export function SubmitBar({
         )}
       </p>
       <Button
-        disabled={disabled}
+        // `filed` FOLDED IN HERE rather than left to the call site, so the state
+        // cannot be rendered live by a caller that passes one prop and forgets the
+        // other. The base variant carries `disabled:pointer-events-none`, which is
+        // what stops the hover and the `active:` cues below from firing.
+        disabled={disabled || filed}
         aria-busy={busy}
-        onClick={onSubmit}
+        onClick={filed ? undefined : onSubmit}
         // A ROW: the spinner's slot, then a two-line stack. The two lines earn the
         // unusual shape — the first is the act, the second is the payload, and
         // splitting them is what lets the payload be named without the act becoming
@@ -107,12 +140,13 @@ export function SubmitBar({
         // `items-center` is the base's, and it is what centres the spinner against
         // the pair rather than against the first line.
         //
-        // `disabled:opacity-100` WHILE BUSY, and only while busy. The base carries
-        // `disabled:opacity-50`, and `disabled` is true on both paths here — the
-        // rationale being empty, and the submit being in flight. Sharing one
-        // treatment made those read the same, and a spinner at half strength reads
-        // as broken rather than working. Dim still means "not yet"; full strength
-        // plus a spinner means "going".
+        // `disabled:opacity-100` WHILE BUSY, and NOT while merely disabled. The base
+        // carries `disabled:opacity-50`, and `disabled` is true on three paths here
+        // — the rationale being empty, the submit being in flight, and the decision
+        // being filed. Sharing one treatment made the first two read the same, and a
+        // spinner at half strength reads as broken rather than working. Dim still
+        // means "not yet"; full strength plus a spinner means "going", and full
+        // strength plus a tick means "done" (see the filed block below).
         className={cn(
           // THE BOX GROWS, AND THE PADDING IS WHAT GROWS IT. It was pinned at
           // 48px so the label could not push it out; that pin is gone and the
@@ -166,6 +200,35 @@ export function SubmitBar({
            * while the button is dim or in flight, which is what should happen.
            */
           "active:translate-y-px active:bg-primary/80",
+          /**
+           * THE FILED TREATMENT — `TONE.ok`'s values (../primitives.tsx), with the
+           * rim as an INSET RING rather than a border.
+           *
+           * `ring-inset` is not a style preference. A 1px border would grow the box
+           * by 2px in each dimension, and the row would twitch at the exact moment
+           * of filing — which is the same bug the always-held spinner slot below
+           * exists to prevent, and the one thing this state must not do. An inset
+           * ring paints inside the existing box and costs no layout at all: armed,
+           * busy and filed all measure 332.49 × 61.25 on this screen, and the
+           * sentence beside them starts at the same x on all three.
+           *
+           * NOT the button's own `success` variant, and the reason is measured.
+           * `bg-success text-white` is 4.25:1 — under the 4.5 an AA pass wants at
+           * 13px semibold, and the exact figure ./FiledRecord.tsx already records
+           * when it rejected solid fills for its change badges. `foreground` on a
+           * `/10` wash is 13.2–14.7:1 and passes in both themes. A filled block at
+           * full strength also reads as the card's primary action, and this is not
+           * an action at all.
+           *
+           * Dark needs no override: `--success` is re-declared in `.dark`, so both
+           * alphas track the theme on their own.
+           *
+           * `disabled:opacity-100` for the reason the busy path has it — `disabled`
+           * is true here, and a filed record at half strength reads as broken
+           * rather than as done.
+           */
+          filed &&
+            "bg-success/10 text-foreground ring-1 ring-inset ring-success/30 disabled:opacity-100",
           busy && "disabled:opacity-100",
         )}
       >
@@ -199,10 +262,18 @@ export function SubmitBar({
             The empty gutter this leaves when idle is the price, and it is the
             right way round: a fixed 16px inset reads as an icon slot, whereas a
             button that jumps as it commits reads as a mis-click. */}
-        <Loader2
-          aria-hidden
-          className={cn("size-4 shrink-0 animate-spin", !busy && "invisible")}
-        />
+        {/* TWO GLYPHS, ONE SLOT — and the slot is the one described above, held
+            open on every path. That invariant is what makes the filed state free:
+            the tick lands where the spinner was, so state 3 → state 4 is a fill
+            change and a glyph swap on a box that does not move. */}
+        {filed ? (
+          <Check aria-hidden className="size-4 shrink-0 text-success" />
+        ) : (
+          <Loader2
+            aria-hidden
+            className={cn("size-4 shrink-0 animate-spin", !busy && "invisible")}
+          />
+        )}
 
         <span className="flex min-w-0 flex-col items-start gap-0.5">
           {/* 13px SEMIBOLD, and it is now one rung ABOVE the resolution cards'
@@ -215,7 +286,9 @@ export function SubmitBar({
 
               `leading-tight` stays. The two lines are a stack inside a control,
               not prose, and the button's height is measured off them. */}
-          <span className="text-[13px] leading-tight font-semibold">Submit</span>
+          <span className="text-[13px] leading-tight font-semibold">
+            {filed ? "Submitted" : "Submit"}
+          </span>
           {/* The payload, named. Not a count of what changed — that is the
               sentence's job — but what goes when this is pressed, which is all
               four parts on every path.

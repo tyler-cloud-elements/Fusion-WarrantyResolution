@@ -1,0 +1,354 @@
+<meta charset="utf-8">
+<title>Decision — the submit bar after submitting</title>
+<style>
+  :root{
+    --background:oklch(1 0 89.88); --foreground:oklch(0.2394 0.0455 252.45);
+    --card:oklch(1 0 89.88); --muted:oklch(0.963 0.0062 255.48);
+    --muted-foreground:oklch(0.4594 0.028 264.25); --border:oklch(0.9229 0.0065 252.13);
+    --primary:oklch(0.64 0.115 208); --primary-foreground:oklch(1 0 89.88);
+    --success:oklch(0.57 0.105 152); --success-foreground:oklch(1 0 89.88);
+    --destructive:oklch(0.62 0.15 18); --warning:oklch(0.75 0.14 70);
+    --insight-600:oklch(0.56 0.20 277);
+    --radius:0.625rem; --font-sans:Inter,ui-sans-serif,sans-serif,system-ui;
+    --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  .dark{
+    --background:oklch(0.21 0.03 258.5); --foreground:oklch(0.985 0 0);
+    --card:oklch(0.233 0.036 254.7); --muted:oklch(0.2648 0.0329 254.38);
+    --muted-foreground:oklch(0.72 0.03 254.38); --border:oklch(0.3068 0.0426 258.29);
+    --primary:oklch(0.69 0.112 207); --primary-foreground:oklch(0.166 0.0283 203.34);
+    --success:oklch(0.7 0.12 152); --destructive:oklch(0.68 0.155 18);
+    --warning:oklch(0.8 0.13 70); --insight-600:oklch(0.70 0.19 277);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 24px;font-family:var(--font-sans);
+       background:var(--background);color:var(--foreground)}
+  main{max-width:1060px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
+  .lede{font-size:13px;color:var(--muted-foreground);margin:0 0 30px;max-width:70ch;line-height:1.6}
+  section{margin-bottom:38px}
+  h2{font-size:13px;font-weight:600;margin:0 0 2px}
+  .note{font-size:12px;color:var(--muted-foreground);margin:0 0 14px;max-width:78ch;line-height:1.6}
+  .tag{display:block;margin-bottom:10px;font-family:var(--font-mono);font-size:10px;
+       letter-spacing:.04em;text-transform:uppercase;color:var(--muted-foreground)}
+  .tag b{color:var(--insight-600);font-weight:600}
+  .tag i{color:var(--success);font-style:normal;font-weight:600}
+  .tag s{color:var(--destructive);text-decoration:none;font-weight:600}
+  code{font-family:var(--font-mono);font-size:11px;background:var(--muted);padding:1px 5px;border-radius:4px}
+  .verdict{font-size:12px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border);
+           color:var(--muted-foreground);line-height:1.6}
+  .verdict b{color:var(--foreground)}
+
+  /* ── the card ─────────────────────────────────────────────── */
+  .card{border:1px solid var(--border);border-radius:12px;background:var(--card);
+        padding:20px;display:flex;flex-direction:column;gap:16px;margin-bottom:14px}
+  /* `color` as well as `background`: the swatches below set their ink with
+     var(--foreground), but plain inherited text would carry the LIGHT value
+     computed up at `body`, which is outside this subtree. */
+  .wrap.dark{background:var(--background);color:var(--foreground);padding:16px;border-radius:12px}
+
+  /* ── submit bar — the real classes, transcribed ────────────── */
+  .bar{display:flex;align-items:center;gap:12px;border-top:1px solid color-mix(in oklab,var(--border) 70%,transparent);padding-top:14px}
+  .more{display:grid;width:36px;height:36px;flex:none;place-items:center;border-radius:8px;
+        color:var(--muted-foreground);font-size:14px}
+  /* THE HELD SLOT. Same 36px the `···` trigger occupies, painted with nothing —
+     so the sentence starts at the same x before and after filing. */
+  .more.held{visibility:hidden}
+  .bar p{margin:0;min-width:0;flex:1;font-size:12px;line-height:1.6;color:var(--muted-foreground)}
+  .bar p b{font-weight:600;color:var(--foreground)}
+  .sub{display:flex;flex:none;align-items:center;gap:10px;border-radius:10px;border:0;
+       background:var(--primary);color:var(--primary-foreground);padding:14px 24px;cursor:pointer;
+       font-family:inherit;text-align:left}
+  .sub.off{opacity:.5;cursor:not-allowed}
+  .sub.busy{opacity:1;cursor:progress}
+  .sub .stk{display:flex;min-width:0;flex-direction:column;align-items:flex-start;gap:2px}
+  .sub .a{font-size:13px;font-weight:600;line-height:1.2}
+  .sub .b{font-size:12px;line-height:1.2;opacity:.85;font-variant-numeric:tabular-nums}
+  .sub .sp{width:16px;height:16px;flex:none;visibility:hidden}
+  .sub .sp.on{visibility:visible}
+  .sub .sp svg{width:16px;height:16px;display:block}
+  .spin{animation:spin 1s linear infinite;transform-origin:center}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── THE SUBMITTED STATE ───────────────────────────────────── */
+  /* Same box: same padding, same radius, same two-line stack, same 16px glyph
+     slot. Only the fill, the rim and the ink change, so nothing on the row
+     moves at the moment of filing. */
+  /* AN INSET RING, NOT A BORDER. A 1px border would grow the box by 2px in each
+     dimension and the row would twitch at the moment of filing — which is the
+     one thing this state must not do. `inset` paints inside the existing box,
+     so `ring-1 ring-inset ring-success/30` costs no layout at all. */
+  .sub.filed{background:color-mix(in oklab,var(--success) 10%,transparent);
+             box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--success) 30%,transparent);
+             color:var(--foreground);cursor:default;opacity:1}
+  .sub.filed .b{opacity:1;color:var(--muted-foreground)}
+  .sub.filed .sp{color:var(--success)}
+
+  /* ── the rejected fill, for comparison ─────────────────────── */
+  .sub.solid{background:var(--success);color:#fff;opacity:1;cursor:default}
+
+  /* ── filed record tail, for the in-context shot ────────────── */
+  .stamp{display:flex;align-items:flex-start;gap:12px}
+  .tick{display:grid;width:24px;height:24px;flex:none;place-items:center;border-radius:999px;
+        background:var(--success);color:var(--success-foreground)}
+  .tick svg{width:12px;height:12px}
+  .stamp-l{min-width:0;flex:1}
+  .stamp-t{font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .stamp-t span{font-variant-numeric:tabular-nums}
+  .stamp-s{font-size:12px;color:var(--muted-foreground);margin-top:1px}
+  .reopen{flex:none;border:1px solid var(--border);background:var(--background);
+          color:var(--foreground);border-radius:8px;padding:8px 16px;font-size:13px;
+          font-weight:500;font-family:inherit;cursor:pointer}
+  .panel{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .panel-h{display:flex;align-items:baseline;gap:8px;padding:8px 14px;
+           border-bottom:1px solid color-mix(in oklab,var(--border) 60%,transparent);
+           font-size:13px;font-weight:600}
+  .row{display:grid;grid-template-columns:14px 88px 20px minmax(0,1fr);align-items:center;
+       gap:0 10px;padding:8px 14px;font-size:12px;
+       border-bottom:1px solid color-mix(in oklab,var(--border) 50%,transparent)}
+  .row:last-child{border-bottom:0}
+  .row .pt{color:var(--muted-foreground)}
+  .badge{display:inline-grid;width:18px;height:18px;place-items:center;border-radius:6px;
+         border:1px solid;font-size:11px;line-height:1;font-weight:700;color:var(--foreground)}
+  .badge.ok{border-color:color-mix(in oklab,var(--success) 30%,transparent);
+            background:color-mix(in oklab,var(--success) 10%,transparent)}
+  .badge.warn{border-color:color-mix(in oklab,var(--warning) 30%,transparent);
+              background:color-mix(in oklab,var(--warning) 10%,transparent)}
+  .row .v{display:flex;min-width:0;flex-wrap:wrap;align-items:center;gap:4px 6px}
+  .row .v b{font-weight:600}
+  .row .v s{color:var(--muted-foreground)}
+  .glyph{width:12px;height:12px;flex:none;color:var(--muted-foreground)}
+  .ic{width:14px;height:14px;flex:none;color:var(--muted-foreground)}
+
+  .two{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+  @media(max-width:860px){.two{grid-template-columns:1fr}}
+</style>
+
+<svg style="display:none">
+  <symbol id="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="loader" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></symbol>
+  <symbol id="scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="banknote" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+</svg>
+
+<main>
+<h1>Decision — the submit bar stays after submitting</h1>
+<p class="lede">
+  Filing the decision currently replaces the whole card body, and the submit bar goes with
+  it: the one control the reviewer just pressed vanishes from under their pointer. This keeps
+  the bar on screen in a fourth state — filed, non-interactive, in the same box — so the row
+  the hand is resting on is still there when the record appears above it.
+</p>
+
+<!-- ══ 1 · the four states ════════════════════════════════════ -->
+<section>
+  <h2>1 · The bar's four states, in order</h2>
+  <p class="note">
+    Three exist today. The fourth is the proposal, and it is a state of the same component
+    rather than a replacement for it — same 36px left slot, same flexed sentence, same
+    two-line button with a 16px glyph slot held open at all times. Nothing on this row
+    changes width or height between the third state and the fourth.
+  </p>
+
+  <div class="card">
+    <span class="tag">state 1 — nothing picked yet, and the sentence says why</span>
+    <div class="bar">
+      <span class="more">···</span>
+      <p><b>No resolution selected.</b></p>
+      <button class="sub off"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">state 2 — armed, a departure counted</span>
+    <div class="bar">
+      <span class="more">···</span>
+      <p><b>Change in position</b> · 2 of 4 parts: resolution and refund.</p>
+      <button class="sub"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag">state 3 — in flight, the 500ms beat</span>
+    <div class="bar">
+      <span class="more">···</span>
+      <p><b>Change in position</b> · 2 of 4 parts: resolution and refund.</p>
+      <button class="sub busy"><span class="sp on"><svg class="spin"><use href="#loader"/></svg></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="tag"><i>state 4 — new</i> — filed, and still on screen</span>
+    <div class="bar">
+      <span class="more held">···</span>
+      <p><b>Filed</b> · change in position, 2 of 4 parts: resolution and refund.</p>
+      <button class="sub filed" aria-disabled="true"><span class="sp on"><svg><use href="#check"/></svg></span><span class="stk"><span class="a">Submitted</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+
+  <p class="verdict">
+    <b>The glyph slot is what makes this free.</b> <code>SubmitBar</code> already mounts the
+    spinner unconditionally and hides it with <code>invisible</code>, precisely so that
+    pressing Submit does not widen the button by 26px. The tick lands in that same slot, and the
+    rim is an <em>inset</em> ring rather than a border — so state 3 → state 4 is a fill change
+    and a glyph swap on a box whose width and height do not move by a pixel.
+  </p>
+</section>
+
+<!-- ══ 2 · in context ════════════════════════════════════════ -->
+<section>
+  <h2>2 · Where it sits in the filed card</h2>
+  <p class="note">
+    Last child of the card, after <code>What changed</code> — the same position it holds in
+    the live card, which is the point. The stamp at the top of the record and the bar at the
+    bottom both say the decision is filed, and they are ~600px apart in a card you scroll:
+    the stamp heads the <em>record</em>, the bar is the resting state of the <em>action</em>.
+    They are not competing for one glance.
+  </p>
+  <div class="card">
+    <span class="tag">the tail of the record, then the bar</span>
+
+    <div class="stamp">
+      <span class="tick"><svg><use href="#check"/></svg></span>
+      <div class="stamp-l">
+        <div class="stamp-t">Partial coverage — <span>$4,940.00</span> refunded</div>
+        <div class="stamp-s">Dana Whitfield · 14:32 · submitted after 2 changes</div>
+      </div>
+      <button class="reopen">Reopen</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">What changed</div>
+      <div class="row">
+        <svg class="ic"><use href="#scale"/></svg>
+        <span class="pt">Resolution</span>
+        <span class="badge warn">○</span>
+        <span class="v"><s>Deny coverage</s><svg class="glyph"><use href="#arrow"/></svg><span>Partial coverage</span></span>
+      </div>
+      <div class="row">
+        <svg class="ic"><use href="#banknote"/></svg>
+        <span class="pt">Refund</span>
+        <span class="badge warn">○</span>
+        <span class="v"><s>$0.00</s><svg class="glyph"><use href="#arrow"/></svg><span>$4,940.00</span></span>
+      </div>
+    </div>
+
+    <div class="bar">
+      <span class="more held">···</span>
+      <p><b>Filed</b> · change in position, 2 of 4 parts: resolution and refund.</p>
+      <button class="sub filed" aria-disabled="true"><span class="sp on"><svg><use href="#check"/></svg></span><span class="stk"><span class="a">Submitted</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+
+  <p class="verdict">
+    <b>No second Reopen.</b> The record's stamp already carries it, and the way back from a
+    filed decision should have exactly one door. The bar's left slot holds its 36px and paints
+    nothing, so the sentence keeps its x — putting <code>Reopen</code> there instead is the one
+    real alternative, and §4 of the plan says why not yet.
+  </p>
+</section>
+
+<!-- ══ 3 · the fill, and the one that was rejected ════════════ -->
+<section>
+  <h2>3 · Why a wash and not a fill</h2>
+  <p class="note">
+    The obvious move is the button's own <code>success</code> variant —
+    <code>bg-success text-white</code>. It is the wrong one twice over, and the second
+    reason is measured.
+  </p>
+  <div class="two">
+    <div class="card">
+      <span class="tag"><s>rejected</s> — solid success, white ink</span>
+      <div class="bar" style="border-top:0;padding-top:0">
+        <p>A filled block at full strength reads as the primary action of the card — pressable,
+           and the next thing to do. It is neither.</p>
+        <button class="sub solid"><span class="sp on"><svg><use href="#check"/></svg></span><span class="stk"><span class="a">Submitted</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+      </div>
+    </div>
+    <div class="card">
+      <span class="tag"><i>chosen</i> — the folder's <code>TONE.ok</code></span>
+      <div class="bar" style="border-top:0;padding-top:0">
+        <p>A rim and a wash of the success hue, with neutral <code>foreground</code> ink. Reads
+           as a receipt: coloured enough to be read as a pass, quiet enough not to be pressed.</p>
+        <button class="sub filed" aria-disabled="true"><span class="sp on"><svg><use href="#check"/></svg></span><span class="stk"><span class="a">Submitted</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+      </div>
+    </div>
+  </div>
+  <p class="verdict">
+    <b>And the contrast settles it.</b> White on <code>--success</code> measures
+    <b>4.25:1</b> — under the 4.5 an AA pass wants for 13px semibold, which is exactly the
+    figure <code>FiledRecord.tsx</code> already records when it rejected solid fills for its
+    change badges. <code>foreground</code> on a <code>/10</code> wash measures
+    <b>13.2–14.7:1</b> and passes in both themes. Reusing <code>TONE.ok</code> means this
+    button is not a fourth opinion about the same question.
+  </p>
+</section>
+
+<!-- ══ 4 · dark ══════════════════════════════════════════════ -->
+<section>
+  <h2>4 · Dark</h2>
+  <p class="note">
+    <code>--success</code> is re-declared in <code>.dark</code> at a lighter chroma, so a
+    <code>color-mix</code> against it — which is what <code>bg-success/10</code> and
+    <code>border-success/30</code> compile to — tracks the theme on its own. No dark-only
+    override, and no hard-coded green anywhere in the state.
+  </p>
+  <div class="wrap dark">
+    <div class="card">
+      <span class="tag">state 2 — armed</span>
+      <div class="bar">
+        <span class="more">···</span>
+        <p><b>Change in position</b> · 2 of 4 parts: resolution and refund.</p>
+        <button class="sub"><span class="sp"></span><span class="stk"><span class="a">Submit</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+      </div>
+    </div>
+    <div class="card">
+      <span class="tag"><i>state 4</i> — filed</span>
+      <div class="stamp">
+        <span class="tick"><svg><use href="#check"/></svg></span>
+        <div class="stamp-l">
+          <div class="stamp-t">Partial coverage — <span>$4,940.00</span> refunded</div>
+          <div class="stamp-s">Dana Whitfield · 14:32 · submitted after 2 changes</div>
+        </div>
+        <button class="reopen">Reopen</button>
+      </div>
+      <div class="bar">
+        <span class="more held">···</span>
+        <p><b>Filed</b> · change in position, 2 of 4 parts: resolution and refund.</p>
+        <button class="sub filed" aria-disabled="true"><span class="sp on"><svg><use href="#check"/></svg></span><span class="stk"><span class="a">Submitted</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5 · the sentence ══════════════════════════════════════ -->
+<section>
+  <h2>5 · The sentence, frozen</h2>
+  <p class="note">
+    The paragraph beside the button is computed from LIVE state today
+    (<code>departuresOf(state, limit)</code>). After filing it has to be computed from the
+    snapshot instead, for the same reason <code>FiledRecord</code> takes a frozen evidence
+    list: a record that re-derives itself from a store that can still move is not a record.
+    Its three readings gain a fourth, in the same voice.
+  </p>
+  <div class="card">
+    <span class="tag">all four readings of one slot</span>
+    <div style="display:flex;flex-direction:column;gap:9px;font-size:12px;line-height:1.6;color:var(--muted-foreground)">
+      <p style="margin:0"><code>unselected</code> &nbsp; <b style="color:var(--foreground)">No resolution selected.</b></p>
+      <p style="margin:0"><code>armed, agreed</code> &nbsp; <b style="color:var(--foreground)">No change in position.</b></p>
+      <p style="margin:0"><code>armed, departed</code> &nbsp; <b style="color:var(--foreground)">Change in position</b> · 2 of 4 parts: resolution and refund.</p>
+      <p style="margin:0"><code>filed</code> &nbsp; <b style="color:var(--foreground)">Filed</b> · change in position, 2 of 4 parts: resolution and refund.</p>
+      <p style="margin:0"><code>filed, agreed</code> &nbsp; <b style="color:var(--foreground)">Filed</b> · no change in position.</p>
+    </div>
+  </div>
+  <p class="verdict">
+    <b>Past tense, not a new fact.</b> <code>Filed</code> takes the bold lead the other three
+    readings give their first clause, and the departure count follows it lowercased — so the
+    row still answers "what went, and did anybody move it" without the stamp above having to
+    be read first. No timestamp here: the stamp prints one 600px up, and two would be two
+    places to disagree.
+  </p>
+</section>
+</main>

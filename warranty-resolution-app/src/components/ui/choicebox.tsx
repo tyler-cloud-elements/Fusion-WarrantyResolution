@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,7 @@ export function ChoiceboxGroup({
   onValueChange,
   direction = "row",
   ariaLabel,
+  readOnly = false,
   className,
   children,
 }: {
@@ -45,6 +46,18 @@ export function ChoiceboxGroup({
   onValueChange: (value: string) => void;
   direction?: "row" | "column";
   ariaLabel: string;
+  /**
+   * THE GROUP IS A RECORD OF A CHOICE RATHER THAN THE CHOICE.
+   *
+   * Set on the filed decision (../coverage/decision/FiledRecord.tsx), which shows
+   * the three resolutions frozen at what was signed. It is passed down to each
+   * item rather than read there, so a group cannot be half read-only.
+   *
+   * DISTINCT FROM `disabled` on the items, which is the wrong lever: that dims
+   * whatever it is on, and here the PICKED card has to keep its full treatment
+   * while the other two recede. `ChoiceboxItem`'s own note has the rest.
+   */
+  readOnly?: boolean;
   className?: string;
   children: ReactNode;
 }) {
@@ -57,13 +70,31 @@ export function ChoiceboxGroup({
       data-type={type}
       data-value={Array.isArray(value) ? value.join(",") : value}
       data-name={name}
+      // The fact, for a screen reader. The dimming below is a style.
+      aria-readonly={readOnly || undefined}
       className={cn("flex gap-3", direction === "row" ? "flex-row items-stretch" : "flex-col", className)}
-      onChange={(e) => {
-        const t = e.target as HTMLInputElement;
-        if (t.type === type) onValueChange(t.value);
-      }}
+      // Belt and braces: every input is `disabled` when read-only, so nothing can
+      // fire this — but a group that cannot change should not carry a handler that
+      // would change it.
+      onChange={
+        readOnly
+          ? undefined
+          : (e) => {
+              const t = e.target as HTMLInputElement;
+              if (t.type === type) onValueChange(t.value);
+            }
+      }
     >
-      {children}
+      {/* The flag reaches the cards through context-free cloning rather than a
+          provider: there are three of them, they are always direct children, and a
+          context for one boolean is more machinery than this needs. */}
+      {readOnly
+        ? Children.map(children, (child) =>
+            isValidElement<{ readOnly?: boolean }>(child)
+              ? cloneElement(child, { readOnly: true })
+              : child,
+          )
+        : children}
     </div>
   );
 }
@@ -77,6 +108,7 @@ export function ChoiceboxItem({
   description,
   badge,
   disabled,
+  readOnly = false,
   /** Shown under the card when it is the selected one. */
   children,
 }: {
@@ -88,6 +120,20 @@ export function ChoiceboxItem({
   description?: ReactNode;
   badge?: ReactNode;
   disabled?: boolean;
+  /**
+   * THE CHOICE AS SIGNED — set by the group, not usually by hand.
+   *
+   * **Not `disabled`.** That applies `opacity-50` to whatever card it is on, and a
+   * filed record needs the opposite split: the card that was chosen keeps its rim,
+   * its ring, its marker and its badge at full strength, and the two that were not
+   * recede to 45%. "One of three" is part of what was decided, so the unchosen
+   * cards stay on screen rather than being dropped — but they are no longer
+   * offers, and full-strength offers beside a signed decision read as a control.
+   *
+   * The input underneath is `disabled` either way, which is what makes the group
+   * inert to arrow keys, clicks and form submission.
+   */
+  readOnly?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -149,9 +195,16 @@ export function ChoiceboxItem({
         selected ? "border-primary" : "border-transparent",
         disabled
           ? "cursor-not-allowed opacity-50"
-          : selected
-            ? "cursor-pointer"
-            : "cursor-pointer hover:bg-muted/70",
+          : readOnly
+            ? // THE RECORD'S SPLIT. No pointer affordance on either — nothing here
+              // can be pressed — and the unchosen two recede. The chosen one takes
+              // no extra treatment: it already has the rim, the ring and the filled
+              // marker, and adding to it would make the signed card louder than the
+              // live one it is a record of.
+              cn("cursor-default", !selected && "opacity-45")
+            : selected
+              ? "cursor-pointer"
+              : "cursor-pointer hover:bg-muted/70",
       )}
     >
       {/* THE CONTROL LEADS, AND THE TEXT STACKS.
@@ -169,7 +222,10 @@ export function ChoiceboxItem({
           name={name}
           value={value}
           checked={selected}
-          disabled={disabled}
+          // `readOnly` folded in: this is what takes the group out of the tab
+          // order and off the arrow keys, and it is the half that `aria-readonly`
+          // on the group cannot do.
+          disabled={disabled || readOnly}
           // `sr-only`, not `absolute` — it stays in the label so a click anywhere on
           // the card reaches it, and focus lands where the marker is drawn.
           className="peer sr-only"

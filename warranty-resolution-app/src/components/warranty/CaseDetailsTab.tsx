@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { CustomerStandingCard } from "@/components/warranty/CustomerStandingCard";
 import { PriorityBadge, SlaBadge } from "@/components/warranty/badges";
 import { dateTime, money } from "@/lib/warranty/format";
-import { ROLE_PROFILES } from "@/lib/role/RoleProvider";
+import { useRoleProfiles } from "@/lib/role/RoleProvider";
 import type { Priority, WarrantyCase } from "@/lib/warranty/types";
 
 // The Details tab: the case record, grouped the way a warranty coordinator
@@ -44,7 +44,25 @@ interface FieldDef {
 }
 
 const PRIORITIES: readonly Priority[] = ["P1", "P2", "P3", "P4"];
-const OWNERS = Object.values(ROLE_PROFILES).map((p) => p.name);
+
+/**
+ * THE OWNER FIELD IS RESOLVED AT RENDER, not here with the rest of `CARDS`.
+ *
+ * Its options and its patch both came off `ROLE_PROFILES` at module scope — a list
+ * of persona names, and a lookup from the chosen name back to that persona's
+ * title. Neither can stay at module scope now that the lead's name depends on
+ * `ciCoverageDecision` (../../lib/role/RoleProvider.tsx): a constant evaluated once
+ * at import cannot read a flag.
+ *
+ * **And the lookup was the sharper half of the problem.** It matched on
+ * `p.name === chosenOwner`. Had the dropdown been renamed and this table not,
+ * picking the lead as owner would have found nobody and written an empty role — a
+ * field silently blanking itself, which is worse than a stale name.
+ *
+ * `CARDS` keeps the field's key, label, type and readers; `resolveField` below
+ * supplies the two parts that depend on who the cast currently is.
+ */
+const OWNER_FIELD_KEY = "owner";
 
 const CARDS: { id: string; title: string; fields: FieldDef[] }[] = [
   {
@@ -70,14 +88,13 @@ const CARDS: { id: string; title: string; fields: FieldDef[] }[] = [
         key: "owner",
         label: "Case owner",
         type: "select",
-        options: OWNERS,
+        // Filled in by `resolveField` at render — see `OWNER_FIELD_KEY` above.
+        options: [],
         editable: true,
         value: (c) => `${c.owner}${c.ownerRole ? ` · ${c.ownerRole}` : ""}`,
         raw: (c) => c.owner,
-        patch: (v) => ({
-          owner: v,
-          ownerRole: Object.values(ROLE_PROFILES).find((p) => p.name === v)?.title ?? "",
-        }),
+        // Replaced by `resolveField` at render, for the same reason.
+        patch: (v) => ({ owner: v }),
       },
     ],
   },
@@ -174,6 +191,27 @@ export function CaseDetailsTab({
 }) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const profiles = useRoleProfiles();
+
+  /**
+   * The owner field, with the live cast in it. Every other field passes through
+   * untouched — `resolveField` is a no-op on them, so `CARDS` stays a constant.
+   */
+  const resolveField = useCallback(
+    (field: FieldDef): FieldDef => {
+      if (field.key !== OWNER_FIELD_KEY) return field;
+      const cast = Object.values(profiles);
+      return {
+        ...field,
+        options: cast.map((p) => p.name),
+        patch: (v) => ({
+          owner: v,
+          ownerRole: cast.find((p) => p.name === v)?.title ?? "",
+        }),
+      };
+    },
+    [profiles],
+  );
 
   function startEdit(field: FieldDef) {
     setDraft(field.raw?.(warrantyCase) ?? "");
@@ -207,7 +245,8 @@ export function CaseDetailsTab({
         <Card key={card.id} className="gap-4 p-5">
           <span className="text-base font-semibold">{card.title}</span>
           <div className="flex flex-col gap-4">
-            {card.fields.map((field) => {
+            {card.fields.map((rawField) => {
+              const field = resolveField(rawField);
               const isEditing = editingKey === field.key;
               const canEdit = editable && field.editable && !rail;
               return (

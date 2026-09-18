@@ -1,0 +1,477 @@
+<meta charset="utf-8">
+<title>Filed record — aligned with the live card</title>
+<style>
+  :root{
+    --background:oklch(1 0 89.88); --foreground:oklch(0.2394 0.0455 252.45);
+    --card:oklch(1 0 89.88); --muted:oklch(0.963 0.0062 255.48);
+    --muted-foreground:oklch(0.4594 0.028 264.25); --border:oklch(0.9229 0.0065 252.13);
+    --primary:oklch(0.64 0.115 208); --primary-foreground:oklch(1 0 89.88);
+    --success:oklch(0.57 0.105 152); --success-foreground:oklch(1 0 89.88);
+    --destructive:oklch(0.62 0.15 18); --warning:oklch(0.75 0.14 70);
+    --insight-100:oklch(0.92 0.05 277); --insight-600:oklch(0.56 0.20 277);
+    --insight-800:oklch(0.38 0.13 278);
+    --radius:0.625rem; --font-sans:Inter,ui-sans-serif,sans-serif,system-ui;
+    --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  .dark{
+    --background:oklch(0.21 0.03 258.5); --foreground:oklch(0.985 0 0);
+    --card:oklch(0.233 0.036 254.7); --muted:oklch(0.2648 0.0329 254.38);
+    --muted-foreground:oklch(0.72 0.03 254.38); --border:oklch(0.3068 0.0426 258.29);
+    --primary:oklch(0.69 0.112 207); --primary-foreground:oklch(0.166 0.0283 203.34);
+    --success:oklch(0.7 0.12 152); --destructive:oklch(0.68 0.155 18);
+    --warning:oklch(0.8 0.13 70); --insight-600:oklch(0.70 0.19 277);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 24px;font-family:var(--font-sans);
+       background:var(--background);color:var(--foreground)}
+  main{max-width:1060px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
+  .lede{font-size:13px;color:var(--muted-foreground);margin:0 0 30px;max-width:72ch;line-height:1.6}
+  section{margin-bottom:38px}
+  h2{font-size:13px;font-weight:600;margin:0 0 2px}
+  .note{font-size:12px;color:var(--muted-foreground);margin:0 0 14px;max-width:80ch;line-height:1.6}
+  .tag{display:block;margin-bottom:10px;font-family:var(--font-mono);font-size:10px;
+       letter-spacing:.04em;text-transform:uppercase;color:var(--muted-foreground)}
+  .tag b{color:var(--insight-600);font-weight:600}
+  .tag i{color:var(--success);font-style:normal;font-weight:600}
+  .tag s{color:var(--destructive);text-decoration:none;font-weight:600}
+  code{font-family:var(--font-mono);font-size:11px;background:var(--muted);padding:1px 5px;border-radius:4px}
+  .verdict{font-size:12px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border);
+           color:var(--muted-foreground);line-height:1.6}
+  .verdict b{color:var(--foreground)}
+  table{border-collapse:collapse;width:100%;font-size:12px;margin-bottom:6px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted-foreground)}
+  td b{font-weight:600}
+  .bad{color:var(--destructive);font-weight:600}
+  .good{color:var(--success);font-weight:600}
+
+  .card{border:1px solid var(--border);border-radius:12px;background:var(--card);
+        padding:20px;display:flex;flex-direction:column;gap:16px;margin-bottom:14px}
+  .wrap.dark{background:var(--background);color:var(--foreground);padding:16px;border-radius:12px}
+  .lbl{font-size:12px;font-weight:400;color:var(--muted-foreground)}
+
+  /* ── stamp ── */
+  .stamp{display:flex;align-items:flex-start;gap:12px}
+  .tick{display:grid;width:24px;height:24px;flex:none;place-items:center;border-radius:999px;
+        background:var(--success);color:var(--success-foreground)}
+  .tick svg{width:12px;height:12px}
+  .stamp-l{min-width:0;flex:1}
+  .stamp-t{font-size:15px;font-weight:600;letter-spacing:-.01em;color:var(--foreground)}
+  .stamp-t span{font-variant-numeric:tabular-nums}
+  .stamp-s{font-size:12px;color:var(--muted-foreground);margin-top:1px}
+  .reopen{flex:none;border:1px solid var(--border);background:var(--background);
+          color:var(--foreground);border-radius:8px;padding:8px 16px;font-size:13px;
+          font-weight:500;font-family:inherit;cursor:pointer}
+  .rule{height:1px;background:var(--border)}
+
+  /* ── evidence, in the LIVE grammar ── */
+  .ev{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .ev-band{display:flex;align-items:center;gap:8px;padding:8px 14px;
+           border-bottom:1px solid color-mix(in oklab,var(--border) 60%,transparent)}
+  .ev-band .t{font-size:13px;font-weight:600}
+  .ev-band .c{font-size:12px;color:var(--muted-foreground)}
+  .ev-heads{display:flex;gap:10px;margin-left:auto}
+  .ch{font-size:12px;color:var(--muted-foreground);text-align:right;flex:none}
+  .ch.rel{width:136px} .ch.dec{width:160px}
+  .ev-row{display:flex;align-items:center;gap:10px;padding:8px 14px;
+          border-bottom:1px solid color-mix(in oklab,var(--border) 50%,transparent)}
+  .ev-row:last-child{border-bottom:0}
+  .chev{width:14px;height:14px;flex:none;color:var(--muted-foreground)}
+  .cdot{width:6px;height:6px;border-radius:999px;flex:none}
+  .cdot.a{background:var(--success)} .cdot.d{background:var(--destructive)}
+  .ev-name{font-size:13px;min-width:0;flex:1}
+  /* THE VALUES SIT IN THE LIVE COLUMNS AND ARE RIGHT-ALIGNED IN THEM, exactly as
+     the live selects are — same 136/160 cells, minus the trigger chrome. */
+  .val{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:none;
+       font-size:12px;font-weight:600}
+  .val.rel{width:136px} .val.dec{width:160px}
+  .bars{display:inline-flex;align-items:flex-end;gap:1.5px;height:10px}
+  .bars i{display:block;width:3px;border-radius:1px}
+  .bars i.f1{height:4px} .bars i.f2{height:7px} .bars i.f3{height:10px}
+  .hi i{background:var(--primary)}
+  .lo i.f1{background:var(--primary)} .lo i.f2,.lo i.f3{background:color-mix(in oklab,var(--primary) 22%,transparent)}
+  .cg{font-size:11px;font-weight:700}
+  .cg.a{color:var(--success)} .cg.d{color:var(--destructive)}
+
+  /* ── amount + rationale: the LIVE flex, 300px money column ── */
+  .mr{display:flex;flex-direction:column;gap:16px}
+  @media(min-width:900px){.mr{flex-direction:row}
+    .money{width:300px;flex:none} .rat{flex:1;min-width:0}}
+  .pan{border:1px solid var(--border);border-radius:12px;background:var(--card);padding:16px}
+  .pan-h{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+  .pan-h .t{font-size:13px;font-weight:600}
+  .pan-h .a{margin-left:auto;font-size:12px;color:var(--muted-foreground)}
+  .claim{font-size:12px;color:var(--muted-foreground)}
+  .claim b{color:var(--foreground);font-variant-numeric:tabular-nums}
+  .fig{margin-top:10px}
+  .fig .k{font-size:12px;color:var(--muted-foreground);display:block}
+  /* STATIC, and dressed as the value it is — not as the 32px input the live panel
+     uses. Same 16/600 rung, so the rank is identical. */
+  .fig .v{font-size:16px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .sub2{display:flex;justify-content:space-between;font-size:12px;color:var(--muted-foreground);margin-top:9px}
+  .sub2 b{color:var(--foreground);font-variant-numeric:tabular-nums;font-weight:600}
+  .meter{margin-top:8px;height:6px;border-radius:999px;background:var(--muted);overflow:hidden}
+  .meter i{display:block;height:100%;border-radius:999px;background:var(--primary);width:98.8%}
+  .mfoot{display:flex;justify-content:space-between;font-size:12px;color:var(--muted-foreground);margin-top:4px}
+  .mfoot span{font-variant-numeric:tabular-nums}
+  .rat p{margin:0;font-size:13px;line-height:1.65;color:var(--muted-foreground)}
+
+  /* ── resolution: the LIVE choicebox treatment, frozen ── */
+  .res{display:flex;gap:12px;margin-top:8px}
+  @media(max-width:760px){.res{flex-direction:column}}
+  .rc{flex:1;min-width:0;border:1px solid transparent;border-radius:10px;background:var(--muted);
+      padding:10px 12px;display:flex;align-items:flex-start;gap:8px}
+  /* UNPICKED — dimmed, because "one of three" is part of what was decided, but
+     the GROUND stays `muted` and the border stays transparent: the live card's
+     own treatment, not a different one. */
+  .rc.off{opacity:.45}
+  /* PICKED — rim plus the live 3px soft ring. NOT a 1px solid one, and the fill
+     does NOT change: `choicebox.tsx` rejected a filled selection twice. */
+  .rc.on{border-color:var(--primary);
+         box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 18%,transparent)}
+  .mk{margin-top:1px;display:grid;width:14px;height:14px;flex:none;place-items:center;
+      border:1.5px solid color-mix(in oklab,var(--muted-foreground) 45%,transparent);border-radius:999px}
+  .rc.on .mk{border-color:var(--primary)}
+  .mk i{display:block;width:6px;height:6px;border-radius:999px;background:var(--primary);transform:scale(0)}
+  .rc.on .mk i{transform:scale(1)}
+  .rc-b{min-width:0;flex:1}
+  .rc-t{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .rc-t .n{font-size:12px;font-weight:600}
+  .chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--insight-100);
+        padding:1px 6px;font-size:10.5px;font-weight:600;white-space:nowrap;color:var(--foreground)}
+  .chip svg{width:11px;height:11px;color:var(--insight-600)}
+  .dark .chip{background:var(--insight-800);color:#fff} .dark .chip svg{color:#fff}
+  .rc-d{font-size:12px;color:var(--muted-foreground);display:block;margin-top:1px}
+
+  /* ── what changed ── */
+  .panel{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .panel-h{display:flex;align-items:baseline;gap:8px;padding:8px 14px;
+           border-bottom:1px solid color-mix(in oklab,var(--border) 60%,transparent);
+           font-size:13px;font-weight:600}
+  .row{display:grid;grid-template-columns:14px 88px 20px minmax(0,1fr);align-items:center;
+       gap:0 10px;padding:8px 14px;font-size:12px;
+       border-bottom:1px solid color-mix(in oklab,var(--border) 50%,transparent)}
+  .row:last-child{border-bottom:0}
+  .row .pt{color:var(--muted-foreground)}
+  .badge{display:inline-grid;width:18px;height:18px;place-items:center;border-radius:6px;
+         border:1px solid;font-size:11px;line-height:1;font-weight:700;color:var(--foreground)}
+  .badge.warn{border-color:color-mix(in oklab,var(--warning) 30%,transparent);
+              background:color-mix(in oklab,var(--warning) 10%,transparent)}
+  .row .v{display:flex;min-width:0;flex-wrap:wrap;align-items:center;gap:4px 6px}
+  .row .v s{color:var(--muted-foreground)}
+  .ic{width:14px;height:14px;flex:none;color:var(--muted-foreground)}
+  .gl{width:12px;height:12px;flex:none;color:var(--muted-foreground)}
+
+  /* ── submitted bar ── */
+  .bar{display:flex;align-items:center;gap:12px;
+       border-top:1px solid color-mix(in oklab,var(--border) 70%,transparent);padding-top:14px}
+  .more{display:grid;width:36px;height:36px;flex:none;place-items:center;border-radius:8px;
+        color:var(--muted-foreground);font-size:14px}
+  .more.held{visibility:hidden}
+  .bar p{margin:0;min-width:0;flex:1;font-size:12px;line-height:1.6;color:var(--muted-foreground)}
+  .bar p b{font-weight:600;color:var(--foreground)}
+  .sub{display:flex;flex:none;align-items:center;gap:10px;border-radius:10px;border:0;
+       padding:14px 24px;font-family:inherit;text-align:left;cursor:default;
+       background:color-mix(in oklab,var(--success) 10%,transparent);
+       box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--success) 30%,transparent);
+       color:var(--foreground)}
+  .sub .sp{width:16px;height:16px;flex:none;color:var(--success)}
+  .sub .sp svg{width:16px;height:16px;display:block}
+  .sub .stk{display:flex;min-width:0;flex-direction:column;align-items:flex-start;gap:2px}
+  .sub .a{font-size:13px;font-weight:600;line-height:1.2}
+  .sub .b{font-size:12px;line-height:1.2;color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+
+  .two{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+  @media(max-width:860px){.two{grid-template-columns:1fr}}
+</style>
+
+<svg style="display:none">
+  <symbol id="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="ai" viewBox="0 0 24 24"><path fill="currentColor" d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"/></symbol>
+  <symbol id="scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="bank" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></symbol>
+  <symbol id="pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+</svg>
+
+<main>
+<h1>Filed record — put back in the live card's order and dress</h1>
+<p class="lede">
+  Filing the decision currently re-orders the card and re-draws four of its sections in
+  markup of their own, so a restyle of the live card does not reach the record. The record
+  becomes the same sections, in the same sequence, rendered by the same components in a
+  read-only mode — evidence, then amount and rationale, then the resolution, then what
+  changed.
+</p>
+
+<!-- ══ 1 · the order ═══════════════════════════════════════════ -->
+<section>
+  <h2>1 · The order, measured on the running page</h2>
+  <p class="note">
+    Both columns are probed off the live DOM, not read off the source. The record does not
+    just differ — it runs the body <em>backwards</em>, so the three things a reviewer reads
+    top-to-bottom before deciding come back bottom-to-top after.
+  </p>
+  <table>
+    <tr><th style="width:38%">Live card (before submit)</th><th style="width:38%">Filed record (today)</th><th>Proposed</th></tr>
+    <tr><td>Decision head — position, confidence</td><td>Stamp — outcome, decider, Reopen</td><td>Stamp <span class="good">(kept)</span></td></tr>
+    <tr><td><b>1 Evidence</b></td><td class="bad">1 Resolution</td><td><b>1 Evidence</b></td></tr>
+    <tr><td><b>2 Amount + Rationale</b></td><td class="bad">2 Refund &amp; authority + Rationale</td><td><b>2 Amount + Rationale</b></td></tr>
+    <tr><td><b>3 Resolution</b></td><td class="bad">3 Evidence</td><td><b>3 Resolution</b></td></tr>
+    <tr><td>4 Submit bar</td><td>4 What changed</td><td><b>4 What changed</b></td></tr>
+    <tr><td>—</td><td>5 Submitted bar</td><td>5 Submitted bar</td></tr>
+  </table>
+  <p class="verdict">
+    <b>What changed stays last.</b> It is the only block with no counterpart in the live
+    card, and its own note already argues the position: the values as signed, then the
+    commentary on how they got that way. It is also the one block that stays outside the
+    <code>aria-readonly</code> wrapper, because it is not one of the fields.
+  </p>
+</section>
+
+<!-- ══ 2 · the whole thing ═════════════════════════════════════ -->
+<section>
+  <h2>2 · The filed record, aligned</h2>
+  <p class="note">
+    Every section below is the live component in a read-only mode — same columns, same
+    grammar, same ranks. Nothing here is a second implementation of anything.
+  </p>
+  <div class="card">
+    <span class="tag"><i>proposed</i> — filed, in the live order and the live dress</span>
+
+    <div class="stamp">
+      <span class="tick"><svg><use href="#check"/></svg></span>
+      <div class="stamp-l">
+        <div class="stamp-t">Partial coverage — <span>$4,940.00</span> refunded</div>
+        <div class="stamp-s">Dana Whitfield · 14:32 · submitted after 2 changes</div>
+      </div>
+      <button class="reopen">Reopen</button>
+    </div>
+    <div class="rule"></div>
+
+    <!-- 1 · EVIDENCE — the live band, the live 136/160 columns -->
+    <div class="ev">
+      <div class="ev-band">
+        <span class="t">Evidence</span>
+        <span class="c">3 items</span>
+        <span class="ev-heads">
+          <span class="ch rel">Relevance</span>
+          <span class="ch dec">Decision</span>
+        </span>
+      </div>
+      <div class="ev-row">
+        <svg class="chev"><use href="#chev"/></svg>
+        <span class="cdot a"></span>
+        <span class="ev-name">Defect in warranty</span>
+        <span class="val rel"><span class="bars hi"><i class="f1"></i><i class="f2"></i><i class="f3"></i></span>High</span>
+        <span class="val dec"><span class="cg a">✓</span><span>Approve</span></span>
+      </div>
+      <div class="ev-row">
+        <svg class="chev"><use href="#chev"/></svg>
+        <span class="cdot d"></span>
+        <span class="ev-name">Unapproved change to controls</span>
+        <span class="val rel"><span class="bars hi"><i class="f1"></i><i class="f2"></i><i class="f3"></i></span>High</span>
+        <span class="val dec"><span class="cg d">✗</span><span>Deny</span></span>
+      </div>
+      <div class="ev-row">
+        <svg class="chev"><use href="#chev"/></svg>
+        <span class="cdot a"></span>
+        <span class="ev-name">Renewal within 3 months</span>
+        <span class="val rel"><span class="bars lo"><i class="f1"></i><i class="f2"></i><i class="f3"></i></span>Low</span>
+        <span class="val dec"><span class="cg a">✓</span><span>Approve</span></span>
+      </div>
+    </div>
+
+    <!-- 2 · AMOUNT + RATIONALE — the live flex, 300px money column -->
+    <div class="mr">
+      <div class="money">
+        <div class="pan">
+          <div class="pan-h"><span class="t">Amount</span><span class="a">3 lines</span></div>
+          <span class="claim">Claim <b>$8,185.00</b></span>
+          <div class="fig">
+            <span class="k">Refund</span>
+            <span class="v">$4,940.00</span>
+          </div>
+          <div class="sub2"><span>Paid by the customer</span><b>$3,245.00</b></div>
+          <div class="meter"><i></i></div>
+          <div class="mfoot"><span>$4,940.00 of $5,000.00</span><span>your authority</span></div>
+        </div>
+      </div>
+      <div class="rat">
+        <div class="pan">
+          <div class="pan-h"><span class="t">Rationale</span><span class="a">edited 14:28 · 2 revisions</span></div>
+          <p>Gearbox configuration changed by the customer, unapproved. Per Clause 4.2,
+             unapproved configuration changes are not covered. Signed partial: parts $3,980
+             covered, travel $960 as goodwill, labour and freight with the customer. $4,940,
+             inside the $5,000 ceiling.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 · RESOLUTION — the live choicebox, frozen -->
+    <div>
+      <span class="lbl">Resolution</span>
+      <div class="res">
+        <div class="rc off">
+          <span class="mk"><i></i></span>
+          <span class="rc-b"><span class="rc-t"><span class="n">Approve</span></span>
+            <span class="rc-d">Fund entirely</span></span>
+        </div>
+        <div class="rc off">
+          <span class="mk"><i></i></span>
+          <span class="rc-b"><span class="rc-t"><span class="n">Deny</span>
+            <span class="chip"><svg><use href="#ai"/></svg>Agent recommended</span></span>
+            <span class="rc-d">Waive to customer</span></span>
+        </div>
+        <div class="rc on">
+          <span class="mk"><i></i></span>
+          <span class="rc-b"><span class="rc-t"><span class="n">Approve partial + goodwill</span></span>
+            <span class="rc-d">Split cost</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 · WHAT CHANGED -->
+    <div class="panel">
+      <div class="panel-h">What changed</div>
+      <div class="row">
+        <svg class="ic"><use href="#scale"/></svg><span class="pt">Resolution</span>
+        <span class="badge warn">○</span>
+        <span class="v"><s>Deny coverage</s><svg class="gl"><use href="#arrow"/></svg><span>Partial coverage</span></span>
+      </div>
+      <div class="row">
+        <svg class="ic"><use href="#bank"/></svg><span class="pt">Refund</span>
+        <span class="badge warn">○</span>
+        <span class="v"><s>$0.00</s><svg class="gl"><use href="#arrow"/></svg><span>$4,940.00</span></span>
+      </div>
+      <div class="row">
+        <svg class="ic"><use href="#pencil"/></svg><span class="pt">Rationale</span>
+        <span class="badge warn">○</span>
+        <span class="v"><span>Rewritten</span><span style="color:var(--muted-foreground)">· replaced when the position moved</span></span>
+      </div>
+    </div>
+
+    <!-- 5 · the bar -->
+    <div class="bar">
+      <span class="more held">···</span>
+      <p><b>Filed</b> · change in position, 2 of 4 parts: resolution and refund.</p>
+      <button class="sub"><span class="sp"><svg><use href="#check"/></svg></span><span class="stk"><span class="a">Submitted</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3 · resolution cards ════════════════════════════════════ -->
+<section>
+  <h2>3 · The resolution cards, which had drifted furthest</h2>
+  <p class="note">
+    The filed record hand-rolls three <code>&lt;div&gt;</code>s instead of rendering
+    <code>ChoiceboxItem</code>, so it disagrees with the live cards on five counts. All five
+    are measured off the running page.
+  </p>
+  <table>
+    <tr><th style="width:22%"></th><th style="width:39%">Live <code>ChoiceboxItem</code></th><th>Filed, today</th></tr>
+    <tr><td><b>Ground</b></td><td><code>bg-muted</code> on all three, always</td><td class="bad">transparent, and <code>bg-primary/5</code> on the picked one</td></tr>
+    <tr><td><b>Picked ring</b></td><td>3px <code>primary/18</code>, soft, inline <code>boxShadow</code></td><td class="bad">1px solid <code>primary</code></td></tr>
+    <tr><td><b>Unpicked</b></td><td><code>border-transparent</code>, full opacity</td><td class="bad"><code>border-border</code>, <code>opacity: .45</code></td></tr>
+    <tr><td><b>Radio marker</b></td><td>a real 14px dot, filled when picked</td><td class="bad">none at all</td></tr>
+    <tr><td><b>Agent recommended</b></td><td>the chip, on the agent's own pick</td><td class="bad">nowhere — and the file's own note claims otherwise</td></tr>
+  </table>
+  <div class="two">
+    <div class="card">
+      <span class="tag"><s>today</s> — filled selection, hard rim, no marker</span>
+      <div class="res" style="flex-direction:column">
+        <div style="flex:1;border:1px solid var(--border);border-radius:10px;padding:10px 12px;opacity:.45">
+          <span style="font-size:13px;font-weight:600">Deny</span>
+          <span style="display:block;font-size:12px;color:var(--muted-foreground)">Waive to customer</span>
+        </div>
+        <div style="flex:1;border:1px solid var(--primary);box-shadow:0 0 0 1px var(--primary);border-radius:10px;padding:10px 12px;background:color-mix(in oklab,var(--primary) 5%,transparent)">
+          <span style="font-size:13px;font-weight:600">Approve partial + goodwill</span>
+          <span style="display:block;font-size:12px;color:var(--muted-foreground)">Split cost</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <span class="tag"><i>proposed</i> — the live treatment, frozen</span>
+      <div class="res" style="flex-direction:column">
+        <div class="rc off">
+          <span class="mk"><i></i></span>
+          <span class="rc-b"><span class="rc-t"><span class="n">Deny</span>
+            <span class="chip"><svg><use href="#ai"/></svg>Agent recommended</span></span>
+            <span class="rc-d">Waive to customer</span></span>
+        </div>
+        <div class="rc on">
+          <span class="mk"><i></i></span>
+          <span class="rc-b"><span class="rc-t"><span class="n">Approve partial + goodwill</span></span>
+            <span class="rc-d">Split cost</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="verdict">
+    <b>The dimming survives; the fill does not.</b> Keeping the unpicked cards at 45% is the
+    record's own good idea — "one of three" is part of what was decided — so it stays, as a
+    <code>frozen</code> state of the real component. The <code>bg-primary/5</code> goes:
+    <code>choicebox.tsx</code> rejected a filled selection twice, once for looking like the
+    Submit button and once because white on <code>--primary</code> is 3.19:1.
+  </p>
+</section>
+
+<!-- ══ 4 · evidence columns ════════════════════════════════════ -->
+<section>
+  <h2>4 · The evidence columns, which do not line up with anything</h2>
+  <p class="note">
+    <code>evidenceColumns.ts</code> exists precisely so that three things agree on these
+    edges — the band's headings, every row, and the composer's line. The filed record is a
+    fourth thing that does not read it.
+  </p>
+  <table>
+    <tr><th style="width:30%"></th><th style="width:35%">Live, from <code>COL</code></th><th>Filed, hard-coded</th></tr>
+    <tr><td><b>Relevance column</b></td><td><code>w-[136px]</code></td><td class="bad"><code>w-[64px]</code></td></tr>
+    <tr><td><b>Decision column</b></td><td><code>w-[160px]</code></td><td class="bad"><code>w-[84px]</code></td></tr>
+    <tr><td><b>Column headings</b></td><td>present, each with a hint</td><td class="bad">absent</td></tr>
+    <tr><td><b>Value grammar</b></td><td><code>RankBars</code> + <code>CallDot</code></td><td class="bad">plain text — <em>though the What&nbsp;changed block 200px below uses the glyphs</em></td></tr>
+  </table>
+  <p class="verdict">
+    <b>The last row is the one to notice.</b> A filed record draws "High" as a word in its
+    evidence rows and as three bars in its manifest — two grammars for one value, on one
+    card. Rendering the live list read-only settles it at the glyphs, which is also what the
+    manifest already chose.
+  </p>
+</section>
+
+<!-- ══ 5 · dark ════════════════════════════════════════════════ -->
+<section>
+  <h2>5 · Dark</h2>
+  <div class="wrap dark">
+    <div class="card">
+      <span class="tag"><i>proposed</i> — dark</span>
+      <div class="ev">
+        <div class="ev-band">
+          <span class="t">Evidence</span><span class="c">3 items</span>
+          <span class="ev-heads"><span class="ch rel">Relevance</span><span class="ch dec">Decision</span></span>
+        </div>
+        <div class="ev-row">
+          <svg class="chev"><use href="#chev"/></svg><span class="cdot a"></span>
+          <span class="ev-name">Defect in warranty</span>
+          <span class="val rel"><span class="bars hi"><i class="f1"></i><i class="f2"></i><i class="f3"></i></span>High</span>
+          <span class="val dec"><span class="cg a">✓</span><span>Approve</span></span>
+        </div>
+      </div>
+      <div>
+        <span class="lbl">Resolution</span>
+        <div class="res">
+          <div class="rc off"><span class="mk"><i></i></span><span class="rc-b"><span class="rc-t"><span class="n">Approve</span></span><span class="rc-d">Fund entirely</span></span></div>
+          <div class="rc on"><span class="mk"><i></i></span><span class="rc-b"><span class="rc-t"><span class="n">Approve partial + goodwill</span></span><span class="rc-d">Split cost</span></span></div>
+        </div>
+      </div>
+      <div class="bar">
+        <span class="more held">···</span>
+        <p><b>Filed</b> · change in position, 2 of 4 parts: resolution and refund.</p>
+        <button class="sub"><span class="sp"><svg><use href="#check"/></svg></span><span class="stk"><span class="a">Submitted</span><span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>

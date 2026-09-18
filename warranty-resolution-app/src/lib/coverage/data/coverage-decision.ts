@@ -1,3 +1,11 @@
+// THE LEAD IS SCOTT FLORENTINO HERE, hardcoded rather than renamed behind the
+// flag like the rest of the app is (../../warranty/ciPersona.ts).
+//
+// This module's only consumer is ../../../components/coverage/RecordSections.tsx,
+// which only exists on the CI coverage decision — the screen `ciCoverageDecision`
+// gates. With the flag off nothing reads these strings at all, so there is no
+// state in which the old name would be the right answer and nothing to make
+// conditional.
 /**
  * THE COVERAGE DECISION MODEL — the data the console's decision column derives
  * from.
@@ -247,7 +255,7 @@ export const COVERAGE_OPTIONS: CoverageOption[] = [
         detail: "— partial, with rationale",
       },
       { text: "Cost collector opened in SAP", detail: "— $9,690.00 accrual" },
-      { text: "Customer notification drafted", detail: "— owner: Sarah Chen" },
+      { text: "Customer notification drafted", detail: "— owner: Scott Florentino" },
       { text: "FieldLink dispatch released", detail: "— restoration proceeds" },
       {
         text: "Quality referral raised",
@@ -397,7 +405,7 @@ export const SECONDARY_ACTIONS: SecondaryAction[] = [
       "Puts the unapproved configuration change to M. Okafor-Reyes before a position " +
       "is taken. Their answer may move the labour line either way.",
     downstream: [
-      { text: "Question drafted to M. Okafor-Reyes", detail: "— owner: Sarah Chen" },
+      { text: "Question drafted to M. Okafor-Reyes", detail: "— owner: Scott Florentino" },
       { text: "Coverage decision paused", detail: "— clock stops at 2h 13m" },
       { text: "Line remains down", detail: "— 96 hrs, no divert", hold: true },
       { text: "Written to the ledger", detail: "— customer consulted" },
@@ -412,7 +420,7 @@ export const SECONDARY_ACTIONS: SecondaryAction[] = [
       "this desk rather than when it is merely difficult.",
     downstream: [
       { text: `Routed to ${CO_APPROVER.split(",")[0]}`, detail: "— no position taken", hold: true },
-      { text: "Coverage decision reassigned", detail: "— off Sarah Chen's queue" },
+      { text: "Coverage decision reassigned", detail: "— off Scott Florentino's queue" },
       { text: "FieldLink dispatch held", hold: true },
       { text: "Written to the ledger", detail: "— escalated undecided" },
     ],

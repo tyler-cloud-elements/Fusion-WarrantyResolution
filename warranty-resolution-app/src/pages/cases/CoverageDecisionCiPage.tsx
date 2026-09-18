@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { GLASS_CLASSES } from "@/components/ui/card";
@@ -7,12 +7,14 @@ import { CaseFacts } from "@/components/coverage/CaseFacts";
 import { CustomerSection, DocumentsSection, HistorySection } from "@/components/coverage/RecordSections";
 import { DecisionSection } from "@/components/coverage/decision/DecisionSection";
 import { Pill, TYPE } from "@/components/coverage/primitives";
+import { SlaBadge } from "@/components/warranty/badges";
 import { AssessmentPanel } from "@/components/warranty/AssessmentPanel";
 import { coverageFixtureFor, type CoverageFixture } from "@/lib/coverage/fixture";
 import { ciActionOverlay, ciCaseOverlay } from "@/lib/coverage/caseOverlay";
 import { useCoverageDecision } from "@/lib/coverage/store";
 import { useRole } from "@/lib/role/useRole";
 import { recordDecision, reopenDecision } from "@/lib/warranty/useCases";
+import { formatRemaining, formatSlaBudget, slaStatusFor } from "@/lib/warranty/sla";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 import { cn } from "@/lib/utils";
 // The selection-driven capture bar, lifted out of the host that the fork of this
@@ -172,13 +174,21 @@ const { selection, readSelection, offer, clear: clearSelection } =
             clearSelection();
           }}
         >
-          <div className="mx-auto flex max-w-[1180px] flex-col gap-6 p-6 pb-14">
+          {/* THE APP'S GUTTERS — `PageContainer`'s 16 / 24 / 32 by breakpoint and
+              its `py-6`, written out because this page manages its own scroll
+              container and cannot nest that component (../../components/PageContainer.tsx
+              owns the overflow, which the capture surface above owns here).
+
+              `pb-14` stays: the submit bar is the last thing on a long column and
+              wants room under it. */}
+          <div className="mx-auto flex max-w-[1180px] flex-col gap-6 px-4 py-6 pb-14 sm:px-6 lg:px-8">
             {/* THE CASE PAGE'S OWN CHROME — a back-link, then a hero card. A
                 reviewer arriving here from ./CaseDetailPage.tsx lands on the
-                header they have just left: the same link row and the same glass
-                hero. The title is 20px where that page's is 24 — see `TYPE.page`
-                in ../../components/coverage/primitives.tsx; that page's h1 is a
-                customer name and this one is a sentence.
+                header they have just left: the same link row, the same glass
+                hero, the same 24/700 title and the same captioned `Meta` columns
+                beside it. The title used to be a rung short of that page's; see
+                `TYPE.page` in ../../components/coverage/primitives.tsx for what
+                changed and why the two moves had to happen together.
 
                 IT GOES BACK ONE STEP, NOT ALL THE WAY OUT. The copy this came
                 from sent this link to `/cases`, which skipped the page the
@@ -195,7 +205,12 @@ const { selection, readSelection, offer, clear: clearSelection } =
               <ChevronLeft className="size-4" /> {warrantyCase.id}
             </Link>
 
-            <header className={cn(...GLASS_CLASSES, "flex flex-wrap items-center gap-x-10 gap-y-4 p-6")}>
+            {/* `items-start`, not `items-center`: the title is two ranks taller
+                than the columns beside it now, and centring it against them put the
+                captions level with the middle of the heading. The case page's hero
+                aligns to the top for the same reason. */}
+            <header className={cn(...GLASS_CLASSES, "flex flex-wrap items-start gap-x-10 gap-y-4 p-6")}>
+              <div className="mr-auto min-w-0">
               {/* THE CASE ID IS IN THE TITLE, AND IT IS STILL THE LINK.
                   It was printed twice — as the row's right-hand link above, and
                   again in a 12px line under the title next to the customer name —
@@ -211,40 +226,72 @@ const { selection, readSelection, offer, clear: clearSelection } =
                   title rather than as part of the sentence, and no underline —
                   colour-on-hover is how every other link in this app is drawn.
 
-                  12px, down from 15: against a 20px title a 15px id was close
-                  enough in size to read as a second half of the headline, and 15
-                  is a rung nothing else on the page has. At 12 it matches the meta
-                  line in the card below and reads as what it is. */}
-              <h1 className={cn(TYPE.page, "mr-auto min-w-0")}>
+                  NOT MONO ANY MORE. The case page sets ids in its plain face —
+                  measured, zero monospace runs on it — and `TYPE.meta` dropped the
+                  mono face for that reason. This one was a literal `font-mono` at
+                  the call site rather than the token, so it had to be taken off
+                  here too.
+
+                  12px, and now against a 24px title rather than a 20px one, which
+                  only widens the gap it was chosen for. It matches the meta line in
+                  the card below and reads as what it is. */}
+              <h1 className={cn(TYPE.page, "min-w-0")}>
                 {action.title}
                 <span className="text-muted-foreground"> · </span>
                 <Link
                   to="/cases/$caseId"
                   params={{ caseId: warrantyCase.id }}
                   title={`Open case ${warrantyCase.id}`}
-                  className="font-mono text-xs font-medium text-muted-foreground hover:text-foreground"
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground"
                 >
                   {warrantyCase.id}
                 </Link>
               </h1>
+              </div>
 
-              {/* THE THREE READINGS ON ONE LINE, WITH NO CAPTIONS.
-                  They were label-over-value `Meta` columns — "Status" over a pill
-                  reading "Action required", "Stage" over one reading "Resolution
-                  decision", "SLA" over the time left. Every one of those captions
-                  names what its own value already says, and between them they cost
-                  the header a whole line.
+              {/* THE THREE READINGS AS CAPTIONED COLUMNS — the case page's own
+                  `Meta`, and this reverses the note that stood here.
 
-                  The hairline sits before the SLA and nowhere else, because that is
-                  the one seam that matters here: the two pills are states the case
-                  is IN, and the time left is a reading that is still moving. */}
-              <div className="flex flex-wrap items-center gap-2.5 text-sm font-medium">
-                <Pill tone={action.status === "Completed" ? "ok" : "warn"}>
-                  {action.status === "Completed" ? "Decided" : "Action required"}
-                </Pill>
-                <Pill tone="info">{action.stage}</Pill>
-                <span aria-hidden className="h-4 w-px shrink-0 bg-border" />
-                <SlaChip slaMinutes={action.slaMinutes} elapsedMinutes={action.elapsedMinutes} />
+                  They WERE columns; they were flattened to one uncaptioned line on
+                  the argument that each caption names what its value already says.
+                  That argument is not wrong about "Action required" — but it is
+                  wrong about the set, and it cost this page the arrangement every
+                  other screen uses. `CaseDetailPage`'s hero puts `Status`,
+                  `Priority`, `Stage` and the SLA budget in exactly these columns,
+                  captions at 12px/300, and a reviewer arriving from that page was
+                  meeting a different grammar for the same three facts.
+
+                  It also paid for the title. The flattened line is what forced
+                  `TYPE.page` down to 20px — four things on one row — so putting the
+                  readings back in columns is what lets the heading take the app's
+                  24/700. The note on that token has the measurement.
+
+                  The hairline is gone with the line it divided; a column boundary
+                  is the separator now, which is what it is on the case page.
+
+                  Same three readings, same order, same words. */}
+              <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
+                <Meta label="Status">
+                  <Pill tone={action.status === "Completed" ? "ok" : "warn"}>
+                    {action.status === "Completed" ? "Decided" : "Action required"}
+                  </Pill>
+                </Meta>
+                <Meta label="Stage">{action.stage}</Meta>
+                {/* THE APP'S SLA PAIR, not this page's ring. `SlaChip` drew a
+                    conic-gradient dial and "2h 13m left" — a widget the app has
+                    nowhere else. The case page names the status and prints the time
+                    beside it, off the same elapsed-vs-budget figures, so nothing is
+                    lost: the proportion stops being drawn and starts being named.
+                    The budget moves into the caption, which is where that page
+                    keeps it. */}
+                <Meta label={formatSlaBudget(action.slaMinutes)}>
+                  <span className="flex items-center gap-2">
+                    <SlaBadge status={slaStatusFor(action.elapsedMinutes, action.slaMinutes)} />
+                    <span className="text-xs font-normal text-muted-foreground tabular-nums">
+                      {formatRemaining(action.elapsedMinutes, action.slaMinutes)}
+                    </span>
+                  </span>
+                </Meta>
               </div>
             </header>
 
@@ -401,46 +448,27 @@ function BackLink({ caseId }: { caseId: string }) {
 }
 
 /**
- * Time left on the SLA, with a ring that fills as it is spent.
+ * ONE CAPTIONED READING — the case page's `Meta`, transcribed.
  *
- * "2h 13m left" is what a reviewer needs; "SLA 4 hr" is what the system knows, and
- * it stays on the `title`. The ring is a conic gradient off the theme's primary, so
- * it needs no extra token; past the budget it turns destructive and the label says
- * how far over.
+ * `CaseDetailPage` declares this shape privately and this page needs the same one,
+ * so it is written out rather than imported: a page importing a helper out of
+ * another page is a dependency between two routes, and this is six lines.
  *
- * **It is a bare value on the header's reading line, not a chip.** It used to carry
- * its own border, card background, height and inline "SLA" caption — a bordered
- * widget in a header that has no other bordered widget in it — and then a `Meta`
- * caption above it. Both are gone; the ring and the reading, which are the two
- * things it actually says, are unchanged.
+ * The caption is `font-light` (300) and the value `font-medium` (500) — measured off
+ * that hero, where `Status` / `Priority` / `Stage` all compute 12px/300 over
+ * 14px/500. The weights are what make the pair read as a label and its reading
+ * rather than as two lines of equal rank.
  *
- * **The word "SLA" now appears only on the `title`**, which is the one thing the
- * caption was carrying that the value does not: "2h 13m left" says what is left,
- * and hovering says what it is left OF.
+ * It replaces this page's `SlaChip`, which drew a conic-gradient dial beside the
+ * time left. That was the one bordered-widget-shaped thing in a header with no other
+ * widget in it, and the app has no dial anywhere; the status word and the remaining
+ * time say the same two things off the same figures.
  */
-function SlaChip({ slaMinutes, elapsedMinutes }: { slaMinutes: number; elapsedMinutes: number }) {
-  const left = slaMinutes - elapsedMinutes;
-  const over = left < 0;
-  const pct = Math.min(100, Math.max(0, (elapsedMinutes / slaMinutes) * 100));
-  const abs = Math.abs(left);
-  const h = Math.floor(abs / 60);
-  const m = abs % 60;
-  const text = `${h > 0 ? `${h}h ` : ""}${m}m ${over ? "over" : "left"}`;
+function Meta({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <span
-      className="inline-flex items-center gap-2"
-      title={`SLA ${Math.round(slaMinutes / 60)} hr`}
-    >
-      <span
-        aria-hidden
-        className="relative size-4 shrink-0 rounded-full"
-        style={{
-          background: `conic-gradient(var(${over ? "--destructive" : "--primary"}) ${pct}%, var(--muted) ${pct}% 100%)`,
-        }}
-      >
-        <span className="absolute inset-[3px] rounded-full bg-card" />
-      </span>
-      <span className={cn("tabular-nums", over && "text-destructive")}>{text}</span>
-    </span>
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <span className="text-xs font-light text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-foreground">{children}</span>
+    </div>
   );
 }

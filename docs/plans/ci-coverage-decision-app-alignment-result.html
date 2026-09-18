@@ -1,0 +1,375 @@
+<meta charset="utf-8">
+<title>CI coverage decision — aligned, as it will look</title>
+<style>
+  :root{
+    --background:oklch(0.985 0.002 250); --foreground:oklch(0.2394 0.0455 252.45);
+    --card:oklch(1 0 89.88); --muted:oklch(0.963 0.0062 255.48);
+    --muted-foreground:oklch(0.4594 0.028 264.25); --border:oklch(0.9229 0.0065 252.13);
+    --primary:oklch(0.64 0.115 208); --primary-foreground:oklch(1 0 89.88);
+    --success:oklch(0.57 0.105 152); --destructive:oklch(0.62 0.15 18);
+    --warning:oklch(0.8 0.115 85); --warning-foreground:oklch(0.166 0.0283 203.34);
+    --info:oklch(0.6 0.118 240);
+    --insight-100:oklch(0.92 0.05 277); --insight-600:oklch(0.56 0.20 277);
+    --insight-800:oklch(0.38 0.13 278);
+    --font-sans:Inter,ui-sans-serif,sans-serif,system-ui;
+  }
+  .dark{
+    --background:oklch(0.21 0.03 258.5); --foreground:oklch(0.985 0 0);
+    --card:oklch(0.233 0.036 254.7); --muted:oklch(0.2648 0.0329 254.38);
+    --muted-foreground:oklch(0.72 0.03 254.38); --border:oklch(0.3068 0.0426 258.29);
+    --primary:oklch(0.69 0.112 207); --success:oklch(0.7 0.12 152);
+    --destructive:oklch(0.68 0.155 18); --warning:oklch(0.8 0.13 70);
+    --warning-foreground:oklch(0.985 0 0); --info:oklch(0.7 0.12 240);
+    --insight-600:oklch(0.70 0.19 277);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground)}
+  .caption{max-width:1180px;margin:0 auto;padding:26px 32px 0}
+  .caption h1{font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  .caption p{font-size:13px;color:var(--muted-foreground);margin:0;max-width:74ch;line-height:1.6}
+  .toggle{margin:18px auto 0;max-width:1180px;padding:0 32px}
+  .toggle button{font-family:inherit;font-size:12px;font-weight:500;padding:6px 12px;border-radius:8px;
+                 border:1px solid var(--border);background:var(--card);color:var(--foreground);cursor:pointer}
+
+  /* ── PageContainer: 16 / 24 / 32 gutters, py-6 ───────────── */
+  .page{padding:24px 16px}
+  @media(min-width:640px){.page{padding:24px}}
+  @media(min-width:1024px){.page{padding:24px 32px}}
+  .col{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+
+  /* ── the app's glass card ────────────────────────────────── */
+  .card{background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.8);border-radius:18px;
+        backdrop-filter:blur(4px);
+        box-shadow:0 2px 16px 2px rgba(0,0,0,.05),inset 0 1px 0 0 rgba(255,255,255,.6);
+        display:flex;flex-direction:column;gap:16px;padding:20px}
+  .dark .card{background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.03);
+              box-shadow:0 2px 24px 2px rgba(0,0,0,.12)}
+  .card.hero{padding:24px}
+
+  .crumb{display:inline-flex;align-items:center;gap:5px;font-size:14px;color:var(--muted-foreground);
+         text-decoration:none;width:fit-content}
+  .crumb svg{width:16px;height:16px}
+
+  h2.head{font-size:16px;font-weight:600;margin:0;display:flex;align-items:center;gap:8px}
+  .headrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+  .rule{height:1px;background:var(--border)}
+
+  /* ── the app's Badge ─────────────────────────────────────── */
+  .badge{display:inline-flex;align-items:center;justify-content:center;gap:4px;border-radius:999px;
+         border:1px solid transparent;padding:2px 8px;font-size:12px;font-weight:500;white-space:nowrap;width:fit-content}
+  .badge.warn{background:color-mix(in oklab,var(--warning) 15%,transparent);color:var(--warning-foreground)}
+  .badge.err{background:color-mix(in oklab,var(--destructive) 10%,transparent);color:var(--destructive)}
+  .badge.info{background:color-mix(in oklab,var(--info) 15%,transparent);color:var(--info)}
+  .badge.ok{background:color-mix(in oklab,var(--success) 15%,transparent);color:var(--success)}
+  .badge.out{background:transparent;border-color:var(--border);color:var(--foreground)}
+  .badge.ai{background:var(--insight-100);color:var(--foreground)}
+  .dark .badge.ai{background:var(--insight-800);color:#fff}
+  .badge.ai svg{width:11px;height:11px;color:var(--insight-600)}
+  .dark .badge.ai svg{color:#fff}
+  .dark .badge.warn,.dark .badge.err,.dark .badge.info,.dark .badge.ok{color:#fff}
+
+  /* ── the app's Meta column ───────────────────────────────── */
+  .metas{display:flex;flex-wrap:wrap;align-items:flex-start;gap:16px 32px}
+  .meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .meta .k{font-size:12px;font-weight:300;color:var(--muted-foreground)}
+  .meta .v{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+  .meta .v .rem{font-size:12px;font-weight:400;color:var(--muted-foreground);font-variant-numeric:tabular-nums}
+
+  .h1{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin:0}
+  .subline{font-size:12px;color:var(--muted-foreground);margin-top:3px}
+  .facts{font-size:12px;color:var(--muted-foreground);margin-top:8px;display:flex;flex-wrap:wrap;gap:0 6px;line-height:1.7}
+  .facts b{color:var(--foreground);font-weight:600}
+  .desc{font-size:14px;color:var(--muted-foreground);margin:6px 0 0;max-width:72ch;line-height:1.6}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 16px;
+       border-radius:10px;border:0;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;
+       background:var(--primary);color:var(--primary-foreground)}
+  .btn.outline{background:transparent;border:1px solid var(--border);color:var(--foreground)}
+  .btn svg{width:16px;height:16px}
+
+  /* ── panels inside cards ─────────────────────────────────── */
+  .panel{border:1px solid var(--border);border-radius:14px;background:var(--card);overflow:hidden}
+  .panel.pad{padding:16px}
+  .band{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px;
+        padding:6px 14px;border-bottom:1px solid var(--border)}
+  .band .t{font-size:14px;font-weight:600}
+  .band .c{font-size:12px;color:var(--muted-foreground)}
+  .frow{display:flex;align-items:center;gap:10px;padding:9px 14px}
+  .frow + .frow{border-top:1px solid var(--border)}
+  .chev{width:14px;height:14px;flex:none;color:var(--muted-foreground)}
+  .dot{width:6px;height:6px;border-radius:999px;flex:none}
+  .dot.ok{background:var(--success)} .dot.bad{background:var(--destructive)}
+  .fname{font-size:14px;min-width:0;flex:1}
+  .fmeta{font-size:12px;color:var(--muted-foreground);flex:none}
+
+  .cols{display:flex;gap:16px;flex-wrap:wrap}
+  .claimbox{border:1px solid var(--border);border-radius:14px;background:var(--card);padding:16px;width:280px;flex:none}
+  .claimbox .k{font-size:12px;font-weight:300;color:var(--muted-foreground)}
+  .fig{font-size:20px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+  .ceil{font-size:12px;color:var(--muted-foreground);margin-top:3px;font-variant-numeric:tabular-nums}
+  .descbox{flex:1;min-width:260px;border:1px solid var(--border);border-radius:14px;background:var(--card);padding:16px}
+
+  .evheads{display:flex;gap:10px;margin-left:auto}
+  .ch{font-size:12px;color:var(--muted-foreground);text-align:right;flex:none}
+  .ch.r{width:136px} .ch.d{width:160px}
+  .val{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:none;font-size:12px;font-weight:600}
+  .val.r{width:136px} .val.d{width:160px}
+  .bars{display:inline-flex;align-items:flex-end;gap:1.5px;height:10px}
+  .bars i{display:block;width:3px;border-radius:1px}
+  .bars i.a{height:4px}.bars i.b{height:7px}.bars i.c{height:10px}
+  .hi i{background:var(--primary)}
+  .lo i.a{background:var(--primary)} .lo i.b,.lo i.c{background:color-mix(in oklab,var(--primary) 22%,transparent)}
+  .cg{font-size:11px;font-weight:700}.cg.ok{color:var(--success)}.cg.bad{color:var(--destructive)}
+
+  .score{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+  .score .n{font-size:20px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+  .score .k{font-size:12px;font-weight:300;color:var(--muted-foreground)}
+
+  .res{display:flex;gap:12px;margin-top:8px}
+  @media(max-width:820px){.res{flex-direction:column}}
+  .rc{flex:1;min-width:0;border:1px solid transparent;border-radius:10px;background:var(--muted);
+      padding:10px 12px;display:flex;align-items:flex-start;gap:8px}
+  .rc.on{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 18%,transparent)}
+  .mk{margin-top:1px;display:grid;width:14px;height:14px;flex:none;place-items:center;border-radius:999px;
+      border:1.5px solid color-mix(in oklab,var(--muted-foreground) 45%,transparent)}
+  .rc.on .mk{border-color:var(--primary)}
+  .mk i{display:block;width:6px;height:6px;border-radius:999px;background:var(--primary);transform:scale(0)}
+  .rc.on .mk i{transform:scale(1)}
+  .rt{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .rt .n{font-size:12px;font-weight:600}
+  .rd{font-size:11px;color:var(--muted-foreground);display:block;margin-top:1px}
+
+  .lbl{font-size:12px;font-weight:300;color:var(--muted-foreground)}
+  .ta{margin-top:6px;border:1px solid var(--border);border-radius:10px;background:var(--card);padding:10px 12px;
+      font-size:14px;line-height:1.6;color:var(--muted-foreground);min-height:96px}
+
+  .bar{display:flex;align-items:center;gap:12px;border-top:1px solid color-mix(in oklab,var(--border) 70%,transparent);padding-top:14px}
+  .bar p{margin:0;flex:1;min-width:0;font-size:12px;color:var(--muted-foreground);line-height:1.6}
+  .bar p b{color:var(--foreground);font-weight:600}
+  .more{width:36px;height:36px;flex:none;display:grid;place-items:center;border-radius:8px;color:var(--muted-foreground)}
+  .sub{display:flex;flex:none;align-items:center;gap:10px;border-radius:10px;border:0;padding:14px 24px;
+       font-family:inherit;text-align:left;background:var(--primary);color:var(--primary-foreground);cursor:pointer}
+  .sub .stk{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+  .sub .a{font-size:13px;font-weight:600;line-height:1.2}
+  .sub .b{font-size:12px;line-height:1.2;opacity:.85;font-variant-numeric:tabular-nums}
+  .sub .sp{width:16px;height:16px;flex:none;visibility:hidden}
+
+  .fold{display:flex;align-items:center;gap:10px;padding:14px 20px}
+  .fold .t{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+  .fold .a{font-size:12px;color:var(--muted-foreground)}
+  .fold svg.c{width:16px;height:16px;color:var(--muted-foreground)}
+  .icon{width:16px;height:16px;color:var(--muted-foreground);flex:none}
+</style>
+
+<svg style="display:none">
+  <symbol id="ai" viewBox="0 0 24 24"><path fill="currentColor" d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"/></symbol>
+  <symbol id="left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+  <symbol id="scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h6"/></symbol>
+  <symbol id="user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21a7 7 0 0 0-14 0"/><circle cx="12" cy="8" r="4"/></symbol>
+  <symbol id="layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></symbol>
+</svg>
+
+<div class="caption">
+  <h1>The CI coverage decision, aligned — as it will look</h1>
+  <p>
+    The same screen, the same sections in the same order, the same words and the same controls.
+    Only the vocabulary changes: the app's <code>Badge</code>, the app's <code>Meta</code>
+    columns, the app's 24/700 page title, the app's gutters, no monospace and no bespoke SLA
+    ring.
+  </p>
+  <div class="toggle" style="padding:0"><button onclick="document.body.classList.toggle('dark')">Toggle dark</button></div>
+</div>
+
+<div class="page">
+<div class="col">
+
+  <a class="crumb" href="#"><svg><use href="#left"/></svg> WR-2026-0417</a>
+
+  <!-- ══ HERO ══ -->
+  <div class="card hero">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:16px 40px">
+      <div style="margin-right:auto;min-width:0;flex:1">
+        <h1 class="h1">Coverage decision — combined cause finding</h1>
+        <div class="subline">WR-2026-0417 · Northstar Retail Distribution</div>
+        <p class="desc">
+          The gearbox failed 30 months into a 60-month rated life, but the drive was also
+          reconfigured above its commissioned limits in February with no written approval.
+        </p>
+        <div class="facts">
+          <span><b>Asset</b> SR-440 · SN 2823-1147</span><span>·</span>
+          <span><b>Site</b> Joliet DC · Line 3 / Induct</span><span>·</span>
+          <span><b>Agreement</b> NRD-ESA-2024-0219, active to 2026-11-30</span><span>·</span>
+          <span><b>Owner</b> Scott Florentino</span>
+        </div>
+      </div>
+      <div class="metas">
+        <div class="meta"><span class="k">Status</span><span class="v"><span class="badge warn">Action required</span></span></div>
+        <div class="meta"><span class="k">Stage</span><span class="v">Resolution decision</span></div>
+        <div class="meta"><span class="k">SLA 4 HR</span><span class="v">
+          <span class="badge warn">At risk</span><span class="rem">2 hr 13 min left</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CASE INFO ══ -->
+  <div class="card">
+    <div class="headrow">
+      <h2 class="head">Case info</h2>
+      <span class="badge ok">Strategic</span>
+    </div>
+    <div class="rule"></div>
+
+    <div class="cols">
+      <div class="claimbox">
+        <span class="k">Claim</span>
+        <div class="fig">$8,185.00</div>
+        <div class="ceil">Approval ceiling $5,000.00</div>
+      </div>
+      <div class="descbox">
+        <span class="k">Description</span>
+        <p class="desc" style="margin-top:4px">
+          Gearbox failed at 30 of 60 rated months. The drive was also reconfigured above its
+          commissioned limits in February, unapproved. No rule covers both causes.
+        </p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="band">
+        <span class="t">Findings</span>
+        <span class="badge info">No rule covers both causes</span>
+      </div>
+      <div class="frow">
+        <svg class="chev"><use href="#down"/></svg><span class="dot ok"></span>
+        <span class="fname">Component defect, inside its term</span>
+        <span class="fmeta">30 of 60 months · within warranty</span>
+        <span class="badge ok">On manufacturer</span>
+      </div>
+      <div class="frow">
+        <svg class="chev"><use href="#down"/></svg><span class="dot bad"></span>
+        <span class="fname">Configuration change, unapproved</span>
+        <span class="fmeta">Limit raise 02/14 · no approval</span>
+        <span class="badge err">Customer fault</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DECISION ══ -->
+  <div class="card">
+    <div class="headrow">
+      <div style="min-width:0">
+        <h2 class="head">Decision</h2>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px">
+          <span style="font-size:20px;font-weight:600;letter-spacing:-.02em;line-height:1.2">No resolution selected</span>
+          <span class="badge ai"><svg><use href="#ai"/></svg>Agent recommended</span>
+          <span style="font-size:14px;font-weight:500">Deny coverage</span>
+        </div>
+      </div>
+      <div class="score"><span class="n">87%</span><span class="k">Confidence</span></div>
+    </div>
+    <div class="rule"></div>
+
+    <!-- evidence -->
+    <div class="panel">
+      <div class="band">
+        <span class="t">Evidence</span>
+        <span class="evheads"><span class="ch r">Relevance</span><span class="ch d">Decision</span></span>
+      </div>
+      <div class="frow">
+        <svg class="chev"><use href="#down"/></svg><span class="dot ok"></span>
+        <span class="fname">Defect in warranty</span>
+        <span class="val r"><span class="bars hi"><i class="a"></i><i class="b"></i><i class="c"></i></span>High</span>
+        <span class="val d"><span class="cg ok">✓</span>Approve</span>
+      </div>
+      <div class="frow">
+        <svg class="chev"><use href="#down"/></svg><span class="dot bad"></span>
+        <span class="fname">Unapproved change to controls</span>
+        <span class="val r"><span class="bars hi"><i class="a"></i><i class="b"></i><i class="c"></i></span>High</span>
+        <span class="val d"><span class="cg bad">✗</span>Deny</span>
+      </div>
+      <div class="frow">
+        <svg class="chev"><use href="#down"/></svg><span class="dot ok"></span>
+        <span class="fname">Renewal within 3 months</span>
+        <span class="val r"><span class="bars lo"><i class="a"></i><i class="b"></i><i class="c"></i></span>Low</span>
+        <span class="val d"><span class="cg ok">✓</span>Approve</span>
+      </div>
+      <div style="border-top:1px solid var(--border);padding:8px 12px">
+        <button class="btn outline" style="height:28px;font-size:12px;padding:0 10px">+ Add evidence</button>
+      </div>
+    </div>
+
+    <!-- amount + rationale -->
+    <div class="cols">
+      <div class="claimbox">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-size:14px;font-weight:600">Amount</span>
+          <span style="margin-left:auto;font-size:12px;color:var(--muted-foreground)">$8,185.00 Breakdown</span>
+        </div>
+        <div style="margin-top:10px"><span class="k">Refund</span>
+          <div style="margin-top:4px;height:32px;border:1px solid var(--border);border-radius:10px;background:var(--card);
+                      display:flex;align-items:center;padding:0 10px;font-size:16px;font-weight:600;
+                      letter-spacing:-.01em;font-variant-numeric:tabular-nums">$0.00</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--muted-foreground);margin-top:10px">
+          Paid by the customer <b style="color:var(--foreground);font-variant-numeric:tabular-nums">$8,185.00</b></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted-foreground);margin-top:12px">
+          <span style="font-variant-numeric:tabular-nums"><b style="color:var(--foreground)">$0.00</b>/<b style="color:var(--foreground)">$5,000.00</b> ceiling</span>
+          <span style="flex:1;height:6px;border-radius:999px;background:color-mix(in oklab,var(--primary) 20%,transparent)"></span>
+        </div>
+      </div>
+      <div class="descbox">
+        <div style="display:flex;align-items:baseline;gap:8px">
+          <span style="font-size:14px;font-weight:600">Rationale <span style="color:var(--destructive)">*</span></span>
+          <span style="margin-left:auto;font-size:12px;color:var(--muted-foreground)">Last edited 9:48 AM · Current</span>
+        </div>
+        <div class="ta">Gearbox configuration was changed by the customer without written approval.
+          Per Clause 4.2, unapproved configuration changes are not approved for warranty claims.</div>
+      </div>
+    </div>
+
+    <!-- resolution -->
+    <div>
+      <span class="lbl">Resolution</span>
+      <div class="res">
+        <div class="rc"><span class="mk"><i></i></span><span style="min-width:0;flex:1">
+          <span class="rt"><span class="n">Approve</span></span><span class="rd">Fund entirely</span></span></div>
+        <div class="rc"><span class="mk"><i></i></span><span style="min-width:0;flex:1">
+          <span class="rt"><span class="n">Deny</span><span class="badge ai"><svg><use href="#ai"/></svg>Agent recommended</span></span>
+          <span class="rd">Waive to customer</span></span></div>
+        <div class="rc"><span class="mk"><i></i></span><span style="min-width:0;flex:1">
+          <span class="rt"><span class="n">Approve partial + goodwill</span></span><span class="rd">Split cost</span></span></div>
+      </div>
+    </div>
+
+    <!-- submit -->
+    <div class="bar">
+      <span class="more">···</span>
+      <p><b>No resolution selected.</b></p>
+      <button class="sub"><span class="sp"></span><span class="stk">
+        <span class="a">Submit</span>
+        <span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+    </div>
+  </div>
+
+  <!-- ══ THE THREE FOLDS ══ -->
+  <div class="card" style="padding:0;gap:0">
+    <div class="fold"><svg class="c"><use href="#down"/></svg>
+      <span class="t"><svg class="icon"><use href="#user"/></svg>This customer</span>
+      <span class="a">6 claims · all approved</span></div>
+  </div>
+  <div class="card" style="padding:0;gap:0">
+    <div class="fold"><svg class="c"><use href="#down"/></svg>
+      <span class="t"><svg class="icon"><use href="#layers"/></svg>Similar claims</span>
+      <span class="a">6 similar cases · 67% partial coverage</span></div>
+  </div>
+  <div class="card" style="padding:0;gap:0">
+    <div class="fold"><svg class="c"><use href="#down"/></svg>
+      <span class="t"><svg class="icon"><use href="#file"/></svg>Documents</span>
+      <span class="a">7 attached · 4 considered</span></div>
+  </div>
+
+</div>
+</div>

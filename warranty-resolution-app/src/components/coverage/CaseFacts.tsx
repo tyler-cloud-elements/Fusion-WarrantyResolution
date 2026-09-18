@@ -1,5 +1,5 @@
-import { Building2, Cog, MapPin, ShieldCheck, Star } from "lucide-react";
-import { Card, CardHead, INK, Label, Mono, ToneChip, TYPE } from "@/components/coverage/primitives";
+import { Building2, Star } from "lucide-react";
+import { Card, CardHead, INK, Label, Pill, TYPE } from "@/components/coverage/primitives";
 import { Finding } from "@/components/coverage/Finding";
 import { moneyExact } from "@/lib/warranty/format";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
@@ -10,9 +10,11 @@ import { cn } from "@/lib/utils";
  * the page is about; and the escalation reason as a lede.
  *
  * The customer is the block's headline with its segment beside it; the asset, the
- * site and the agreement follow as one icon-led meta line. The claim and the
+ * site and the agreement follow as one label-led meta line. The claim and the
  * escalation reason then sit side by side as two bordered panels, the claim at
- * 24/700 because that number is what every control below is arguing about.
+ * `TYPE.figure` — 20/600 since the page title took the app's 24/700 rung, so the
+ * number is still the loudest thing in its own panel without outranking the name
+ * of the page it sits on.
  *
  * It is a glass `Card` with `p-5` and a `CardHead`, like every other card in
  * warranty resolution. It used to be a two-column grid that bled to its own
@@ -51,21 +53,28 @@ export function CaseFacts({ action, warrantyCase }: { action: CaseAction; warran
             · Agreement was three facts joined by middots, opening with four words
               ("Extended Service Agreement") that `NRD-ESA-2024-0219` restates.
 
-          Labels went with them. This is the case page's own hero pattern — a name,
-          then an icon-led strip of facts (`CaseDetailPage`'s `Asset · Claim value ·
-          Owner` line is the same thing) — so the icons carry what the labels did,
-          and the block drops from 181px to about 134. */}
+          Labels went with them — AND HAVE COME BACK, because the claim about the
+          hero was wrong. `CaseDetailPage`'s meta line is **`**Asset** SR-440 · SN …
+          · **Owner** Scott Florentino`**: bold words, no glyphs. Measured on the
+          running page, that hero has no icon in its fact strip at all, so an
+          icon-led row here was this screen's invention rather than the app's
+          pattern. The facts, their order and their wording are unchanged; the
+          glyph in front of each is now the word it stood for. */}
       <div>
         <div className="flex flex-wrap items-center gap-2">
           {/* 16/700 against the card head's 16/600. Weight and ink separate them
               rather than a seventh type size: the mock drew this at 18px, which is
               a rung neither this page nor the rest of the app has. */}
           <span className={cn(TYPE.title, "font-bold")}>{warrantyCase.customer}</span>
+          {/* `Pill`, which is the app's `Badge` now (./primitives.tsx). The
+              `Star` keeps its own `text-primary` for the reason ./Finding.tsx's
+              chip gives: the status inks the word, and a glyph left to inherit
+              would stop reading as a marker. */}
           {warrantyCase.customerSegment && (
-            <ToneChip tone="brand">
+            <Pill tone="brand">
               <Star className="size-3.5 shrink-0 text-primary" aria-hidden />
               {warrantyCase.customerSegment}
-            </ToneChip>
+            </Pill>
           )}
         </div>
 
@@ -75,17 +84,17 @@ export function CaseFacts({ action, warrantyCase }: { action: CaseAction; warran
             "mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-muted-foreground",
           )}
         >
-          <MetaFact icon={<Cog />}>
+          <MetaFact label="Asset">
             <b className="font-semibold text-foreground">{warrantyCase.asset.model}</b>
-            {tail && <Mono>·{tail}</Mono>}
+            {tail && <span>·{tail}</span>}
           </MetaFact>
           <Rule />
-          <MetaFact icon={<MapPin />}>
+          <MetaFact label="Site">
             <b className="font-semibold text-foreground">{place}</b>
             {line}
           </MetaFact>
           <Rule />
-          <MetaFact icon={<ShieldCheck />}>
+          <MetaFact label="Agreement">
             <b className="font-semibold text-foreground">{agreementRef}</b>
             {agreementRest}
           </MetaFact>
@@ -161,10 +170,19 @@ export function CaseFacts({ action, warrantyCase }: { action: CaseAction; warran
 }
 
 /** One icon-led fact on the meta line. */
-function MetaFact({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+/**
+ * One fact on the meta line: the word for it, then the fact.
+ *
+ * IT TOOK AN ICON AND NOW TAKES A LABEL. The hero this row imitates uses bold
+ * words — see the note at the call site — and a glyph is only legible to somebody
+ * who already knows the convention, which for a cog-versus-shield pair is a guess.
+ * The label is also what a screen reader now reads out; the glyph was `aria-hidden`
+ * and the fact arrived unqualified.
+ */
+function MetaFact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5">
-      <span className="flex shrink-0 [&>svg]:size-3.5">{icon}</span>
+      <span className="shrink-0 font-semibold text-foreground">{label}</span>
       {children}
     </span>
   );

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Info } from "lucide-react";
-import { Band, FoldRow, INK, Mono, Rows, ToneChip, TYPE } from "@/components/coverage/primitives";
+import { Band, FoldRow, INK, Mono, Pill, Rows, TYPE } from "@/components/coverage/primitives";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { CaseAction, DecisionCause } from "@/lib/warranty/types";
@@ -100,11 +100,19 @@ function VerdictTag({ verdict }: { verdict: NonNullable<CaseAction["verdict"]> }
     ? verdict.detail.charAt(0).toUpperCase() + verdict.detail.slice(1)
     : null;
 
+  /* `Pill`, WHICH IS THE APP'S `Badge` NOW (../coverage/primitives.tsx).
+     It was `ToneChip` — a rimmed pill with neutral ink — and this chip is one of
+     the three that kept the page on that language while every status elsewhere in
+     the app is rimless and status-inked. The tone name does not change.
+
+     The `Info` glyph keeps its own `text-primary`: `Badge`'s info status inks the
+     WORD, and a glyph left to inherit would have gone the same colour as the text
+     rather than reading as the marker it is. */
   const chip = (
-    <ToneChip tone="brand" className={detail ? "cursor-help" : undefined}>
+    <Pill tone="brand" className={detail ? "cursor-help" : undefined}>
       <Info className="size-3.5 shrink-0 text-primary" aria-hidden />
       {label}
-    </ToneChip>
+    </Pill>
   );
 
   if (!detail) return chip;
@@ -154,9 +162,12 @@ function CauseRow({ cause }: { cause: DecisionCause }) {
               colour already say three times over, and the 88px box existed to
               align two short labels that are now long enough to align on their
               own right edge — which is the edge the row aligns on anyway. */}
-          <ToneChip tone={us ? "ok" : "bad"}>
+          {/* The two cause sides, on the app's chip. `ok`/`bad` now resolve to
+              `Badge`'s success/error statuses, so the verdict is carried by the ink
+              of the words — which is how the case page signals every status. */}
+          <Pill tone={us ? "ok" : "bad"}>
             {us ? "On manufacturer" : "Customer fault"}
-          </ToneChip>
+          </Pill>
         </>
       }
     >

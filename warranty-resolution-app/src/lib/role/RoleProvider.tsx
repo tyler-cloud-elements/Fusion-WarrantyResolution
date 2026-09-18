@@ -1,4 +1,7 @@
-import { createContext, useCallback, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+
+import { useFlags } from "@/lib/flags";
+import { renameProfiles } from "@/lib/warranty/ciPersona";
 
 // The personas the app can sign in as, from the FUSION 2026 storyboard's settled
 // cast. The storyboard pins three in the header strip (Sarah, Miguel, Ryan)
@@ -101,11 +104,44 @@ function readInitialRole(): Role {
   } catch {
     /* ignore */
   }
-  return "lead"; // Sarah Chen is the persona the demo opens on.
+  // The lead is the persona the demo opens on. Named by role rather than by name
+  // here, because who the lead IS now depends on a flag this function cannot read.
+  return "lead";
+}
+
+/**
+ * THE CAST AS THE APP SHOULD SHOW IT, which depends on a flag.
+ *
+ * `ROLE_PROFILES` above stays the source of truth — the storyboard's settled cast,
+ * and what the app is without the CI flag. This is the accessor everything reads
+ * instead, because with `ciCoverageDecision` on the lead is Scott Florentino
+ * (../warranty/ciPersona.ts).
+ *
+ * **IT EXISTS BECAUSE THE PROVIDER IS NOT THE ONLY READER.** Renaming inside
+ * `RoleProvider` below would have been one line and would have left the old name
+ * in three places: the persona switcher menu
+ * (../../components/ui/shell-user-profile-menu-items.tsx), the switcher itself
+ * (../../components/warranty/PersonaSwitcher.tsx) and the case Details tab's owner
+ * dropdown (../../components/warranty/CaseDetailsTab.tsx). All three import the
+ * constant directly. They read this now, and the provider does too, so there is
+ * one answer to "what is the lead called" rather than two.
+ *
+ * That last one had a sharper version of the bug: it looks a persona's title up by
+ * `p.name === chosenOwner`. With the menu renamed and the lookup table not, picking
+ * the lead as owner would have found nobody and blanked the role.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useRoleProfiles(): Record<Role, RoleProfile> {
+  const { ciCoverageDecision } = useFlags();
+  return useMemo(
+    () => (ciCoverageDecision ? renameProfiles(ROLE_PROFILES) : ROLE_PROFILES),
+    [ciCoverageDecision],
+  );
 }
 
 export function RoleProvider({ children }: { children: ReactNode }) {
   const [role, setRoleState] = useState<Role>(readInitialRole);
+  const profiles = useRoleProfiles();
 
   useEffect(() => {
     try {
@@ -118,7 +154,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const setRole = useCallback((next: Role) => setRoleState(next), []);
 
   return (
-    <RoleContext.Provider value={{ role, profile: ROLE_PROFILES[role], setRole }}>
+    <RoleContext.Provider value={{ role, profile: profiles[role], setRole }}>
       {children}
     </RoleContext.Provider>
   );

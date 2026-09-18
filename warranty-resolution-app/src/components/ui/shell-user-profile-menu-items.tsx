@@ -8,7 +8,7 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { SupportedLocale } from "@/lib/i18n";
-import { ROLE_PROFILES, type Role } from "@/lib/role/RoleProvider";
+import { useRoleProfiles, type Role } from "@/lib/role/RoleProvider";
 import { useRole } from "@/lib/role/useRole";
 import { cn } from "@/lib/utils";
 import { useAuth } from "./shell-auth-provider";
@@ -22,6 +22,9 @@ export const UserProfileMenuItems = () => {
   const { logout } = useAuth();
   const { setTheme } = useTheme();
   const { role, setRole } = useRole();
+  // The accessor, not the constant: the lead's name depends on a flag, and the
+  // provider is not the only reader of it (../../lib/role/RoleProvider.tsx).
+  const profiles = useRoleProfiles();
   const language = i18n.language;
 
   function setLanguage(code: SupportedLocale) {
@@ -40,8 +43,8 @@ export const UserProfileMenuItems = () => {
           <span>Switch role</span>
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent>
-          {(Object.keys(ROLE_PROFILES) as Role[]).map((key) => {
-            const p = ROLE_PROFILES[key];
+          {(Object.keys(profiles) as Role[]).map((key) => {
+            const p = profiles[key];
             return (
               <DropdownMenuItem
                 key={key}

@@ -125,6 +125,16 @@ export interface FeatureFlags {
    * (`coverageFixtureFor` in ./coverage/fixture.ts), so every other case keeps
    * the existing console either way rather than opening a page that has to
    * apologise for having nothing to show.
+   *
+   * **IT ALSO RENAMES THE WARRANTY LEAD, APP-WIDE.** On, she is Scott Florentino
+   * — on every screen, not only the flagged one: the work queue's owner column,
+   * the case header, the task assignee, the sidebar profile and its avatar, the
+   * morning greeting, the filed record's stamp. Off, Sarah Chen again, which is
+   * who the storyboard and the demo dataset name.
+   *
+   * Two effects on one switch, which is worth knowing when reading this name: the
+   * flag is "the CI build", not "that one page". ./warranty/ciPersona.ts holds the
+   * rename and names the three places it is applied.
    */
   ciCoverageDecision: boolean;
 }
@@ -189,7 +199,7 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
   // of the nav's list.
   ciCoverageDecision: {
     label: "CI Coverage decision",
-    hint: "Showcase the coverage decision page for CI",
+    hint: "Showcase the coverage decision page for CI, and name the lead Scott Florentino app-wide.",
   },
 };
 

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { ROLE_PROFILES, type Role } from "@/lib/role/RoleProvider";
+import { useRoleProfiles, type Role } from "@/lib/role/RoleProvider";
 import { useRole } from "@/lib/role/useRole";
 
 /**
@@ -25,7 +25,9 @@ import { useRole } from "@/lib/role/useRole";
  */
 export function PersonaSwitcher() {
   const { role, profile, setRole } = useRole();
-  const roles = Object.keys(ROLE_PROFILES) as Role[];
+  // See the note on the accessor in ../../lib/role/RoleProvider.tsx.
+  const profiles = useRoleProfiles();
+  const roles = Object.keys(profiles) as Role[];
 
   return (
     <DropdownMenu>
@@ -68,7 +70,7 @@ export function PersonaSwitcher() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {roles.map((key) => {
-          const candidate = ROLE_PROFILES[key];
+          const candidate = profiles[key];
           return (
             <DropdownMenuItem
               key={key}

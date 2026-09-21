@@ -26,6 +26,8 @@ import {
 } from "@/lib/warranty/useCases";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 import { useFlags } from "@/lib/flags";
+import { usePageWidthClass } from "@/lib/layout";
+import { cn } from "@/lib/utils";
 import { coverageFixtureFor } from "@/lib/coverage/fixture";
 
 /**
@@ -234,6 +236,7 @@ export function DecisionConsolePage() {
   const { warrantyCase, isLoading: caseLoading } = useCase(caseId);
   const navigate = useNavigate();
   const flags = useFlags();
+  const width = usePageWidthClass();
 
   // Only the departure is state; the recommendation is the resting value. Held
   // here because the assessment rail answers the position as well as the
@@ -313,7 +316,9 @@ export function DecisionConsolePage() {
   return (
     <div className="flex h-full min-h-0">
       <div className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-[1460px] flex-col gap-4 px-5 py-5">
+        {/* Capped narrower when `ciNarrow` is on; `cn` resolves the two `max-w-*`
+            in favour of the later one (../../lib/layout.ts). */}
+        <div className={cn("mx-auto flex max-w-[1460px] flex-col gap-4 px-5 py-5", width)}>
           {breadcrumb}
           <ConsoleHeader action={action} warrantyCase={warrantyCase} />
 

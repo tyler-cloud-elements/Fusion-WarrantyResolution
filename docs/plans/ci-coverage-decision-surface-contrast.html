@@ -1,0 +1,229 @@
+<meta charset="utf-8">
+<title>Section / background contrast — three proposals</title>
+<style>
+  :root{
+    --fg:oklch(0.2394 0.0455 252.45); --muted-fg:oklch(0.4594 0.028 264.25);
+    --border:oklch(0.9229 0.0065 252.13); --muted:oklch(0.963 0.0062 255.48);
+    --primary:oklch(0.64 0.115 208); --success:oklch(0.57 0.105 152);
+    --destructive:oklch(0.62 0.15 18); --warning:oklch(0.8 0.115 85);
+    --warning-fg:oklch(0.166 0.0283 203.34); --info:oklch(0.6 0.118 240);
+    --sidebar:oklch(0.9723 0.0074 260.73);
+    --font-sans:Inter,ui-sans-serif,sans-serif,system-ui;
+    --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+
+    /* ── the two knobs every option turns ───────────────────── */
+    --page:oklch(1 0 89.88);          /* --background */
+    --card-fill:rgba(255,255,255,.55); /* bg-white/55 */
+    --card-rim:rgba(255,255,255,.8);   /* border-white/80 */
+    --card-shadow:0 2px 16px 2px rgba(0,0,0,.05);
+  }
+  /* A · darker page, glass untouched */
+  body[data-opt="A"]{--page:oklch(0.982 0.004 255)}
+  /* B · page untouched, the rim becomes real */
+  body[data-opt="B"]{--card-rim:color-mix(in oklab,var(--border) 70%,transparent);
+                     --card-shadow:0 2px 16px 2px rgba(0,0,0,.07)}
+  /* C · darker page AND an opaque card */
+  body[data-opt="C"]{--page:oklch(0.982 0.004 255); --card-fill:#fff;
+                     --card-rim:color-mix(in oklab,var(--border) 60%,transparent)}
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--page);color:var(--fg);
+       transition:background-color .18s}
+  .bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+       padding:12px 24px;background:color-mix(in oklab,var(--page) 88%,transparent);
+       backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  .bar b{font-size:12px;font-weight:600;margin-right:4px}
+  .bar button{font-family:inherit;font-size:12px;font-weight:500;padding:6px 11px;border-radius:8px;
+              border:1px solid var(--border);background:#fff;color:var(--fg);cursor:pointer}
+  .bar button[aria-pressed="true"]{background:var(--fg);color:#fff;border-color:var(--fg)}
+  .bar .num{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--muted-fg)}
+
+  main{max-width:1180px;margin:0 auto;padding:24px 32px 56px}
+  h1{font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  .lede{font-size:13px;color:var(--muted-fg);margin:0 0 22px;max-width:76ch;line-height:1.6}
+  h2{font-size:13px;font-weight:600;margin:0 0 2px}
+  .note{font-size:12px;color:var(--muted-fg);margin:0 0 14px;max-width:82ch;line-height:1.6}
+  code{font-family:var(--font-mono);font-size:11px;background:var(--muted);padding:1px 5px;border-radius:4px}
+  table{border-collapse:collapse;width:100%;font-size:12px;background:#fff;border-radius:10px;overflow:hidden}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-fg);font-weight:600}
+  td.n{font-family:var(--font-mono)}
+  .bad{color:var(--destructive);font-weight:700}
+  .ok{color:var(--success);font-weight:700}
+  .sw{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid var(--border);
+      vertical-align:-3px;margin-right:5px}
+
+  /* ── the page fragment under test ────────────────────────── */
+  .stack{display:flex;flex-direction:column;gap:16px;margin-top:20px}
+  .card{background:var(--card-fill);border:1px solid var(--card-rim);border-radius:18px;
+        backdrop-filter:blur(4px);box-shadow:var(--card-shadow),inset 0 1px 0 0 rgba(255,255,255,.6);
+        padding:20px;display:flex;flex-direction:column;gap:14px;transition:background-color .18s,border-color .18s}
+  .card.hero{padding:24px}
+  .h1{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin:0}
+  .subline{font-size:12px;color:var(--muted-fg);margin-top:3px}
+  .metas{display:flex;flex-wrap:wrap;gap:16px 32px}
+  .meta .k{font-size:12px;font-weight:300;color:var(--muted-fg);display:block}
+  .meta .v{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;margin-top:2px}
+  .badge{display:inline-flex;align-items:center;border-radius:999px;border:1px solid transparent;
+         padding:2px 8px;font-size:12px;font-weight:500;white-space:nowrap}
+  .badge.warn{background:color-mix(in oklab,var(--warning) 15%,transparent);color:var(--warning-fg)}
+  .badge.ok{background:color-mix(in oklab,var(--success) 15%,transparent);color:var(--success)}
+  .badge.err{background:color-mix(in oklab,var(--destructive) 10%,transparent);color:var(--destructive)}
+  .badge.info{background:color-mix(in oklab,var(--info) 15%,transparent);color:var(--info)}
+  .head{font-size:16px;font-weight:600;margin:0}
+  .rule{height:1px;background:var(--border)}
+  .panel{border:1px solid var(--border);border-radius:14px;background:#fff;overflow:hidden}
+  .band{display:flex;align-items:center;justify-content:space-between;gap:12px;
+        padding:7px 14px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:14px}
+  .row+.row{border-top:1px solid var(--border)}
+  .row .m{margin-left:auto;font-size:12px;color:var(--muted-fg)}
+  .dot{width:6px;height:6px;border-radius:999px;flex:none}
+  .dot.ok{background:var(--success)}.dot.bad{background:var(--destructive)}
+  .two{display:flex;gap:16px;flex-wrap:wrap}
+  .box{border:1px solid var(--border);border-radius:14px;background:#fff;padding:16px}
+  .box.w{width:280px;flex:none}.box.f{flex:1;min-width:240px}
+  .k{font-size:12px;font-weight:300;color:var(--muted-fg)}
+  .fig{font-size:20px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+  p.body{font-size:14px;color:var(--muted-fg);line-height:1.6;margin:4px 0 0}
+</style>
+
+<div class="bar">
+  <b>Preview:</b>
+  <button data-set="0" aria-pressed="true">0 · Today</button>
+  <button data-set="A" aria-pressed="false">A · Darker page</button>
+  <button data-set="B" aria-pressed="false">B · Real rim</button>
+  <button data-set="C" aria-pressed="false">C · Darker page + opaque card</button>
+  <span class="num" id="readout"></span>
+</div>
+
+<main>
+<h1>Section / background contrast — three proposals</h1>
+<p class="lede">
+  Flip between them with the bar above; the cards below are the real ones. Every number in
+  this file was computed by compositing the actual token values, not estimated.
+</p>
+
+<h2>What is actually happening today</h2>
+<p class="note">
+  In light mode <code>--background</code> is <b>pure white</b>, and the glass card is
+  <code>bg-white/55</code> with a <code>border-white/80</code> rim. White at 55% over white is
+  white; white at 80% over white is white. <b>So the fill and the rim contribute nothing at
+  all</b> — the only thing separating a section from the page is one
+  <code>rgba(0,0,0,.05)</code> shadow.
+</p>
+<p class="note">
+  <b>Dark mode does not have this problem.</b> There the same <code>white/[0.055]</code> lands
+  on <code>oklch(0.21 …)</code> and lifts the card to <b>1.157</b>. Light is the outlier, which
+  is the tell: the glass system was designed for a tinted page, and in light mode it is not
+  getting one.
+</p>
+
+<table>
+  <tr><th>option</th><th>page</th><th>card</th><th>card vs page</th><th>rim vs page</th><th>touches</th></tr>
+  <tr><td><b>0 · today</b></td><td class="n"><span class="sw" style="background:#fff"></span>#ffffff</td>
+      <td class="n"><span class="sw" style="background:#fff"></span>#ffffff</td>
+      <td class="n bad">1.000</td><td class="n bad">1.000</td><td>—</td></tr>
+  <tr><td><b>A · darker page</b></td><td class="n"><span class="sw" style="background:#f7f9fc"></span>#f7f9fc</td>
+      <td class="n"><span class="sw" style="background:#fbfcfe"></span>#fbfcfe</td>
+      <td class="n">1.027</td><td class="n">1.044</td><td>1 token, global</td></tr>
+  <tr><td><b>B · real rim</b></td><td class="n"><span class="sw" style="background:#fff"></span>#ffffff</td>
+      <td class="n"><span class="sw" style="background:#fff"></span>#ffffff</td>
+      <td class="n bad">1.000</td><td class="n ok">1.165</td><td><code>GLASS_CLASSES</code></td></tr>
+  <tr><td><b>C · both</b></td><td class="n"><span class="sw" style="background:#f7f9fc"></span>#f7f9fc</td>
+      <td class="n"><span class="sw" style="background:#fff"></span>#ffffff</td>
+      <td class="n ok">1.055</td><td class="n">1.044</td><td>1 token + <code>GLASS_CLASSES</code></td></tr>
+</table>
+
+<p class="note" style="margin-top:14px">
+  <b>Why A alone is modest.</b> The card is 55% white, so darkening the page behind it is
+  filtered: 45% of the change reaches the surface and the rest is absorbed by the card's own
+  fill. #ffffff → #f7f9fc is a 1.055 step on the page but only <b>1.027</b> between card and
+  page. C recovers the full step by making the card opaque — which is the one change that lets
+  the fill do any work at all.
+</p>
+<p class="note">
+  <b>One caveat on A and C.</b> The sidebar is already <code>#f3f6fb</code>, <i>darker</i> than
+  the page. Darkening the page to #f7f9fc narrows page-vs-sidebar from <b>1.083 to 1.027</b> —
+  you gain a card boundary and spend some of the sidebar's. It still reads as three layers
+  (sidebar darkest → page → card lightest), which is a more coherent elevation model than
+  today's, but it is a trade rather than a free win.
+</p>
+<p class="note">
+  <b>And a precision note, because it is easy to overclaim.</b> None of these are WCAG
+  pass/fail numbers. WCAG 1.4.11's 3:1 applies to the boundary of a <i>control</i> and to state
+  changes, not to decorative layering of panels — no surface-vs-surface ratio is mandated. These
+  figures are perceptibility, and for adjacent surfaces the useful band is roughly 1.05–1.15.
+  Today's 1.000 is below anything; B is the only option that puts a real edge on the card, which
+  is the lever WCAG would care about if the card were interactive (the queue's cards are).
+</p>
+
+<h2 style="margin-top:28px">The fragment, under whichever option is selected</h2>
+<p class="note">Same content as the real page; only the two knobs move.</p>
+
+<div class="stack">
+  <div class="card hero">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:16px 40px">
+      <div style="margin-right:auto;min-width:0;flex:1">
+        <h2 class="h1">Coverage decision — combined cause finding</h2>
+        <div class="subline">WR-2026-0417</div>
+      </div>
+      <div class="metas">
+        <div class="meta"><span class="k">Status</span><span class="v"><span class="badge warn">Action required</span></span></div>
+        <div class="meta"><span class="k">Stage</span><span class="v">Resolution decision</span></div>
+        <div class="meta"><span class="k">SLA 4 HR</span><span class="v"><span class="badge ok">On track</span>
+          <span style="font-size:12px;font-weight:400;color:var(--muted-fg)">2 hr 13 min left</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <h3 class="head">Case info</h3><span class="badge ok">Strategic</span>
+    </div>
+    <div class="rule"></div>
+    <div class="two">
+      <div class="box w"><span class="k">Claim</span><div class="fig">$8,185.00</div>
+        <div style="font-size:12px;color:var(--muted-fg);margin-top:3px">Approval ceiling $5,000.00</div></div>
+      <div class="box f"><span class="k">Description</span>
+        <p class="body">Gearbox failed at 30 of 60 rated months. The drive was also reconfigured
+          above its commissioned limits in February, unapproved.</p></div>
+    </div>
+    <div class="panel">
+      <div class="band"><span>Findings</span><span class="badge info">No rule covers both causes</span></div>
+      <div class="row"><span class="dot ok"></span>Component defect, inside its term
+        <span class="m">30 of 60 months</span><span class="badge ok">On manufacturer</span></div>
+      <div class="row"><span class="dot bad"></span>Configuration change, unapproved
+        <span class="m">no approval</span><span class="badge err">Customer fault</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="head">Decision</h3>
+    <div class="rule"></div>
+    <div class="panel">
+      <div class="band"><span>Evidence</span><span style="font-size:12px;font-weight:400;color:var(--muted-fg)">3 items</span></div>
+      <div class="row"><span class="dot ok"></span>Defect in warranty <span class="m">High · ✓ Approve</span></div>
+      <div class="row"><span class="dot bad"></span>Unapproved change to controls <span class="m">High · ✗ Deny</span></div>
+      <div class="row"><span class="dot ok"></span>Renewal within 3 months <span class="m">Low · ✓ Approve</span></div>
+    </div>
+  </div>
+
+  <div class="card"><div style="display:flex;align-items:center;gap:10px">
+    <h3 class="head" style="flex:1">This customer</h3>
+    <span style="font-size:12px;color:var(--muted-fg)">6 claims · all approved</span></div></div>
+</div>
+</main>
+
+<script>
+  const NUMS={"0":"card vs page 1.000 · rim 1.000 — separation is one 5% shadow",
+              "A":"card vs page 1.027 · rim 1.044 — page #f7f9fc",
+              "B":"card vs page 1.000 · rim 1.165 — the edge does the work",
+              "C":"card vs page 1.055 · rim 1.044 — the fill does the work"};
+  const out=document.getElementById('readout');
+  const set=v=>{if(v==="0") document.body.removeAttribute('data-opt'); else document.body.dataset.opt=v;
+    document.querySelectorAll('.bar button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.set===v)));
+    out.textContent=NUMS[v];};
+  document.querySelectorAll('.bar button').forEach(b=>b.addEventListener('click',()=>set(b.dataset.set)));
+  set("0");
+</script>

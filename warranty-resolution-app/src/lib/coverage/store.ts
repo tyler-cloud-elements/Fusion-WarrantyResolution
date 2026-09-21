@@ -341,7 +341,12 @@ function reduce(ctx: Ctx) {
               // `touchedByReviewer` on the way through: both of these events are
               // only ever dispatched by a control the reviewer operated — the
               // row's two selects and the composer editing a row back.
-              x.id === e.id ? { ...x, ...e.patch, touchedByReviewer: true } : x,
+              //
+              // `touchedAt` beside it, for the same reason `reasonAt` exists: the
+              // row's mark names the hand, and the tooltip says when the hand moved.
+              x.id === e.id
+                ? { ...x, ...e.patch, touchedByReviewer: true, touchedAt: ctx.now() }
+                : x,
             ),
           },
           ctx,
@@ -353,7 +358,14 @@ function reduce(ctx: Ctx) {
             // Counter off the length rather than a uuid: this is a demo store with
             // no persistence, and a removed row's id never coming back is a
             // property worth having when the id is also the React key.
-            evidence: [...s.evidence, { id: `ev-new-${s.nextEvidenceNo}`, ...e.item }],
+            // `addedAt` is the store's to set, not the composer's: the composer
+            // builds what the reviewer typed, and when they pressed Add is a fact
+            // about the dispatch. Same clock as `reasonAt`, so the two stamps on
+            // this screen can be compared.
+            evidence: [
+              ...s.evidence,
+              { id: `ev-new-${s.nextEvidenceNo}`, ...e.item, addedAt: ctx.now() },
+            ],
             nextEvidenceNo: s.nextEvidenceNo + 1,
           },
           ctx,
@@ -362,9 +374,27 @@ function reduce(ctx: Ctx) {
         return reassess(
           {
             ...s,
-            evidence: s.evidence.map((x) =>
-              x.id === e.id ? { ...x, ...e.patch, touchedByReviewer: true } : x,
-            ),
+            evidence: s.evidence.map((x) => {
+              if (x.id !== e.id) return x;
+              /**
+               * WHO ADDED A ROW IS NOT SOMETHING AN EDIT CAN CHANGE.
+               *
+               * `toItem` in the composer (../../components/coverage/EvidenceComposer.tsx)
+               * builds every item with `addedByReviewer: true`, and it feeds this
+               * event as well as `evidence.create`. So an agent's row edited through
+               * the composer would relabel itself as the reviewer's — and grow the
+               * Edit/Remove pair on a row that is supposed to BE the record.
+               *
+               * Unreachable today, because Edit only renders on rows that already
+               * carry the flag. Stripped here rather than in the composer because
+               * this is the invariant's home: `update` takes a patch, and authorship
+               * is not in the patch's gift whatever the caller sends. Making it true
+               * beats leaving it merely unreached.
+               */
+              const patch = { ...e.patch };
+              delete patch.addedByReviewer;
+              return { ...x, ...patch, touchedByReviewer: true, touchedAt: ctx.now() };
+            }),
           },
           ctx,
         );

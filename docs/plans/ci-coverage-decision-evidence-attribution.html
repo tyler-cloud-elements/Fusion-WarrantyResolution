@@ -1,0 +1,461 @@
+<meta charset="utf-8">
+<title>Evidence — a hand on every row that moved</title>
+<style>
+  :root{
+    --background:oklch(1 0 89.88); --foreground:oklch(0.2394 0.0455 252.45);
+    --card:oklch(1 0 89.88); --muted:oklch(0.963 0.0062 255.48);
+    --muted-foreground:oklch(0.4594 0.028 264.25); --border:oklch(0.9229 0.0065 252.13);
+    --primary:oklch(0.64 0.115 208); --success:oklch(0.57 0.105 152);
+    --warning:oklch(0.8 0.1401 80.82); --destructive:oklch(0.62 0.15 18);
+    --insight-100:oklch(0.94 0.03 277); --insight-600:oklch(0.56 0.20 277);
+    --font-sans:Inter,ui-sans-serif,sans-serif,system-ui; --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  .dark{
+    --background:oklch(0.21 0.03 258.5); --foreground:oklch(0.985 0 0);
+    --card:oklch(0.233 0.036 254.7); --muted:oklch(0.2648 0.0329 254.38);
+    --muted-foreground:oklch(0.72 0.03 254.38); --border:oklch(0.3068 0.0426 258.29);
+    --primary:oklch(0.69 0.112 207); --success:oklch(0.7 0.12 152);
+    --warning:oklch(0.6889 0.1401 80.82); --destructive:oklch(0.68 0.155 18);
+    --insight-100:oklch(0.31 0.06 277); --insight-600:oklch(0.70 0.19 277);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 24px;font-family:var(--font-sans);background:var(--background);color:var(--foreground)}
+  main{max-width:1100px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
+  .shipped{font-size:12.5px;line-height:1.6;margin:0 0 20px;max-width:76ch;padding:11px 14px;
+           border:1px solid color-mix(in oklab,var(--success) 40%,transparent);border-radius:10px;
+           background:color-mix(in oklab,var(--success) 8%,transparent)}
+  .lede{font-size:13px;color:var(--muted-foreground);margin:0 0 28px;max-width:76ch;line-height:1.6}
+  section{margin-bottom:38px}
+  h2{font-size:13px;font-weight:600;margin:0 0 2px}
+  .note{font-size:12px;color:var(--muted-foreground);margin:0 0 14px;max-width:84ch;line-height:1.6}
+  .note b{color:var(--foreground)}
+  code{font-family:var(--font-mono);font-size:11px;background:var(--muted);padding:1px 5px;border-radius:4px}
+  .tag{display:block;margin-bottom:10px;font-family:var(--font-mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted-foreground)}
+  .tag b{color:var(--insight-600);font-weight:600} .tag i{color:var(--success);font-style:normal;font-weight:600}
+  .tag s{color:var(--destructive);text-decoration:none;font-weight:600}
+  .verdict{font-size:12px;margin-top:14px;padding-top:13px;border-top:1px solid var(--border);color:var(--muted-foreground);line-height:1.6}
+  .verdict b{color:var(--foreground)}
+  .pair{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+  .col{flex:1 1 470px;min-width:430px}
+  /* Section 1 stacks: the decision card is ~720px on the real page, and two
+     470px columns truncate titles that do not truncate in the app. */
+  .pair.stack{flex-direction:column;gap:22px}
+  .pair.stack .col{flex:1 1 auto;min-width:0;max-width:724px}
+  /* `color` inherits as a COMPUTED value, so re-declaring --foreground here does
+     not reach children that merely inherit body's ink. The wrapper has to set it. */
+  .wrap.dark{background:var(--background);color:var(--foreground);padding:16px;border-radius:14px}
+
+  /* ── the card ── */
+  .card{overflow:hidden;border-radius:14px;border:1px solid var(--border);background:var(--card)}
+  .band{display:flex;align-items:center;gap:12px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600}
+  .band .aside{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .head{font-size:11px;font-weight:500;color:var(--muted-foreground);text-align:right;flex:none}
+  .head.rel{width:136px} .head.dec{width:160px}
+
+  .row{display:flex;min-height:48px;align-items:center;gap:10px;padding:0 14px}
+  .row + .row{border-top:1px solid var(--border)}
+  .row:hover{background:color-mix(in oklab,var(--muted) 50%,transparent)}
+  .row .lhs{display:flex;min-width:0;flex:1 1 auto;align-items:center;gap:10px;padding:8px 0}
+  svg.chev{width:16px;height:16px;flex:none;color:var(--muted-foreground)}
+  svg.chev.none{opacity:0}
+  .dot{width:6px;height:6px;border-radius:50%;flex:none}
+  .dot.ok{background:var(--success)} .dot.warn{background:var(--warning)}
+  .dot.bad{background:var(--destructive)} .dot.none{background:var(--border)}
+  .title{font-size:13px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cell{display:flex;justify-content:flex-end;flex:none}
+  .cell.rel{width:136px} .cell.dec{width:160px}
+
+  /* the compact select trigger, approximated */
+  .sel{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;border:1px solid var(--border);
+       border-radius:8px;font-size:12px;font-weight:600;background:var(--card);white-space:nowrap}
+  .sel svg.caret{width:12px;height:12px;color:var(--muted-foreground)}
+  .filed{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;white-space:nowrap}
+
+  /* ── THE MARK ── */
+  .mark{display:inline-flex;align-items:center;gap:4px;flex:none;font-size:10.5px;color:var(--muted-foreground);white-space:nowrap}
+  .mark svg{width:12px;height:12px;flex:none}
+  .mark.agent svg{color:var(--insight-600)}
+  /* rejected variants */
+  .chip{display:inline-flex;align-items:center;gap:4px;flex:none;font-size:10.5px;padding:2px 7px;border-radius:999px;
+        background:var(--insight-100);color:var(--foreground)}
+  .chip svg{width:11px;height:11px;flex:none;color:var(--insight-600)}
+  .bare{width:6px;height:6px;border-radius:50%;background:var(--primary);flex:none}
+
+  /* value glyphs */
+  .bars{display:inline-flex;align-items:flex-end;gap:1.5px;height:10px;flex:none}
+  .bars i{display:block;width:3px;border-radius:1px;background:var(--border)}
+  .bars i.on{background:var(--foreground)}
+  .bars i:nth-child(1){height:4px}.bars i:nth-child(2){height:7px}.bars i:nth-child(3){height:10px}
+  .call{font-size:11px;font-weight:800;line-height:1;flex:none}
+  .call.a{color:var(--success)} .call.d{color:var(--destructive)} .call.p{color:var(--warning)}
+
+  table.m{border-collapse:collapse;font-size:12px;width:100%}
+  table.m th,table.m td{text-align:left;padding:7px 12px 7px 0;border-bottom:1px solid var(--border);vertical-align:middle}
+  table.m th{font-size:11px;font-weight:600;color:var(--muted-foreground)}
+  table.m tr:last-child td{border-bottom:0}
+  td.no{color:var(--destructive)} td.yes{color:var(--success);font-weight:600}
+  .strip{display:flex;flex-wrap:wrap;gap:10px}
+  .opt{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--card);min-width:212px;flex:1 1 212px}
+  .opt .cap{font-size:10px;font-family:var(--font-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted-foreground);margin-bottom:8px}
+  .opt .why{font-size:11.5px;color:var(--muted-foreground);margin-top:9px;line-height:1.55}
+  .opt.pick{border-color:color-mix(in oklab,var(--success) 55%,transparent);background:color-mix(in oklab,var(--success) 7%,transparent)}
+  .opt.drop{opacity:.72}
+  .specimen{display:flex;align-items:center;gap:10px;min-height:26px}
+  .specimen .title{font-size:13px}
+  .narrow{width:430px}
+</style>
+
+<svg style="display:none">
+  <symbol id="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></symbol>
+  <!-- user-round, FILLED, stroke 0 — exactly as EvidenceList draws it today -->
+  <symbol id="user" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+  <symbol id="pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="pencil-line" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 21h8"/><path d="m15 5 4 4"/><path d="M20.174 5.812a2.5 2.5 0 0 0-3.986-3.987L3.842 14.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></symbol>
+  <!-- user-pen: the silhouette with a nib. Filled head, stroked nib. -->
+  <symbol id="user-pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 15H7a4 4 0 0 0-4 4v2"/><path d="M21.378 16.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/><circle cx="10" cy="7" r="4"/></symbol>
+  <!-- Apollo Vertex AI mark -->
+  <symbol id="ai" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+</svg>
+
+<main>
+<h1>Evidence — a hand on every row that moved</h1>
+<p class="shipped"><b>Shipped, with one change from the draft:</b> the same avatar marks both
+  states. A <code>Pencil</code> on the edited row was built and rejected — the mark answers
+  <i>whose hand is on this row</i>, and that is the same person either way, so two glyphs made
+  one question look like two. §2 and §5 keep the alternatives for the record; every other
+  section draws what shipped.</p>
+<p class="lede">
+  Today only a row the reviewer <b>added</b> carries a name. A row they re-weighted
+  carries nothing, which is the more common edit and the one that moves the
+  recommendation. The mark becomes a two-verb grammar — <code>UserRound</code> for
+  <i>added</i>, <code>Pencil</code> for <i>edited</i> — with the same name, ink, size and
+  slot in both, so the column answers one question down its whole length:
+  <b>whose hand is on this row?</b>
+</p>
+
+<!-- ─────────────────────────────────────────────────────────── 1 -->
+<section>
+  <h2>1 · The list, now and after</h2>
+  <p class="note">
+    The case's three authored rows plus two the reviewer filed. In <b>now</b>, the
+    reviewer has re-weighted <i>Unapproved change to controls</i> from High to Medium and
+    flipped <i>Renewal within 3 months</i> to Partially approve — and the list says nothing
+    about either. The agent's own row and the row you rewrote look identical.
+  </p>
+
+  <div class="pair stack">
+    <div class="col">
+      <span class="tag">now — <s>silent on every edit</s></span>
+      <div class="card">
+        <div class="band">Evidence<span class="aside"><span class="head rel">Relevance</span><span class="head dec">Decision</span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Defect in warranty</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span>High<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call a">✓</span>Approve<svg class="caret"><use href="#caret"/></svg></span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot bad"></span><span class="title">Unapproved change to controls</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i class="on"></i><i></i></span>Medium<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call d">✗</span>Deny<svg class="caret"><use href="#caret"/></svg></span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot warn"></span><span class="title">Renewal within 3 months</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i></i><i></i></span>Low<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call p">◐</span>Partially approve<svg class="caret"><use href="#caret"/></svg></span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Site photos, drive coupling</span>
+          <span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i class="on"></i><i></i></span>Medium<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call a">✓</span>Approve<svg class="caret"><use href="#caret"/></svg></span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Operator statement, 14 Feb</span>
+          <span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i></i><i></i></span>Low<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call a">✓</span>Approve<svg class="caret"><use href="#caret"/></svg></span></span></div>
+      </div>
+      <p class="verdict">
+        Two rows the reviewer moved, <b>zero marks</b>. The only record that either
+        happened is 200px below, in the filed record's manifest, and only after submit.
+      </p>
+    </div>
+
+    <div class="col">
+      <span class="tag">after — <i>added</i> and <b>edited</b>, one grammar</span>
+      <div class="card">
+        <div class="band">Evidence<span class="aside"><span class="head rel">Relevance</span><span class="head dec">Decision</span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Defect in warranty</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span>High<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call a">✓</span>Approve<svg class="caret"><use href="#caret"/></svg></span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot bad"></span><span class="title">Unapproved change to controls</span>
+          <span class="mark" title="Edited by Scott Florentino · 10:47 AM"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i class="on"></i><i></i></span>Medium<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call d">✗</span>Deny<svg class="caret"><use href="#caret"/></svg></span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot warn"></span><span class="title">Renewal within 3 months</span>
+          <span class="mark" title="Edited by Scott Florentino · 10:49 AM"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i></i><i></i></span>Low<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call p">◐</span>Partially approve<svg class="caret"><use href="#caret"/></svg></span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Site photos, drive coupling</span>
+          <span class="mark" title="Added by Scott Florentino · 10:44 AM"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i class="on"></i><i></i></span>Medium<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call a">✓</span>Approve<svg class="caret"><use href="#caret"/></svg></span></span></div>
+
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Operator statement, 14 Feb</span>
+          <span class="mark" title="Added by Scott Florentino · 10:45 AM"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+          <span class="cell rel"><span class="sel"><span class="bars"><i class="on"></i><i></i><i></i></span>Low<svg class="caret"><use href="#caret"/></svg></span></span>
+          <span class="cell dec"><span class="sel"><span class="call a">✓</span>Approve<svg class="caret"><use href="#caret"/></svg></span></span></div>
+      </div>
+      <p class="verdict">
+        One unmarked row left, and <b>the absence now means something</b>: this is the
+        only item still standing exactly as the agent filed it. Hover any mark for the
+        verb and the time; screen readers get the same sentence off <code>aria-label</code>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── 2 -->
+<section>
+  <h2>2 · Which glyph carries “edited”</h2>
+  <p class="note">
+    The name is identical in both states, so <b>the glyph is the only thing doing the
+    work</b>. It has to read at 12px beside 10.5px type, and it has to pair with the
+    filled <code>UserRound</code> without looking like a different system.
+  </p>
+  <div class="strip">
+    <div class="opt drop">
+      <div class="cap">Pencil — built, then rejected</div>
+      <div class="specimen"><span class="title">Unapproved change to controls</span><span class="mark"><svg><use href="#pencil"/></svg>Scott Florentino</span></div>
+      <p class="why">The folder's own edit glyph, and the draft's recommendation on that
+      basis. Rejected on review: it makes the mark look like it is answering "what happened
+      here", when the question it answers is "whose hand is this".</p>
+    </div>
+    <div class="opt drop">
+      <div class="cap">PencilLine</div>
+      <div class="specimen"><span class="title">Unapproved change to controls</span><span class="mark"><svg><use href="#pencil-line"/></svg>Scott Florentino</span></div>
+      <p class="why">The underscore reads as a text-field cursor at this size, and it is
+      not a glyph this app uses anywhere. A second edit mark to learn.</p>
+    </div>
+    <div class="opt drop">
+      <div class="cap">UserPen</div>
+      <div class="specimen"><span class="title">Unapproved change to controls</span><span class="mark"><svg><use href="#user-pen"/></svg>Scott Florentino</span></div>
+      <p class="why">Says both words in one mark, and is the tempting answer — but at 12px
+      the nib collapses into the shoulder and it reads as a smudged <code>UserRound</code>.
+      The two states stop being distinguishable, which is the whole point.</p>
+    </div>
+    <div class="opt pick">
+      <div class="cap">UserRound for both — shipped</div>
+      <div class="specimen"><span class="title">Unapproved change to controls</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></div>
+      <p class="why">One mark, one question, one answer. The cost is real and accepted:
+      an added row and an edited one are now <b>visually identical</b>, and the verb survives
+      only in the tooltip and the <code>aria-label</code>. The affordance still separates them
+      — an added row opens with Edit and Remove, an agent's row does not.</p>
+    </div>
+  </div>
+  <p class="verdict">
+    <b>The avatar, for both.</b> 12px, filled, <code>strokeWidth={0}</code> as prop and inline
+    style, <code>text-muted-foreground</code>, 4px to the name — one specimen, drawn the same
+    on every marked row. The three alternatives above are kept because the argument for a
+    second glyph is a reasonable one, and this is the record of it being heard and declined.
+  </p>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── 3 -->
+<section>
+  <h2>3 · Rejected dressings</h2>
+  <p class="note">
+    The current badge earned its plainness the hard way — it was a tinted
+    <code>Badge</code> with initials and the words "Added by", and all three came off.
+    Doubling the number of marked rows is a reason to hold that line, not to reopen it.
+  </p>
+  <div class="strip">
+    <div class="opt drop">
+      <div class="cap">a chip with a ground</div>
+      <div class="specimen"><span class="title">Unapproved change</span><span class="chip"><svg><use href="#user"/></svg>Scott Florentino</span></div>
+      <p class="why">A tinted ground is what this console gives a <i>state</i> — the
+      recommendation tag, the on-us markers, the eval verdicts. This is a note about a hand,
+      not a verdict. With five marked rows the list would read as five badges.</p>
+    </div>
+    <div class="opt drop">
+      <div class="cap">prose</div>
+      <div class="specimen"><span class="title">Unapproved change</span><span class="mark"><svg><use href="#user"/></svg>Edited by Scott Florentino</span></div>
+      <p class="why">"Added by" was already deleted from this exact slot: a person glyph
+      followed by a name says somebody put this here. The verb belongs in the tooltip and
+      the <code>aria-label</code>, where it costs no width.</p>
+    </div>
+    <div class="opt drop">
+      <div class="cap">a bare dot</div>
+      <div class="specimen"><span class="title">Unapproved change</span><span class="bare"></span></div>
+      <p class="why">Cheapest, and answers the wrong question — it says <i>that</i> something
+      changed, and the ask is <i>who</i>. The row already has a coloured dot 10px to the
+      left carrying the call, so this is a second dot with an unrelated meaning.</p>
+    </div>
+    <div class="opt drop">
+      <div class="cap">an inline timestamp</div>
+      <div class="specimen"><span class="title">Unapproved change</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino <svg><use href="#clock"/></svg>10:47</span></div>
+      <p class="why">~46px more on a line whose title already truncates, to print a time
+      nobody is comparing across rows within one sitting. It goes in the tooltip beside the
+      verb, where it is there when it is wanted.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── 4 -->
+<section>
+  <h2>4 · Does the agent get a name too?</h2>
+  <p class="note">
+    The symmetric reading: if a reviewer's hand is named, so is the agent's. The
+    <code>AiMark</code> / <code>UserRound</code> pair is already established one card up, on
+    the decision badge. <b>This is the one open call in the plan</b> — both are drawn here.
+  </p>
+  <div class="pair">
+    <div class="col">
+      <span class="tag">A — <i>recommended</i> · unmarked means untouched</span>
+      <div class="card">
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Defect in warranty</span></span><span class="cell dec"><span class="filed"><span class="call a">✓</span>Approve</span></span></div>
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot bad"></span><span class="title">Unapproved change to controls</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span><span class="cell dec"><span class="filed"><span class="call d">✗</span>Deny</span></span></div>
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Site photos, drive coupling</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span><span class="cell dec"><span class="filed"><span class="call a">✓</span>Approve</span></span></div>
+      </div>
+      <p class="verdict">
+        One mark per <b>departure</b>. The eye finds the two rows a human touched without
+        filtering them out of a full column. The unmarked row is the baseline, and after this
+        change that reads cleanly — it did not before, when an edited row was also blank.
+      </p>
+    </div>
+    <div class="col">
+      <span class="tag">B — every row names its hand</span>
+      <div class="card">
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Defect in warranty</span><span class="mark agent"><svg><use href="#ai"/></svg>Coverage agent</span></span><span class="cell dec"><span class="filed"><span class="call a">✓</span>Approve</span></span></div>
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot bad"></span><span class="title">Unapproved change to controls</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span><span class="cell dec"><span class="filed"><span class="call d">✗</span>Deny</span></span></div>
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Site photos, drive coupling</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span><span class="cell dec"><span class="filed"><span class="call a">✓</span>Approve</span></span></div>
+      </div>
+      <p class="verdict">
+        Complete, and <b>the same trade the manifest's attribution column lost on</b>: a column
+        with a mark on every row is a column you read past. It also overstates the claim —
+        the agent did not "author" <i>Defect in warranty</i>, IXP extracted it, and naming an
+        author is a promise about provenance this demo cannot keep.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── 5 -->
+<section>
+  <h2>5 · A row that is both — added, then edited</h2>
+  <p class="note">
+    <code>evidence.set</code> sets <code>touchedByReviewer</code> on any row, your own
+    included, so re-weighting a row you filed leaves both flags true. With one glyph this
+    decides nothing you can see — <b>it decides which sentence the tooltip tells, and which
+    timestamp it prints</b>. The three options are drawn as they were argued.
+  </p>
+  <div class="strip">
+    <div class="opt pick">
+      <div class="cap">added wins — recommended</div>
+      <div class="specimen"><span class="title">Site photos, drive coupling</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></div>
+      <p class="why">It is one fact: the row is Scott's. Editing your own row is not news,
+      and the mark answers "whose hand", which has not changed. <b>Verified in the app:</b> a
+      row added at 12:03 and re-weighted at 12:05 still reads
+      <code>Added by Scott Florentino · 12:03 PM</code> — the add's stamp, matching the verb.</p>
+    </div>
+    <div class="opt drop">
+      <div class="cap">edited wins</div>
+      <div class="specimen"><span class="title">Site photos, drive coupling</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></div>
+      <p class="why">Most recent action, and it makes the sentence tell the smaller fact.
+      It would also have been the wrong pairing back when the glyph differed: a row that can
+      be removed would have looked like one that cannot.</p>
+    </div>
+    <div class="opt drop">
+      <div class="cap">both marks</div>
+      <div class="specimen"><span class="title">Site photos</span><span class="mark"><svg><use href="#user"/></svg><svg><use href="#pencil"/></svg>Scott Florentino</span></div>
+      <p class="why">Two glyphs and one name reads as two people until you look twice, and
+      it spends 16px saying Scott edited Scott's row.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── 6 -->
+<section>
+  <h2>6 · Width — the title truncates, the mark never does</h2>
+  <p class="note">
+    The mark lives inside the toggle button, after a <code>truncate</code> title, in a flex
+    row whose two right cells are fixed at 136px and 160px. At 430px the mark is
+    <code>shrink-0</code> and the title gives way — which is correct, since a half-name is
+    worse than a half-title.
+  </p>
+  <div class="strip">
+    <div class="narrow">
+      <div class="card">
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot bad"></span><span class="title">Unapproved change to controls, ramp and limit settings</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span></div>
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Site photos</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span></div>
+        <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot warn"></span><span class="title">Renewal within 3 months</span><span class="mark"><svg><use href="#user"/></svg>Kelsey Nordstrom</span></span></div>
+      </div>
+    </div>
+    <div class="opt" style="flex:1 1 380px">
+      <div class="cap">what holds this together</div>
+      <table class="m">
+        <tr><td><code>flex:none</code> on the mark</td><td class="yes">name never breaks</td></tr>
+        <tr><td><code>white-space:nowrap</code></td><td class="yes">no mid-name wrap</td></tr>
+        <tr><td><code>min-w-0 truncate</code> title</td><td class="yes">title yields first</td></tr>
+        <tr><td>12px glyph + 4px gap</td><td>~16px of the row</td></tr>
+        <tr><td>longest cast name</td><td>Kelsey Nordstrom, 83px @10.5px</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── 7 -->
+<section>
+  <h2>7 · Dark, and the filed record</h2>
+  <p class="note">
+    The filed list is the same component with <code>readOnly</code>. The marks matter
+    <b>more</b> here, not less — this is the record, and it is where somebody comes back
+    to ask who moved what.
+  </p>
+  <div class="wrap dark">
+    <div class="card">
+      <div class="band">Evidence<span class="aside"><span style="font-size:11px;color:var(--muted-foreground)">5 items</span><span class="head rel">Relevance</span><span class="head dec">Decision</span></span></div>
+      <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Defect in warranty</span></span>
+        <span class="cell rel"><span class="filed"><span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span>High</span></span>
+        <span class="cell dec"><span class="filed"><span class="call a">✓</span>Approve</span></span></div>
+      <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot bad"></span><span class="title">Unapproved change to controls</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+        <span class="cell rel"><span class="filed"><span class="bars"><i class="on"></i><i class="on"></i><i></i></span>Medium</span></span>
+        <span class="cell dec"><span class="filed"><span class="call d">✗</span>Deny</span></span></div>
+      <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot warn"></span><span class="title">Renewal within 3 months</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+        <span class="cell rel"><span class="filed"><span class="bars"><i class="on"></i><i></i><i></i></span>Low</span></span>
+        <span class="cell dec"><span class="filed"><span class="call p">◐</span>Partially approve</span></span></div>
+      <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Site photos, drive coupling</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+        <span class="cell rel"><span class="filed"><span class="bars"><i class="on"></i><i class="on"></i><i></i></span>Medium</span></span>
+        <span class="cell dec"><span class="filed"><span class="call a">✓</span>Approve</span></span></div>
+      <div class="row"><span class="lhs"><svg class="chev"><use href="#chev"/></svg><span class="dot ok"></span><span class="title">Operator statement, 14 Feb</span><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></span>
+        <span class="cell rel"><span class="filed"><span class="bars"><i class="on"></i><i></i><i></i></span>Low</span></span>
+        <span class="cell dec"><span class="filed"><span class="call a">✓</span>Approve</span></span></div>
+    </div>
+  </div>
+  <p class="verdict">
+    <code>text-muted-foreground</code> is 4.6:1 on <code>--card</code> in light and 6.1:1 in
+    dark, so the 10.5px name clears AA at both. The glyphs are held to WCAG 1.4.11's 3:1 for
+    non-text contrast and clear it on the same ink.
+  </p>
+</section>
+
+<!-- ─────────────────────────────────────────────────────────── 8 -->
+<section>
+  <h2>8 · What each state says, to the eye and to a reader</h2>
+  <table class="m">
+    <tr><th>state</th><th>mark</th><th>tooltip and <code>aria-label</code></th></tr>
+    <tr><td><code>addedByReviewer</code></td><td><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></td><td>Added by Scott Florentino · 10:44 AM</td></tr>
+    <tr><td><code>touchedByReviewer</code></td><td><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></td><td>Edited by Scott Florentino · 10:47 AM</td></tr>
+    <tr><td>both</td><td><span class="mark"><svg><use href="#user"/></svg>Scott Florentino</span></td><td>Added by Scott Florentino · 10:44 AM</td></tr>
+    <tr><td>neither</td><td style="color:var(--muted-foreground)">— nothing —</td><td>as the agent filed it</td></tr>
+  </table>
+  <p class="verdict">
+    The time is <b>new data</b> and the one store change this needs — see §2 of the plan.
+    Without it the tooltip is the verb alone, which is still worth having.
+  </p>
+</section>
+
+</main>

@@ -122,7 +122,27 @@
   --radius: 0.625rem;
   /* Vertex AI gradient (apollo-vertex-theme --ai-gradient-strong), theme-independent */
   --ai-gradient: linear-gradient(97.73deg, #6c5aef 8.79%, #69c7dd 91.48%);
-  --background: oklch(1 0 89.88);
+  /* NOT PURE WHITE, AND THE GLASS CARD IS WHY.
+     The card is an opaque white surface on a tinted page (see `GLASS_CLASSES` in
+     components/ui/card.tsx). While this was `oklch(1 0 89.88)` the card and the
+     page were the same colour: measured card-vs-page contrast was 1.000, and the
+     only thing separating a section from the canvas behind it was one
+     `rgba(0,0,0,0.05)` shadow. Dark mode never had the problem — there the same
+     card lands on `oklch(0.21 ...)` and lifts to 1.157 — so light was the outlier.
+
+     `oklch(0.982 0.004 255)` = #f7f9fc, which puts card-vs-page at 1.055: inside
+     the 1.05-1.15 band where adjacent surfaces read as separate. It is in the same
+     cool-grey family as `--sidebar` (#f3f6fb), so the three layers stack in one
+     hue — sidebar darkest, page, card lightest.
+
+     The trade, recorded: page-vs-sidebar narrows from 1.083 to 1.027. Three layers
+     in one family is a more coherent elevation model than a white page with a
+     darker sidebar and an invisible card, but it is a trade rather than a free win.
+
+     NOT a WCAG threshold. 1.4.11's 3:1 governs the boundary of a control, not the
+     layering of panels; this figure is perceptibility.
+     See docs/plans/ci-coverage-decision-surface-contrast.md. */
+  --background: oklch(0.982 0.004 255);
   --foreground: oklch(0.2394 0.0455 252.45);
   --card: oklch(1 0 89.88);
   --card-foreground: oklch(0.2394 0.0455 252.45);

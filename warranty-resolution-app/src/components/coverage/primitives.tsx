@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
  * So each of them is now a thin adapter over the app's own component:
  *
  *   `Card`    → `GLASS_CLASSES` from ../ui/card.tsx (the glass every other card is)
- *   `Pill`    → `ToneChip` below (a tinted-outline pill, 12px, six tones)
+ *   `Pill`    → the app's `Badge` (rimless, tinted, status-inked — see its note)
  *   `TYPE`    → the app's own six rungs, below
  *   `Band`    → a hairline sub-head, no tint
  *   `Label`   → a 12px caption, sentence case
@@ -32,8 +32,8 @@ import { cn } from "@/lib/utils";
  */
 
 /**
- * SIX RUNGS, AND THEY ARE THE APP'S — 12 · 14 · 16 · 24, plus the 11px mono stamp
- * and the 10px the odd chip resolves to.
+ * SIX RUNGS, AND THEY ARE THE APP'S — 12 · 14 · 16 · 24, plus the 10px the odd chip
+ * resolves to. The 11px mono stamp is gone; `meta`'s own note says why.
  *
  * Measured off the case detail page: every leaf element there renders at 10, 11,
  * 12, 14, 16 or 24px. This page had ten sizes, four of which (13, 13.5, 15, 20)
@@ -44,45 +44,77 @@ import { cn } from "@/lib/utils";
  *
  *   label   12px               a caption. NOT uppercase — the app has no
  *                              uppercase micro-label, and this page had ~30 of them
- *   meta    11px mono          ids, stamps, sources, counts
+ *   meta    12px               ids, stamps, sources, counts (NOT mono — see below)
  *   small   12px               captions and meta prose
  *   body    14px               everything a reviewer reads
  *   title   16px semibold      a card's or a section's own heading
- *   page    20px semibold      the one h1 (see its own note below)
+ *   page    24px bold          the one h1, the app's own heading rung
  *   figure  24px bold tabular  the claim, the decision
  *
  * Radii come from the app too: cards `rounded-2xl` (18px), panels `rounded-xl`
  * (14px), controls `rounded-lg` (10px), pills `rounded-full`.
  */
 export const TYPE = {
-  /** A caption. Sentence case — see the note above on the uppercase label. */
-  label: "text-xs font-normal",
-  meta: "font-mono text-[11px] tracking-wide",
+  /**
+   * A caption. Sentence case — see the note above on the uppercase label.
+   *
+   * `font-light` (300), not `font-normal`. This is `Meta`'s own weight on the case
+   * page (`CaseDetailPage`'s `Status` / `Priority` / `Stage` captions all compute
+   * 12px/300), and a caption at 400 sits at the same weight as the value under it,
+   * which is what made these read as two lines of equal rank rather than as a
+   * label and its reading.
+   */
+  label: "text-xs font-light",
+  /**
+   * NOT MONOSPACE ANY MORE, and the case page is why.
+   *
+   * Measured on `/cases/WR-2026-0417`: the hero prints `WR-2026-0417 · Joliet DC ·
+   * Line 3 / Induct` in plain 12px muted, and the page uses a monospace face
+   * **nowhere** — 0 runs against this page's 2. An id set in mono reads as a code
+   * sample rather than as a fact about the case, and it was the one face on this
+   * screen the app does not have.
+   *
+   * 12px rather than 11: `small` is the rung the case page's own meta line sits on,
+   * and an 11px step under it existed only to make room for the mono face's wider
+   * figures.
+   */
+  meta: "text-xs",
   small: "text-xs",
   /** Reading prose — the paragraphs a reviewer actually reads. */
   body: "text-sm",
   /** A section's own heading, at the same rank the app's widget headers use. */
   title: "text-base font-semibold",
   /**
-   * 20/600, NOT 24/700 — and this is the one rung that deliberately leaves the
-   * app's set.
+   * 24/700 — THE APP'S OWN `h1`, and this reverses the note that stood here.
    *
-   * 24px bold is the case detail page's `h1`, and there it carries a CUSTOMER
-   * NAME: two or three words. Here it carries an action title — "Coverage
-   * decision — combined cause finding" — which is a 41-character sentence, and a
-   * sentence set at 24/700 reads as shouting rather than as a heading. It also
-   * has to sit on one line beside the case id and three status readings, and at
-   * 24px it took 620px of the 1132 available.
+   * It was 20/600, and the reason was real: at 24px the title took 620px of the
+   * 1132 available, because it shared a line with the case id and three status
+   * readings. A 41-character sentence crammed against four other things does read
+   * as shouting.
    *
-   * 20px keeps it comfortably the largest thing on the screen (the next rung
-   * down is the 16px card heads) while letting the line settle. The cost is one
-   * type size the rest of the app does not have; the alternative was 16px, which
-   * is the card heads and the customer name, and that collapses the hierarchy
-   * altogether.
+   * **The crowding is what changed, not the argument.** The header's readings moved
+   * into `Meta` columns — caption over value, the case page's own arrangement
+   * (../../pages/cases/CoverageDecisionCiPage.tsx) — which takes them off the
+   * title's line entirely. The title now owns its line, so the app's rung fits at
+   * its natural size and this page stops being the only screen whose heading is a
+   * rung short.
+   *
+   * The two changes are one change: reverting either alone brings back either the
+   * crowding or the odd rung.
    */
-  page: "text-xl leading-tight font-semibold tracking-tight",
-  /** The one or two figures a screen is about — the claim, the decision. */
-  figure: "text-2xl leading-none font-bold tracking-tight tabular-nums",
+  page: "text-2xl leading-tight font-bold tracking-tight",
+  /**
+   * The one or two figures a screen is about — the claim, the decision.
+   *
+   * 20/600, DOWN FROM 24/700, and the reason is the rung above. While the page
+   * title was 20px this figure was set at 24 — so the largest, boldest thing on the
+   * screen was a number, one rung ABOVE the heading of the page it sits on. With
+   * the title at the app's 24/700 that inversion would simply flip to a tie.
+   *
+   * It keeps its position, its tabular figures and its emphasis inside its own
+   * panel; it is no longer competing with the page's own name.
+   */
+  figure: "text-xl leading-none font-semibold tracking-tight tabular-nums",
 } as const;
 
 /**
@@ -119,6 +151,18 @@ export function Label({ children, className }: { children: ReactNode; className?
   return <span className={cn(TYPE.label, "text-muted-foreground", className)}>{children}</span>;
 }
 
+/**
+ * THE NAME IS HISTORICAL AND THE FACE IS NOT MONOSPACE ANY MORE.
+ *
+ * It wraps `TYPE.meta`, which dropped the mono face when this page was measured
+ * against the case detail hero — that page sets ids, stamps and sources in its
+ * plain 12px muted and uses a monospace face nowhere. See `TYPE.meta`'s note.
+ *
+ * Kept as `Mono` on purpose rather than renamed: it has callers in five files and
+ * the job it does — "this is a reference, not prose" — did not change, only the
+ * face it does it with. Renaming it is a churn-only diff across those five, and
+ * this note is what stops the name being read as a promise.
+ */
 export function Mono({ children, className }: { children: ReactNode; className?: string }) {
   return <span className={cn(TYPE.meta, "text-muted-foreground", className)}>{children}</span>;
 }
@@ -126,11 +170,13 @@ export function Mono({ children, className }: { children: ReactNode; className?:
 /**
  * A CARD, AND IT IS THE APP'S CARD.
  *
- * `GLASS_CLASSES` rather than a copy of its values: `bg-white/55`, the white rim,
+ * `GLASS_CLASSES` rather than a copy of its values: the fill, the rim,
  * `rounded-2xl`, `backdrop-blur-sm` and the two-part shadow are one decision made
- * in ../ui/card.tsx, and a second copy here is a second thing to keep in step. It
- * stays a `<section>` — the app's `Card` is a `div`, and the landmark is worth
- * more here than the shared element.
+ * in ../ui/card.tsx, and a second copy here is a second thing to keep in step —
+ * which the data table proved by carrying one and drifting the moment the card's
+ * fill changed. No values are named here on purpose; that file owns them. It stays
+ * a `<section>` — the app's `Card` is a `div`, and the landmark is worth more here
+ * than the shared element.
  *
  * It carries NO padding or layout, deliberately: this page's cards want different
  * insides (a grid of facts, a column of panels, a bare list), so each caller says
@@ -514,24 +560,44 @@ export function ToneChip({
 }
 
 /**
- * A STATUS CHIP — and it is `ToneChip` above, not the app's filled `Badge`.
+ * A STATUS CHIP — AND IT IS THE APP'S `Badge` AGAIN.
  *
- * It was `Badge variant="secondary" status={…}`: a 15% wash, no rim, 8px padding
- * and status-coloured ink. That is the app's chip, and adopting it was right for
- * the reskin — but the findings group then grew a bordered chip for its verdict and
- * its two cause sides, and the page ended up speaking two chip languages at once,
- * with the header's pair in one and everything below them in the other.
+ * This is a reversal of the note that used to stand here, so the argument on both
+ * sides is worth keeping.
  *
- * So this is now a thin alias with `ToneChip`'s tone names mapped onto the six this
- * takes. The signature did not change, which is the point: the header's two pills
- * (../../pages/cases/DecisionConsolePage.tsx) move to the unified style without an
- * edit at the call site, and any `Pill` added later gets it for free rather than
- * reintroducing the filled one.
+ * It was `Badge`; it became `ToneChip` because the findings group had grown a
+ * bordered chip for its verdict and its two cause sides, and the page ended up
+ * speaking two chip languages at once. Unifying on the bordered one made the page
+ * internally consistent — and left it inconsistent with everything around it.
  *
- * **`badges.tsx` has its own unrelated `Pill`** wrapping the app `Badge`, used by
- * the case and actions pages. That one is untouched — those screens are not part of
- * this page's chip vocabulary, and unifying across them is a separate decision.
+ * **Measured against the case page, the rimmed chip is the outlier.** Every status
+ * on `/cases/WR-2026-0417` is rimless, on a `/15` wash, with the INK carrying the
+ * tone: `Action required` is warning-inked, `P1` is destructive-inked. This page's
+ * chips were a 1px `/30` rim over a `/10` wash with neutral `foreground` ink, so
+ * the tone survived only as a pale border and a paler fill, and the word itself
+ * said nothing. That is the difference a reader registers first.
+ *
+ * So the unification stands and only its target moved: the three direct `ToneChip`
+ * callers on this page — the findings verdict, the two cause markers
+ * (./Finding.tsx) and the customer segment (./CaseFacts.tsx) — came across in the
+ * same change. `ToneChip` keeps no callers here; `TONE` is still read by
+ * ./decision/FiledRecord.tsx's change badges, which are 18px glyph squares rather
+ * than text pills and are right to stay bordered.
+ *
+ * **`badges.tsx` has its own unrelated `Pill`**, also wrapping `Badge`, used by the
+ * case and actions pages. The two now agree by construction rather than by
+ * coincidence.
  */
+const BADGE_STATUS = {
+  ok: "success",
+  bad: "error",
+  warn: "warning",
+  info: "info",
+  // No brand status on `Badge`, and `info` is the nearest reading: both mean "a
+  // fact about where this sits" rather than a verdict on it.
+  brand: "info",
+} as const;
+
 export function Pill({
   tone,
   children,
@@ -541,9 +607,19 @@ export function Pill({
   children: ReactNode;
   className?: string;
 }) {
+  // `plain` is the one tone with no hue, and `Badge`'s answer to that is the
+  // outline variant rather than a status — a rim and no wash, which is what a
+  // toneless chip should be.
+  if (tone === "plain") {
+    return (
+      <Badge variant="outline" className={className}>
+        {children}
+      </Badge>
+    );
+  }
   return (
-    <ToneChip tone={tone} className={className}>
+    <Badge variant="secondary" status={BADGE_STATUS[tone]} className={className}>
       {children}
-    </ToneChip>
+    </Badge>
   );
 }

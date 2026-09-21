@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PageContainer } from "@/components/PageContainer";
+import { usePageWidthClass } from "@/lib/layout";
 import { AskAiPanel } from "@/components/warranty/AskAiPanel";
 import { CaseDetailSkeleton } from "@/components/warranty/CaseSkeletons";
 import { CaseTabs } from "@/components/warranty/CaseTabs";
@@ -110,6 +111,7 @@ export function CaseDetailPage() {
     : null;
   // Inline editing on the Details tab belongs to whoever owns the case.
   const editable = profile.name === warrantyCase.owner;
+  const width = usePageWidthClass();
 
   return (
     <div className="flex h-full min-h-0">
@@ -120,7 +122,13 @@ export function CaseDetailPage() {
         two-column Overview ended up 958px of content in 632px of room, cut off
         under the panel and only reachable by scrolling sideways.
       */}
-      <div className="@container min-w-0 flex-1 overflow-y-auto p-6">
+      {/* THE CAP GOES ON THE `@container`, not on the column inside it.
+          The tab layouts below switch on THIS element's width, so narrowing the
+          content while leaving the query element wide would have them choose a
+          two-column arrangement for a one-column space — the exact failure the
+          note above describes, arrived at from the other direction
+          (../../lib/layout.ts). */}
+      <div className={cn("@container min-w-0 flex-1 overflow-y-auto p-6", width)}>
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between gap-3">
             <Link

@@ -1,0 +1,150 @@
+<meta charset="utf-8">
+<title>Card width — the rest of the app</title>
+<style>
+  :root{
+    --background:oklch(1 0 89.88); --foreground:oklch(0.2394 0.0455 252.45);
+    --card:oklch(1 0 89.88); --muted:oklch(0.963 0.0062 255.48);
+    --muted-foreground:oklch(0.4594 0.028 264.25); --border:oklch(0.9229 0.0065 252.13);
+    --primary:oklch(0.64 0.115 208); --primary-foreground:oklch(1 0 89.88);
+    --success:oklch(0.57 0.105 152); --warning:oklch(0.8 0.1401 80.82);
+    --destructive:oklch(0.62 0.15 18); --insight-600:oklch(0.56 0.20 277);
+    --font-sans:Inter,ui-sans-serif,sans-serif,system-ui; --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+    --page-max:none;              /* today: PageContainer has NO cap */
+  }
+  body.narrow{ --page-max:960px; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:oklch(0.985 0.002 250);color:var(--foreground)}
+
+  .bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:14px;
+       border-bottom:1px solid var(--border);background:var(--card);padding:10px 20px}
+  .sw{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;font-weight:600}
+  .sw .t{position:relative;display:inline-flex;height:16px;width:28px;flex:none;align-items:center;
+         border-radius:999px;background:color-mix(in oklab,var(--muted-foreground) 35%,transparent);padding:2px;transition:background-color .15s}
+  body.narrow .sw .t{background:var(--primary)}
+  .sw .t i{display:block;height:12px;width:12px;border-radius:999px;background:#fff;transition:transform .15s}
+  body.narrow .sw .t i{transform:translateX(12px)}
+  .sw small{display:block;font-size:11px;font-weight:400;color:var(--muted-foreground)}
+  .readout{margin-left:auto;display:flex;gap:18px;font-family:var(--font-mono);font-size:11px;color:var(--muted-foreground)}
+  .readout b{color:var(--foreground);font-weight:600}
+
+  .page{padding:20px 16px 40px}
+  .gut{position:relative}
+  .gut::before,.gut::after{content:"";position:absolute;top:0;bottom:0;width:0;
+       background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in oklab,var(--primary) 9%,transparent) 6px 12px);
+       transition:width .28s cubic-bezier(.4,0,.2,1);pointer-events:none}
+  body.narrow .gut::before,body.narrow .gut::after{width:calc((100% - 960px)/2)}
+  .gut::before{left:0} .gut::after{right:0}
+  .col{margin:0 auto;display:flex;max-width:var(--page-max);flex-direction:column;gap:14px;transition:max-width .28s cubic-bezier(.4,0,.2,1)}
+  .note{max-width:var(--page-max);margin:0 auto 14px;font-size:12px;color:var(--muted-foreground);line-height:1.6;transition:max-width .28s}
+  .note b{color:var(--foreground)}
+
+  h2.sec{max-width:var(--page-max);margin:26px auto 10px;font-size:13px;font-weight:600;transition:max-width .28s}
+  .card{border:1px solid var(--border);border-radius:14px;background:var(--card);padding:16px}
+  .tiles{display:flex;gap:12px}
+  .tile{flex:1;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:13px}
+  .tile .v{font-size:22px;font-weight:700} .tile .k{font-size:11px;color:var(--muted-foreground)}
+
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;padding:8px 10px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+     color:var(--muted-foreground);border-bottom:1px solid var(--border);font-weight:600}
+  td{padding:11px 10px;border-bottom:1px solid color-mix(in oklab,var(--border) 55%,transparent);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  .cid{color:var(--primary);font-weight:600} .sub{color:var(--muted-foreground);font-size:11px}
+  .pill{display:inline-flex;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap}
+  .pill.warn{background:color-mix(in oklab,var(--warning) 20%,transparent)}
+  .pill.risk{background:color-mix(in oklab,var(--destructive) 13%,transparent);color:var(--destructive)}
+  .pill.ok{background:color-mix(in oklab,var(--success) 15%,transparent)}
+  .travel{position:relative}
+  body.show-gap td.travel::after{content:"";position:absolute;left:0;right:0;top:50%;
+       border-top:1px dashed color-mix(in oklab,var(--destructive) 50%,transparent)}
+  .warnbox{max-width:var(--page-max);margin:0 auto;border:1px solid color-mix(in oklab,var(--warning) 45%,transparent);
+     background:color-mix(in oklab,var(--warning) 12%,transparent);border-radius:11px;padding:12px 14px;
+     font-size:12px;line-height:1.6;transition:max-width .28s}
+  .warnbox b{color:var(--foreground)}
+</style>
+
+<div class="bar">
+  <label class="sw"><span class="t" id="t"><i></i></span>
+    <span>Compact card width<small>Off is today — these pages have no cap at all. On is 960px.</small></span></label>
+  <label class="sw" style="font-weight:400"><input type="checkbox" id="g" style="accent-color:var(--destructive)">
+    <span style="font-size:12px">Show the stretch</span></label>
+  <div class="readout"><span>cap <b id="rc">none</b></span><span>table width <b id="rw">—</b></span>
+    <span>gutter <b id="rg">0px</b></span></div>
+</div>
+
+<div class="page">
+  <p class="note">
+    <b>Mock 2 of 2 — the work queue, and why this page is the bigger change.</b>
+    The decision consoles already cap themselves. Everything on <code>PageContainer</code>
+    — work queue, case detail, performance, case plans — has <b>no cap at all</b> and runs
+    to the window edge. So here the flag does not swap a number, it introduces one.
+  </p>
+
+  <div class="gut">
+    <div class="col" id="col">
+      <div class="tiles">
+        <div class="tile"><div class="v">41</div><div class="k">Open cases</div></div>
+        <div class="tile"><div class="v">38</div><div class="k">Progressing on their own</div></div>
+        <div class="tile"><div class="v">3</div><div class="k">For you today</div></div>
+        <div class="tile"><div class="v">10</div><div class="k">Cases at SLA risk</div></div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <table id="tbl">
+          <tr><th>Case</th><th>Description</th><th>Owner</th><th>Why it's here</th><th>Status</th><th>SLA</th></tr>
+          <tr>
+            <td><div class="cid">WR-2026-0417</div><div class="sub">Northstar Retail Distribution</div></td>
+            <td class="travel">Coverage disputed: combined cause finding<div class="sub">Resolution decision</div></td>
+            <td>Scott Florentino<div class="sub">Warranty Resolution Lead</div></td>
+            <td>No rule resolves a combined cause</td>
+            <td><span class="pill warn">Action required</span></td>
+            <td><span class="pill risk">At risk</span><div class="sub">12 min ago</div></td>
+          </tr>
+          <tr>
+            <td><div class="cid">WR-2026-0421</div><div class="sub">Northstar Retail Distribution</div></td>
+            <td class="travel">Repeat-failure pattern needs a human call<div class="sub">Close and learn</div></td>
+            <td>Ryan Ochoa<div class="sub">Product Quality Lead</div></td>
+            <td>Recurrence confirmed, gates closure</td>
+            <td><span class="pill warn">Action required</span></td>
+            <td><span class="pill risk">At risk</span><div class="sub">1 hr ago</div></td>
+          </tr>
+          <tr>
+            <td><div class="cid">WR-2026-0409</div><div class="sub">Northstar Retail Distribution</div></td>
+            <td class="travel">Engineering sign-off on a spec deviation<div class="sub">Diagnose and contain</div></td>
+            <td>Miguel Alvarez<div class="sub">Reliability and Controls Engineer</div></td>
+            <td>Repair exceeds standard spec</td>
+            <td><span class="pill warn">Action required</span></td>
+            <td><span class="pill ok">On track</span><div class="sub">48 min ago</div></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">The trade to weigh</h2>
+  <div class="warnbox">
+    <b>A cap helps the reading pages and can hurt the table.</b> Six columns at 960px
+    is tight — <i>Why it's here</i> and <i>Description</i> start wrapping to three lines
+    where today they fit on one or two. Toggle the switch and watch those two columns.
+    <br><br>
+    That is the argument for scoping the flag to <b>card-based pages</b> — the decision
+    consoles and case detail — and leaving the queue's table full-bleed, rather than one
+    cap over everything. It is one line either way; it just needs deciding, because
+    "all the cards" and "all the pages" are not the same set.
+  </div>
+</div>
+
+<script>
+  const body=document.body,t=document.getElementById('t'),g=document.getElementById('g');
+  t.parentElement.addEventListener('click',e=>{if(e.target===g)return;body.classList.toggle('narrow');measure();});
+  g.addEventListener('change',()=>{body.classList.toggle('show-gap',g.checked);});
+  function measure(){
+    const narrow=body.classList.contains('narrow');
+    document.getElementById('rc').textContent=narrow?'960px':'none';
+    const w=document.getElementById('tbl').getBoundingClientRect().width;
+    document.getElementById('rw').textContent=Math.round(w)+'px';
+    const avail=document.querySelector('.gut').getBoundingClientRect().width;
+    document.getElementById('rg').textContent=narrow?Math.max(0,Math.round((avail-960)/2))+'px each side':'0px';
+  }
+  addEventListener('resize',measure); setTimeout(measure,350); measure();
+</script>

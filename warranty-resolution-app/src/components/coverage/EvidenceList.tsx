@@ -8,7 +8,7 @@ import { EvidenceComposer, draftFrom } from "@/components/coverage/EvidenceCompo
 import { COL, COL_HINT } from "@/components/coverage/evidenceColumns";
 import { CALL_OPTIONS, IMPORTANCE_OPTIONS, type EvidenceItem } from "@/lib/coverage/fixture";
 import type { CoverageEvent } from "@/lib/coverage/store";
-import { moneyExact } from "@/lib/warranty/format";
+import { moneyExact, timeOnly } from "@/lib/warranty/format";
 import { cn } from "@/lib/utils";
 
 /**
@@ -42,12 +42,18 @@ import { cn } from "@/lib/utils";
  * one was the obvious alternative and is worse: a list with one row open for a
  * reason nobody stated reads as a bug rather than as a hint.
  *
- * ## The reviewer's own rows are marked, and only those can be touched
+ * ## Every row a hand has been on is marked; only the reviewer's own can be edited
  *
- * A chip beside the title, and Edit / Remove in the opened body. The agent's items
- * carry neither: they are the record this decision is being taken against, and a
- * list where any row could be deleted is one where "three items" stops meaning
- * anything.
+ * These are two different facts and the row draws them separately. **The mark**
+ * (`Hand` below) names whoever added OR changed the row, which now includes an
+ * agent's item the reviewer merely re-weighted — that is the commonest edit on this
+ * card and the one that moves the agent, and the list used to be silent about it.
+ * **Edit / Remove in the opened body** stay on `addedByReviewer` alone: the agent's
+ * items are the record this decision is being taken against, and a list where any
+ * row could be deleted is one where "three items" stops meaning anything.
+ *
+ * So a re-weighted agent row carries a mark and no controls, which is exactly what
+ * it should say — somebody moved this, and it is still not theirs to remove.
  *
  * ## A standing hazard in this app, since two passes have now hit it
  *
@@ -123,7 +129,7 @@ function ColumnHead({ width, hint, children }: { width: string; hint: string; ch
 export function EvidenceList({
   evidence,
   dispatch,
-  addedByName,
+  actorName,
   readOnly = false,
 }: {
   evidence: EvidenceItem[];
@@ -133,16 +139,20 @@ export function EvidenceList({
    */
   dispatch?: (e: CoverageEvent) => void;
   /**
-   * WHOSE ROWS THE MARKED ONES ARE — the signed-in reviewer, passed in.
+   * WHOSE HAND IS ON THE MARKED ROWS — the signed-in reviewer, passed in.
    *
-   * `addedByReviewer` is a boolean, so the item itself does not know a name, and
-   * every row it is true of was added in this session by the person looking at the
-   * screen. Threaded from the decider name the decision is already signed with
-   * rather than read from the role hook here: one source for "who is acting", and
-   * this file stays a renderer. Switching persona therefore re-labels these rows,
-   * which is correct — the demo's whole point is that the record says who.
+   * `addedByReviewer` and `touchedByReviewer` are booleans, so the item itself does
+   * not know a name, and every row either is true of was added or edited in this
+   * session by the person looking at the screen. Threaded from the decider name the
+   * decision is already signed with rather than read from the role hook here: one
+   * source for "who is acting", and this file stays a renderer. Switching persona
+   * therefore re-labels these rows, which is correct — the demo's whole point is
+   * that the record says who.
+   *
+   * `addedByName` until it named one verb only. It now stands behind two — added
+   * and edited — and the name is the same string in both, which is the point.
    */
-  addedByName: string;
+  actorName: string;
   /**
    * THE LIST AS FILED — same band, same columns, same rows, no controls.
    *
@@ -216,7 +226,7 @@ export function EvidenceList({
               key={e.id}
               item={e}
               dispatch={dispatch}
-              addedByName={addedByName}
+              actorName={actorName}
               readOnly={readOnly}
               onEdit={() => setComposer({ mode: "edit", id: e.id })}
             />
@@ -291,16 +301,119 @@ function FiledValue({ glyph, label }: { glyph: ReactNode; label: string | null }
   );
 }
 
+/**
+ * WHOSE HAND IS ON THIS ROW — one mark, two verbs, and the glyph IS the verb.
+ *
+ * ## What it replaced, and what it keeps
+ *
+ * A `Badge` with a tinted ground, an initials avatar and the words "Added by".
+ * All three came off: a tinted ground is the shape this console gives a STATE —
+ * the recommendation tag, the on-us/on-them markers, the eval verdicts — and this
+ * is not a state, it is a note about a hand. Dressing it as a badge gave it a
+ * verdict's weight. The prose went with the ground, because a person glyph
+ * followed by a name already says somebody put this here.
+ *
+ * All of that still holds, and holds harder now that roughly twice as many rows
+ * carry a mark.
+ *
+ * ## The second verb
+ *
+ * The mark used to fire on `addedByReviewer` only, so the list announced the rarer
+ * act and stayed silent on the commoner one. Re-weighting is what moves the agent —
+ * `rationaleFor` in ../../lib/coverage/store.ts reads `importance === "high"` on the
+ * renewal item, which is the beat this whole screen is built around — and the row it
+ * happened to looked identical to one nobody had touched.
+ *
+ * `touchedByReviewer` covers every way a reviewer can change an item: both the row's
+ * two selects (`evidence.set`) and the composer editing a row back
+ * (`evidence.update`) set it. So the second verb needed no new state, only drawing.
+ *
+ * ## ONE MARK FOR BOTH VERBS — the same avatar, by decision
+ *
+ * A `Pencil` on the edited state was built first, on the argument that the glyph
+ * should carry the verb. It was rejected: the mark answers *whose hand is on this
+ * row*, and the answer is the same person either way, so drawing two glyphs made one
+ * question look like two. The silhouette is the mark; the verb is a detail about it.
+ *
+ * **What follows from that:** the visible difference between an added row and an
+ * edited one is nothing. Both read `👤 Scott Florentino`. The verb survives only in
+ * the tooltip and the `aria-label` — which is a deliberate trade, not an oversight,
+ * and the reason `Added wins when a row is both` below still matters: it decides
+ * which sentence the invisible-to-the-eye states tell.
+ *
+ * **Filled, not the outline.** A hairline person at 12px against 10.5px type reads
+ * as a smudge; a solid one reads as a mark. The inline style matters as much as the
+ * prop, because lucide writes `strokeWidth` as a presentation attribute and any CSS
+ * rule anywhere (a stylesheet this app cannot see the source of included) beats one
+ * of those; an inline declaration does not lose that race.
+ *
+ * ## Added wins when a row is both
+ *
+ * `evidence.set` sets `touchedByReviewer` on any row, the reviewer's own included, so
+ * re-weighting a row you filed leaves both flags true. Authorship outranks revision:
+ * it is one fact — the row is yours — and editing your own row is not news. With one
+ * glyph this decides nothing visible; it decides which sentence the tooltip tells,
+ * and `Added by …` is the truer one about a row its owner went back to.
+ *
+ * ## The verb and the time live in the tooltip
+ *
+ * "Edited by Scott Florentino" is 120px against the bare name's 74px, on a line whose
+ * title already truncates. The sentence goes where it costs no width — `aria-label`
+ * for a reader who cannot see the glyph, which is where it has always been, and now a
+ * tooltip for a pointer. 1200ms, the dwell the column heads and the triggers use, and
+ * for the same reason: this mark sits on a 48px row that is itself a toggle, so a
+ * pointer crossing it on the way somewhere else must not raise anything.
+ *
+ * An unmarked row is the case as the agent filed it. That absence only started
+ * meaning something with the second verb — before it, a blank row was either
+ * untouched or edited-invisibly, which is worth nothing to read.
+ */
+function Hand({ item: e, name }: { item: EvidenceItem; name: string }) {
+  const added = Boolean(e.addedByReviewer);
+  if (!added && !e.touchedByReviewer) return null;
+
+  // The stamp that matches the verb, never the later of the two: a row added at
+  // 10:44 and edited at 10:51 prints "Added by … · 10:44 AM", which is what the
+  // glyph beside it just said. `addedAt`/`touchedAt` in ../../lib/coverage/fixture.ts
+  // are separate fields for exactly this.
+  const at = added ? e.addedAt : e.touchedAt;
+  const sentence = `${added ? "Added" : "Edited"} by ${name}${at ? ` · ${timeOnly(at)}` : ""}`;
+
+  return (
+    <Tooltip delayDuration={1200}>
+      <TooltipTrigger asChild>
+        <span
+          aria-label={sentence}
+          className={cn(
+            TYPE.small,
+            "flex shrink-0 items-center gap-1 text-[10.5px] text-muted-foreground",
+          )}
+        >
+          <UserRound
+            className="size-3 shrink-0"
+            fill="currentColor"
+            strokeWidth={0}
+            style={{ strokeWidth: 0 }}
+            aria-hidden
+          />
+          {name}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top">{sentence}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function Row({
   item: e,
   dispatch,
-  addedByName,
+  actorName,
   readOnly = false,
   onEdit,
 }: {
   item: EvidenceItem;
   dispatch?: (ev: CoverageEvent) => void;
-  addedByName: string;
+  actorName: string;
   readOnly?: boolean;
   onEdit: () => void;
 }) {
@@ -315,48 +428,7 @@ function Row({
       title={e.name}
       open={open}
       onToggle={hasBody ? () => setOpen((o) => !o) : undefined}
-      badge={
-        e.addedByReviewer ? (
-          /* A SILHOUETTE AND A NAME — no chip, no initials, no sentence.
-             It was a `Badge` with a tinted ground, an initials avatar and the
-             words "Added by": the shape this console gives a STATE, which is what
-             the recommendation tag, the on-us/on-them markers and the eval
-             verdicts are. This is not a state. It is a note about where one row
-             came from, and dressing it as a badge gave it a verdict's weight.
-
-             The prose went with the ground. A person glyph followed by a name
-             already says somebody put this here, and only the reviewer's own rows
-             carry it — so "Added by" was two words spelling out what the mark
-             means rather than adding to it. `aria-label` keeps the sentence for a
-             reader who cannot see the glyph.
-
-             FILLED, not the outline. A hairline person at 12px against 10.5px
-             type reads as a smudge; a solid one reads as a mark. `strokeWidth={0}`
-             matters as much as the fill — lucide draws strokes, so filling alone
-             leaves an outline thickening the silhouette from the inside. */
-          <span
-            aria-label={`Added by ${addedByName}`}
-            className={cn(
-              TYPE.small,
-              "flex shrink-0 items-center gap-1 text-[10.5px] text-muted-foreground",
-            )}
-          >
-            <UserRound
-              className="size-3 shrink-0"
-              fill="currentColor"
-              // BOTH, and the inline style is the one that is guaranteed. lucide
-              // writes `strokeWidth` as a presentation attribute, and any CSS rule
-              // anywhere — a stylesheet this app cannot see the source of included
-              // — beats a presentation attribute. An inline declaration does not
-              // lose that race.
-              strokeWidth={0}
-              style={{ strokeWidth: 0 }}
-              aria-hidden
-            />
-            {addedByName}
-          </span>
-        ) : undefined
-      }
+      badge={<Hand item={e} name={actorName} />}
       right={
         /* `width={0}` STAYS — the trigger still sizes itself from the inside out.
            What changed is that it now sits in a fixed cell (`COL` above), so its

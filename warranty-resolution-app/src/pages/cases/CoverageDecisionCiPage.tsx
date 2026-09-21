@@ -16,6 +16,7 @@ import { useRole } from "@/lib/role/useRole";
 import { recordDecision, reopenDecision } from "@/lib/warranty/useCases";
 import { formatRemaining, formatSlaBudget, slaStatusFor } from "@/lib/warranty/sla";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
+import { usePageWidthClass } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 // The selection-driven capture bar, lifted out of the host that the fork of this
 // screen was embedded in. Its own notes explain the gesture.
@@ -99,6 +100,7 @@ function Decision({
   fixture: CoverageFixture;
 }) {
   const { profile } = useRole();
+  const width = usePageWidthClass();
   const { state, dispatch, limit, claim, recommended, opening } = useCoverageDecision(action, fixture);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -181,7 +183,15 @@ const { selection, readSelection, offer, clear: clearSelection } =
 
               `pb-14` stays: the submit bar is the last thing on a long column and
               wants room under it. */}
-          <div className="mx-auto flex max-w-[1180px] flex-col gap-6 px-4 py-6 pb-14 sm:px-6 lg:px-8">
+          {/* `usePageWidthClass` wins over the 1180 here when `ciNarrow` is on —
+              `cn` is tailwind-merge, so the later `max-w-*` replaces this one
+              rather than sitting beside it (../../lib/layout.ts). */}
+          <div
+            className={cn(
+              "mx-auto flex max-w-[1180px] flex-col gap-6 px-4 py-6 pb-14 sm:px-6 lg:px-8",
+              width,
+            )}
+          >
             {/* THE CASE PAGE'S OWN CHROME — a back-link, then a hero card. A
                 reviewer arriving here from ./CaseDetailPage.tsx lands on the
                 header they have just left: the same link row, the same glass

@@ -42,6 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { GLASS_CLASSES } from "@/components/ui/card";
 import { useReactTableCompat } from "@/hooks/useReactTableCompat";
 import { cn } from "@/lib/utils";
 import { DataTableExpandAllToggle } from "./data-table-expand-toggle";
@@ -54,8 +55,11 @@ import {
 import { DataTableSkeleton } from "./data-table-skeleton";
 import { DataTableToolbar } from "./data-table-toolbar";
 
-const GLASS_CLASSES =
-  "bg-white/55 border border-white/80 rounded-2xl backdrop-blur-sm shadow-[0_2px_16px_2px_rgba(0,0,0,0.05),inset_0_1px_0_0_rgba(255,255,255,0.6)] dark:bg-white/[0.055] dark:border-white/[0.03] dark:shadow-[0_2px_16px_2px_rgba(0,0,0,0.2),inset_0_1px_0_0_rgba(255,255,255,0.04)]";
+/* IMPORTED, NOT RESTATED. This was a verbatim copy of ../card.tsx's own constant,
+   inlined as one string — so the table card and every other card in the app agreed
+   only by coincidence. They stopped agreeing the moment the card went opaque on a
+   tinted page: the queue's table would have stayed translucent while everything
+   around it moved. One definition, one place. */
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];

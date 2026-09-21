@@ -170,11 +170,13 @@ export function Mono({ children, className }: { children: ReactNode; className?:
 /**
  * A CARD, AND IT IS THE APP'S CARD.
  *
- * `GLASS_CLASSES` rather than a copy of its values: `bg-white/55`, the white rim,
+ * `GLASS_CLASSES` rather than a copy of its values: the fill, the rim,
  * `rounded-2xl`, `backdrop-blur-sm` and the two-part shadow are one decision made
- * in ../ui/card.tsx, and a second copy here is a second thing to keep in step. It
- * stays a `<section>` — the app's `Card` is a `div`, and the landmark is worth
- * more here than the shared element.
+ * in ../ui/card.tsx, and a second copy here is a second thing to keep in step —
+ * which the data table proved by carrying one and drifting the moment the card's
+ * fill changed. No values are named here on purpose; that file owns them. It stays
+ * a `<section>` — the app's `Card` is a `div`, and the landmark is worth more here
+ * than the shared element.
  *
  * It carries NO padding or layout, deliberately: this page's cards want different
  * insides (a grid of facts, a column of panels, a bare list), so each caller says

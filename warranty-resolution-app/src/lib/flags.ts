@@ -137,6 +137,23 @@ export interface FeatureFlags {
    * rename and names the three places it is applied.
    */
   ciCoverageDecision: boolean;
+  /**
+   * Cap the page's content at a narrower measure.
+   *
+   * On, every card-based page is held to 960px and centred instead of running to
+   * the window edge. The gain is horizontal travel: on the decision's evidence
+   * rows the span between an item's name and its first control drops from 581px
+   * to 361px at a 1600px window, which is the distance the eye crosses on every
+   * row. Off by default — the wide layout is what the app has always shipped.
+   *
+   * 960 is the tightest width that costs nothing. The binding constraint is the
+   * three resolution cards: the longest title needs 198px to stay on one line, so
+   * they need 618px of content between them, and 960 leaves each 290px. Below
+   * about 900 they start wrapping.
+   *
+   * ./layout.ts holds the number and the four places it is applied.
+   */
+  ciNarrow: boolean;
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
@@ -151,6 +168,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   compactFinding: true,
   useActions: false,
   ciCoverageDecision: true,
+  ciNarrow: false,
 };
 
 export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: string }> = {
@@ -200,6 +218,12 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
   ciCoverageDecision: {
     label: "CI Coverage decision",
     hint: "Showcase the coverage decision page for CI, and name the lead Scott Florentino app-wide.",
+  },
+  // Directly under the CI coverage decision, which is what puts it there in the
+  // nav: the panel renders `Object.keys(FLAG_LABELS)` order.
+  ciNarrow: {
+    label: "CI narrow",
+    hint: "Hold the cards to a 960px column instead of the full window. Off by default.",
   },
 };
 

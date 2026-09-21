@@ -74,11 +74,45 @@ export interface EvidenceItem {
    *
    * Distinct from `addedByReviewer`, which says who FILED it: an agent's item the
    * reviewer re-weighted is still the agent's item, and still not the reviewer's
-   * to delete. What this buys is the submit bar's count of what departs from the
-   * agent's proposal — an edited row is a departure and there is otherwise no
-   * record that it happened, because the row simply holds its new value.
+   * to delete.
+   *
+   * Set by BOTH edit paths — the row's two selects (`evidence.set`) and the
+   * composer editing a row back (`evidence.update`) — so one flag covers every way
+   * a reviewer can change an item.
+   *
+   * It buys two things. The submit bar's count of what departs from the agent's
+   * proposal, and the row's own mark: the list draws the same person-and-name on a
+   * row this is true of as it draws on one they added — one mark for both verbs,
+   * since the answer to "whose hand is on this row" is the same person either way,
+   * and the verb survives in the tooltip. That mark is the newer of the two — for a
+   * long time an edit left no trace on the row at all, while the row simply held its
+   * new value, which made the list silent about the single gesture that moves the
+   * agent (re-weighting the renewal item; see `rationaleFor` in ./store.ts).
+   *
+   * STICKY, deliberately. Move a select and move it back and this stays true, so
+   * the row keeps its mark while the filed record's manifest — which diffs against
+   * the opening — correctly reports nothing changed. "You touched this" is true,
+   * and clearing it would mean threading the opening into a list that is otherwise
+   * a pure renderer of items.
    */
   touchedByReviewer?: boolean;
+  /**
+   * WHEN THE REVIEWER FILED THIS ROW. Absent on the case's own items, which nobody
+   * on this screen added.
+   *
+   * Stamped in the reducer off the injected clock, like `reasonAt` — the row's mark
+   * prints it in the tooltip, so a record says when as well as who.
+   */
+  addedAt?: string;
+  /**
+   * WHEN THE REVIEWER LAST CHANGED IT. Absent until they do.
+   *
+   * Separate from `addedAt` rather than one "last acted" stamp: the mark shows the
+   * ADDED verb on a row that is both added and edited (authorship outranks
+   * revision), and a single field would make that row print the edit's time under
+   * the word "Added".
+   */
+  touchedAt?: string;
 }
 
 export const IMPORTANCE_OPTIONS: { value: Importance; label: string }[] = [

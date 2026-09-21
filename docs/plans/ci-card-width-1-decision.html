@@ -1,0 +1,219 @@
+<meta charset="utf-8">
+<title>Card width — the decision page</title>
+<style>
+  :root{
+    --background:oklch(1 0 89.88); --foreground:oklch(0.2394 0.0455 252.45);
+    --card:oklch(1 0 89.88); --muted:oklch(0.963 0.0062 255.48);
+    --muted-foreground:oklch(0.4594 0.028 264.25); --border:oklch(0.9229 0.0065 252.13);
+    --primary:oklch(0.64 0.115 208); --primary-foreground:oklch(1 0 89.88);
+    --success:oklch(0.57 0.105 152); --warning:oklch(0.8 0.1401 80.82);
+    --destructive:oklch(0.62 0.15 18); --insight-100:oklch(0.92 0.05 277);
+    --insight-600:oklch(0.56 0.20 277);
+    --font-sans:Inter,ui-sans-serif,sans-serif,system-ui; --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+    /* THE ONE VALUE THE FLAG CHANGES */
+    --page-max:1180px;
+  }
+  body.narrow{ --page-max:960px; }
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:oklch(0.985 0.002 250);color:var(--foreground)}
+
+  /* ── the flag switch, standing in for the sidebar's Feature flags row ── */
+  .bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:14px;
+       border-bottom:1px solid var(--border);background:var(--card);padding:10px 20px}
+  .sw{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;font-weight:600}
+  .sw .t{position:relative;display:inline-flex;height:16px;width:28px;flex:none;align-items:center;
+         border-radius:999px;background:color-mix(in oklab,var(--muted-foreground) 35%,transparent);
+         padding:2px;transition:background-color .15s}
+  body.narrow .sw .t{background:var(--primary)}
+  .sw .t i{display:block;height:12px;width:12px;border-radius:999px;background:#fff;transition:transform .15s}
+  body.narrow .sw .t i{transform:translateX(12px)}
+  .sw small{display:block;font-size:11px;font-weight:400;color:var(--muted-foreground)}
+  .readout{margin-left:auto;display:flex;gap:18px;font-family:var(--font-mono);font-size:11px;color:var(--muted-foreground)}
+  .readout b{color:var(--foreground);font-weight:600}
+
+  /* ── the page ── */
+  .page{padding:20px 16px 40px}
+  .col{margin:0 auto;display:flex;max-width:var(--page-max);flex-direction:column;gap:14px;
+       transition:max-width .28s cubic-bezier(.4,0,.2,1)}
+  .gut{position:relative}
+  /* the gutter ruler, so the change is measurable and not just felt */
+  .gut::before,.gut::after{content:"";position:absolute;top:0;bottom:0;width:calc((100% - var(--page-max))/2);
+       background:repeating-linear-gradient(135deg,transparent 0 6px,color-mix(in oklab,var(--primary) 9%,transparent) 6px 12px);
+       transition:width .28s cubic-bezier(.4,0,.2,1);pointer-events:none}
+  .gut::before{left:0} .gut::after{right:0}
+
+  .card{border:1px solid var(--border);border-radius:14px;background:var(--card);padding:18px}
+  .hero{display:flex;flex-wrap:wrap;align-items:center;gap:26px}
+  .h1{font-size:19px;font-weight:600;letter-spacing:-.02em}
+  .h1 .id{font-family:var(--font-mono);font-size:12px;color:var(--muted-foreground)}
+  .meta{font-size:11px;color:var(--muted-foreground)}
+  .metav{font-size:13px;font-weight:600}
+  .pill{display:inline-flex;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
+  .pill.warn{background:color-mix(in oklab,var(--warning) 20%,transparent)}
+  .pill.ok{background:color-mix(in oklab,var(--success) 15%,transparent)}
+  .ch{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin-bottom:12px}
+  .ch svg{width:15px;height:15px;color:var(--muted-foreground)}
+  .split{display:flex;gap:14px}
+  .box{border:1px solid var(--border);border-radius:11px;padding:13px}
+  .box .k{font-size:11px;color:var(--muted-foreground)} .box .v{font-size:19px;font-weight:700}
+  .desc{flex:1;font-size:13px;line-height:1.55}
+
+  .rows{overflow:hidden;border:1px solid var(--border);border-radius:11px;margin-top:12px}
+  .rhead,.r{display:flex;align-items:center;gap:10px;padding:9px 13px;font-size:12px}
+  .rhead{border-bottom:1px solid var(--border);font-weight:600}
+  .r{border-bottom:1px solid color-mix(in oklab,var(--border) 55%,transparent)} .r:last-child{border:0}
+  .rname{flex:1;min-width:0;font-weight:600;font-size:13px}
+  .ctl{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:8px;
+       padding:5px 9px;font-size:12px;background:var(--card);white-space:nowrap}
+  .w-rel{width:104px;justify-content:space-between} .w-dec{width:116px;justify-content:space-between}
+  /* the dead span the request pointed at */
+  .gap{position:relative;flex:1;min-width:0;height:1px}
+  body.show-gap .gap::after{content:attr(data-w);position:absolute;left:0;right:0;top:-8px;height:16px;
+       border-top:1px dashed color-mix(in oklab,var(--destructive) 55%,transparent);
+       text-align:center;font-family:var(--font-mono);font-size:10px;color:var(--destructive);line-height:16px}
+
+  .two{display:flex;gap:14px;margin-top:12px}
+  .money{width:290px;flex:none}
+  .ta{flex:1;min-height:98px;border:1px solid var(--border);border-radius:11px;padding:11px;
+      font-size:13px;line-height:1.55;color:var(--foreground);background:var(--card)}
+  .res{display:flex;gap:11px;margin-top:12px}
+  .rc{flex:1;min-width:0;border:1px solid transparent;border-radius:10px;background:var(--muted);padding:10px 12px}
+  .rc.sel{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 18%,transparent)}
+  .rc .n{font-size:12px;font-weight:600} .rc .d{font-size:11px;color:var(--muted-foreground);margin-top:1px}
+  .bdg{display:inline-flex;align-items:center;gap:4px;border-radius:999px;background:var(--insight-100);
+       padding:1px 6px;font-size:10.5px;font-weight:600;margin-left:6px}
+  .bdg svg{width:11px;height:11px;color:var(--insight-600)}
+  .submitrow{display:flex;align-items:center;gap:12px;margin-top:14px;border-top:1px solid var(--border);padding-top:13px}
+  .submitrow p{flex:1;margin:0;font-size:12px;color:var(--muted-foreground)}
+  .sub{border:0;border-radius:10px;background:var(--primary);color:var(--primary-foreground);
+       padding:12px 22px;font-size:13px;font-weight:600;cursor:pointer}
+  .note{max-width:var(--page-max);margin:0 auto 14px;font-size:12px;color:var(--muted-foreground);line-height:1.6;
+        transition:max-width .28s}
+  .note b{color:var(--foreground)}
+</style>
+
+<svg style="display:none">
+  <symbol id="ai" viewBox="0 0 24 24"><path fill="currentColor" d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"/></symbol>
+  <symbol id="scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></symbol>
+  <symbol id="bldg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></symbol>
+</svg>
+
+<div class="bar">
+  <label class="sw">
+    <span class="t" id="t"><i></i></span>
+    <span>Compact card width<small>New flag — off is today's 1180px, on is 960px</small></span>
+  </label>
+  <label class="sw" style="font-weight:400">
+    <input type="checkbox" id="g" style="accent-color:var(--destructive)">
+    <span style="font-size:12px">Show the dead span</span>
+  </label>
+  <div class="readout">
+    <span>container <b id="rc">1180px</b></span>
+    <span>cards <b id="rw">1116px</b></span>
+    <span>gutter <b id="rg">—</b></span>
+    <span>name → control <b id="rt">581px</b></span>
+  </div>
+</div>
+
+<div class="page">
+  <p class="note">
+    <b>Mock 1 of 2 — the coverage decision.</b> This page already caps itself at
+    1180px, so the flag swaps one number. Toggle the switch and watch the hatched
+    gutters and the readout. Every measurement below is taken from the running app
+    at a 1600px window.
+  </p>
+  <div class="gut">
+  <div class="col" id="col">
+
+    <div class="card hero">
+      <div style="margin-right:auto">
+        <div class="h1">Coverage decision — combined cause finding <span class="id">· WR-2026-0417</span></div>
+      </div>
+      <div><div class="meta">Status</div><span class="pill warn">Action required</span></div>
+      <div><div class="meta">Stage</div><div class="metav">Resolution decision</div></div>
+      <div><div class="meta">SLA 4 HR</div><span class="pill ok">On track</span> <span class="meta">2 hr 13 min left</span></div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><svg><use href="#bldg"/></svg> Case info</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:8px">Northstar Retail Distribution</div>
+      <div class="split">
+        <div class="box" style="width:230px;flex:none">
+          <div class="k">Claim</div><div class="v">$8,185.00</div>
+          <div class="k" style="margin-top:2px">Approval ceiling: <b>$5,000.00</b></div>
+        </div>
+        <div class="box desc">
+          <div class="k" style="margin-bottom:4px">Description</div>
+          Gearbox failed at 30 of 60 rated months. The drive was also reconfigured above its
+          commissioned limits in February, unapproved. No rule covers both causes.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><svg><use href="#scale"/></svg> Coverage decision</div>
+      <div style="font-size:17px;font-weight:600;margin:-6px 0 2px">
+        No resolution selected
+        <span class="bdg"><svg><use href="#ai"/></svg>Agent recommended</span>
+        <span style="font-size:13px">Deny coverage</span>
+      </div>
+
+      <div class="rows">
+        <div class="rhead"><span class="rname" style="font-weight:600">Evidence</span>
+          <span class="gap" data-w=""></span>
+          <span style="width:104px;text-align:right;color:var(--muted-foreground)">Relevance</span>
+          <span style="width:116px;text-align:right;color:var(--muted-foreground)">Decision</span></div>
+        <div class="r"><span class="rname">Defect in warranty</span>
+          <span class="gap gm" data-w=""></span>
+          <span class="ctl w-rel">High <span>⌄</span></span><span class="ctl w-dec">✓ Approve <span>⌄</span></span></div>
+        <div class="r"><span class="rname">Unapproved change to controls</span>
+          <span class="gap gm" data-w=""></span>
+          <span class="ctl w-rel">High <span>⌄</span></span><span class="ctl w-dec">✗ Deny <span>⌄</span></span></div>
+        <div class="r"><span class="rname">Renewal within 3 months</span>
+          <span class="gap gm" data-w=""></span>
+          <span class="ctl w-rel">Low <span>⌄</span></span><span class="ctl w-dec">✓ Approve <span>⌄</span></span></div>
+      </div>
+
+      <div class="two">
+        <div class="box money"><div class="k">Amount</div><div class="v" style="font-size:16px">$8,185.00</div>
+          <div class="k" style="margin-top:8px">Refund</div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-weight:600">$0.00</div></div>
+        <div class="ta">Gearbox configuration was changed by the customer without written approval.
+          Per Clause 4.2, unapproved configuration changes are not approved for warranty claims.</div>
+      </div>
+
+      <div class="res">
+        <div class="rc"><div class="n">Approve</div><div class="d">Fund entirely</div></div>
+        <div class="rc"><div class="n">Deny <span class="bdg"><svg><use href="#ai"/></svg>Agent recommended</span></div><div class="d">Waive to customer</div></div>
+        <div class="rc"><div class="n">Approve partial + goodwill</div><div class="d">Split cost</div></div>
+      </div>
+
+      <div class="submitrow"><p><b style="color:var(--foreground)">No resolution selected.</b></p>
+        <button class="sub">Submit</button></div>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<script>
+  const body=document.body, t=document.getElementById('t'), g=document.getElementById('g');
+  t.parentElement.addEventListener('click',e=>{ if(e.target===g) return; body.classList.toggle('narrow'); measure(); });
+  g.addEventListener('change',()=>{ body.classList.toggle('show-gap',g.checked); measure(); });
+  function measure(){
+    const narrow=body.classList.contains('narrow');
+    const max=narrow?960:1180;
+    const col=document.getElementById('col');
+    const cards=col.querySelector('.card').getBoundingClientRect().width;
+    const gutter=Math.max(0,Math.round((col.parentElement.getBoundingClientRect().width-max)/2));
+    document.getElementById('rc').textContent=max+'px';
+    document.getElementById('rw').textContent=Math.round(cards)+'px';
+    document.getElementById('rg').textContent=gutter+'px each side';
+    const row=document.querySelector('.r'); const name=row.querySelector('.rname'); const ctl=row.querySelector('.ctl');
+    const travel=Math.round(ctl.getBoundingClientRect().left-name.getBoundingClientRect().right);
+    document.getElementById('rt').textContent=travel+'px';
+    document.querySelectorAll('.gm').forEach(el=>el.setAttribute('data-w',travel+'px of nothing'));
+  }
+  addEventListener('resize',measure); setTimeout(measure,350); measure();
+</script>

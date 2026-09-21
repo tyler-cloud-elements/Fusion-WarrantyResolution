@@ -3,8 +3,36 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * THE GLASS CARD — an OPAQUE white surface on a tinted page, and the light-mode
+ * half of that is new.
+ *
+ * It was `bg-white/55` with a `border-white/80` rim, over an `--background` of pure
+ * white. White at 55% over white is white; white at 80% over white is white. So in
+ * light mode the fill and the rim both measured **1.000** against the page and the
+ * only separation a section had was a single `rgba(0,0,0,0.05)` shadow.
+ *
+ * Two things had to move together, and moving either alone does almost nothing:
+ *
+ *   - `--background` is tinted now (index.css) — but a 55% white card filters it,
+ *     absorbing more than half the change, so the page alone reached only 1.027.
+ *   - the fill is opaque — which is what lets the tint behind it do full work.
+ *
+ * Measured after: card-vs-page **1.055**, rim-vs-page 1.044. Dark mode is untouched
+ * and stays at 1.157: `dark:bg-white/[0.055]` still wins there, so the card is still
+ * a translucent lift on a dark canvas, which is where that treatment always worked.
+ *
+ * `border-border/60` replaces the white rim, since a white rim on a white fill was
+ * the same no-op as the fill.
+ *
+ * TWO CLASSES ARE NOW DECORATIVE IN LIGHT MODE and are kept deliberately:
+ * `backdrop-blur-sm` (the dark fill is still translucent, so the class is not dead
+ * there — and dropping it is a compositing-layer question, not a contrast one) and
+ * the white `inset` highlight in the shadow (invisible on an opaque white fill,
+ * still doing work on the dark one).
+ */
 export const GLASS_CLASSES = [
-  "bg-white/55 border border-white/80 rounded-2xl backdrop-blur-sm",
+  "bg-white border border-border/60 rounded-2xl backdrop-blur-sm",
   "shadow-[0_2px_16px_2px_rgba(0,0,0,0.05),inset_0_1px_0_0_rgba(255,255,255,0.6)]",
   "dark:bg-white/[0.055] dark:border-white/[0.03]",
   "dark:shadow-[0_2px_24px_2px_rgba(0,0,0,0.12),inset_0_1px_0_0_color-mix(in_srgb,var(--sidebar)_5%,transparent)]",

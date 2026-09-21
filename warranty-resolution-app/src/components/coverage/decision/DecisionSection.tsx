@@ -314,13 +314,13 @@ function DecisionHead({
           the score is a reading of the whole head, not of its name. */}
       <div className="min-w-0 flex-1">
       {/* ROW ONE IS THE APP'S `CardHead`, NOT A HAND-ROLLED EYEBROW — and it is
-          the primitive itself rather than a copy of its metrics, so "Decision"
-          cannot drift from "Case info" above it or from the three folded sections
-          below. Both get the 16/600 title and the 16px muted icon from one place.
+          the primitive itself rather than a copy of its metrics, so "Coverage
+          decision" cannot drift from "Case info" above it or from the three folded
+          sections below. Both get the 16/600 title and the 16px muted icon from one place.
 
           The confidence rides the head's `aside` slot, which is where every other
           card puts the reading that qualifies its title. */}
-      <CardHead title="Decision" icon={<Scale />} />
+      <CardHead title="Coverage decision" icon={<Scale />} />
 
       {/* ROW TWO IS THE VALUE. It is what the card stands at, so it is the
           largest thing in the head — 20/600 under a 16/600 title. Four pixels
@@ -572,7 +572,7 @@ export function DecisionSection({
         {/* NO ASIDE, for the reason the pending head has none: the panel under it
             opens on a green tick, the outcome and "Reopen". A header whispering
             "Filed" over that is the third thing on screen saying the same word. */}
-        <CardHead title="Decision" icon={<Scale />} />
+        <CardHead title="Coverage decision" icon={<Scale />} />
         <FiledRecord
           /* THE ACTION, for the amount panel: it reads the cost lines and the
              partial split's allocation off it. The record used to print the refund
@@ -642,7 +642,7 @@ export function DecisionSection({
   return (
     <Card className="flex flex-col gap-4 p-5">
       {/* ── THE HEAD, WHICH IS NOW ALSO THE RECOMMENDATION ──────────────────
-          A `CardHead` reading "Decision" used to sit above a bordered panel that
+          A `CardHead` reading "Coverage decision" used to sit above a bordered panel that
           named the position: an AI avatar, the resolution in bold, a Recommended
           badge, and the confidence. Two objects, and the panel said what the
           selected option card 16px below it already said — then, on a change, it
@@ -702,7 +702,7 @@ export function DecisionSection({
           the reducer feeds the recommendation strip from the same list — so this
           needs no new plumbing and the composer, the row actions and the
           `addedByReviewer` chip behave exactly as they did. */}
-      <EvidenceList evidence={state.evidence} dispatch={dispatch} addedByName={deciderName} />
+      <EvidenceList evidence={state.evidence} dispatch={dispatch} actorName={deciderName} />
 
       {/* ── amount · rationale ──
           FLEX WITH A FIXED MONEY COLUMN, NOT A RATIO — and the ratio was the first

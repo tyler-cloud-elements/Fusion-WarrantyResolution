@@ -326,7 +326,7 @@ export function FiledRecord({
         {/* 1 · THE EVIDENCE, which opens the body — the live list, frozen. The
                rows still open; the two selects are their values, in the two cells
                the selects occupied. */}
-        <EvidenceList evidence={evidence} addedByName={deciderName} readOnly />
+        <EvidenceList evidence={evidence} actorName={deciderName} readOnly />
 
         {/* 2 · AMOUNT · RATIONALE — the live flex with its 300px money column, not
                the 2-up grid this used to be. `DecisionSection`'s own note explains

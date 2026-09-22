@@ -1,5 +1,5 @@
 import { Building2, Star } from "lucide-react";
-import { Card, CardHead, INK, Label, Pill, TYPE } from "@/components/coverage/primitives";
+import { INK, Label, Pill, Section, TYPE } from "@/components/coverage/primitives";
 import { Finding } from "@/components/coverage/Finding";
 import { moneyExact } from "@/lib/warranty/format";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
@@ -16,11 +16,15 @@ import { cn } from "@/lib/utils";
  * number is still the loudest thing in its own panel without outranking the name
  * of the page it sits on.
  *
- * It is a glass `Card` with `p-5` and a `CardHead`, like every other card in
- * warranty resolution. It used to be a two-column grid that bled to its own
- * corners — the claim in a `bg-muted/40` well welded to the right edge, the reason
- * in a full-bleed strip under it — which is why it could not have padding and why
- * both of those had to invent a background to separate themselves.
+ * It is a `Section` — the page's own foldable glass card (./primitives.tsx) — and it
+ * opens by default. It was a plain `Card` with a `CardHead`; the fold is what makes
+ * it agree with the three reference sections under the decision rather than being a
+ * fourth thing that looks like them and does not move. The call site has the rest.
+ *
+ * Before that it was a two-column grid that bled to its own corners — the claim in a
+ * `bg-muted/40` well welded to the right edge, the reason in a full-bleed strip under
+ * it — which is why it could not have padding and why both of those had to invent a
+ * background to separate themselves.
  */
 export function CaseFacts({ action, warrantyCase }: { action: CaseAction; warrantyCase: WarrantyCase }) {
   const claim = action.claimTotal ?? warrantyCase.claimValue;
@@ -39,8 +43,49 @@ export function CaseFacts({ action, warrantyCase }: { action: CaseAction; warran
   const agreementRest = restOfAgreement.length ? ` · ${restOfAgreement.join(" · ")}` : "";
 
   return (
-    <Card className="flex flex-col gap-4 p-5">
-      <CardHead title="Case info" icon={<Building2 />} />
+    /**
+     * FOLDABLE, AND OPEN TO START — `Section` rather than a `Card` with a
+     * disclosure bolted on.
+     *
+     * This page already had one fold gesture and three users of it (This customer,
+     * Similar claims, Documents in ./RecordSections.tsx). `Section` is that
+     * gesture: the same glass card, the same 56px head, the same 16/600 title, the
+     * same chevron rotation, the same hover. It has carried `defaultOpen` since it
+     * was written, so the requested behaviour is the prop rather than new state.
+     *
+     * Rolling a second collapsible here would have given the page two folds that
+     * look alike and are wired differently — which is the exact trap `Section`'s
+     * own note describes about the chevron transform.
+     *
+     * **The Decision card below stays a plain `Card`, deliberately.** It is the
+     * work; everything else on the page is the reference the work rests on, and a
+     * decision you can fold away is a decision you can lose. So after this the page
+     * reads as one open card with four foldable ones around it, and the fold is the
+     * mark of "reference".
+     */
+    <Section
+      title="Case info"
+      icon={<Building2 />}
+      /**
+       * WHAT THE FOLD HIDES, in one line — the case's identity and the figure
+       * every control below is arguing about.
+       *
+       * It does repeat the customer name, which is also the body's own headline 20px
+       * down. That is the trade and it is worth taking: a summary's whole job is to
+       * make the COLLAPSED state readable, and "Case info" alone would fold the case
+       * away behind a label that says nothing about which case it is. Open, the two
+       * sit at different ranks in different places — 12px muted, right-aligned,
+       * against a 16/700 headline on the left — so they read as a caption and a
+       * heading rather than as the same line twice.
+       */
+      summary={`${warrantyCase.customer} · ${moneyExact(claim)}`}
+      defaultOpen
+    >
+      {/* THE BODY CARRIES ITS OWN PADDING. `Section` gives its content none — the
+          three sections below it are full-bleed row lists that want the edge — so
+          the inset that used to come from the card's `p-5` is stated here, minus
+          the top, which the head already provides. */}
+      <div className="flex flex-col gap-4 px-5 pb-5">
 
       {/* THE CUSTOMER IS THE HEADLINE; EVERYTHING ELSE IS ONE META LINE.
           It was four label-over-value facts in a 3-column grid, two rows tall, and
@@ -165,7 +210,8 @@ export function CaseFacts({ action, warrantyCase }: { action: CaseAction; warran
           now and `Finding` returns its own bordered `Rows` group, so it is just
           the next child. */}
       <Finding action={action} />
-    </Card>
+      </div>
+    </Section>
   );
 }
 

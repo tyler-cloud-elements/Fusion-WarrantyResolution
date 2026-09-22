@@ -598,7 +598,22 @@ export function changesSince(
 ): Change[] {
   const out: Change[] = [];
 
-  if (s.resolution !== opening.outcome) {
+  /**
+   * NOT HAVING PICKED ONE IS NOT A CHANGE — the same guard `departuresOf` carries
+   * above, for the same reason, and it was missing here only because this function
+   * could not run before a resolution existed.
+   *
+   * `ciDiff` (../flags.ts) runs it on every render of the live card, mount
+   * included. At mount `s.resolution` is `""` and `opening.outcome` is the agent's,
+   * so the comparison fired — and `name` is `fullName`, which falls back to
+   * `resolutionFor("")` and so to `RESOLUTIONS[1]`. The row read
+   * `Resolution · Deny coverage → Deny`: one value spelled two ways, credited to
+   * the agent because nothing had set `touched.resolution`, on a panel that is
+   * supposed to be invisible until something moves.
+   *
+   * A no-op for the filed record, which cannot be reached without a selection.
+   */
+  if (s.resolution !== "" && s.resolution !== opening.outcome) {
     out.push({
       part: "Resolution",
       from: name(opening.outcome),

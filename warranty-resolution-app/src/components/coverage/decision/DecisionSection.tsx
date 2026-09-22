@@ -4,6 +4,7 @@ import { AiMark } from "@/components/ui/ai-mark";
 import { MoreMenu } from "@/components/coverage/dock/MoreMenu";
 import { SubmitBar } from "@/components/coverage/decision/SubmitBar";
 import { FiledRecord } from "@/components/coverage/decision/FiledRecord";
+import { ChangeManifest } from "@/components/coverage/decision/ChangeManifest";
 import { RecommendedChip } from "@/components/coverage/decision/RecommendedChip";
 import { RefundPanel } from "@/components/coverage/decision/RefundPanel";
 import { RationalePanel } from "@/components/coverage/decision/RationalePanel";
@@ -22,6 +23,7 @@ import {
   type ReasonRevision,
 } from "@/lib/coverage/store";
 import { useReassessment } from "@/lib/coverage/useReassessment";
+import { useFlags } from "@/lib/flags";
 import { moneyExact, timeOnly } from "@/lib/warranty/format";
 import type { CaseAction, DecisionEffect } from "@/lib/warranty/types";
 import { cn } from "@/lib/utils";
@@ -484,6 +486,24 @@ export function DecisionSection({
   const departures = departuresOf(state, limit);
   const reasonMissing = state.reason.trim().length === 0;
 
+  /**
+   * THE SAME DIFF THE RECORD FILES, ASKED EVERY RENDER — `ciDiff`.
+   *
+   * `changesSince` is pure and `opening` is frozen at mount, so this is the value
+   * `submit` has always computed, one press early. Derived rather than stored for
+   * the reason `departures` above it is: every comparison it makes is against state
+   * that just changed, and a cached copy would be a second answer to the question.
+   *
+   * Computed unconditionally, flag or no flag. It is four comparisons and a pass
+   * over three evidence items, and a hook-free `const` behind a condition buys
+   * nothing but a second code path to keep true.
+   *
+   * NOT `decided.changes`. That one is frozen at the press and stays frozen — a
+   * record that re-derives itself is not a record.
+   */
+  const flags = useFlags();
+  const changes = changesSince(opening, state, limit, moneyExact, fullName);
+
   const [busy, setBusy] = useState(false);
   const [decided, setDecided] = useState<{
     outcome: string;
@@ -556,7 +576,10 @@ export function DecisionSection({
         reasonHistory: state.reasonHistory,
         reasonAt: state.reasonAt,
         reasonMine: state.touched.reason,
-        changes: changesSince(opening, state, limit, moneyExact, fullName),
+        // The value THIS render computed, for the reason `departures` below is:
+        // both are the pre-submit reading, and the evidence list above is copied
+        // from the same instant.
+        changes,
         // The value THIS render computed, which is the pre-submit one — the same
         // instant the evidence list above is copied from.
         departures,
@@ -770,6 +793,38 @@ export function DecisionSection({
           ))}
         </ChoiceboxGroup>
       </div>
+
+      {/* ── WHAT CHANGED, BEFORE IT IS FILED — `ciDiff`, off by default ─────
+          The record's own panel, in the record's own slot, through the record's own
+          component (./ChangeManifest.tsx). That is the whole design: `FiledRecord`
+          is this form rendered read-only, the manifest is already its last block,
+          so drawing the live one anywhere else would make the panel MOVE at the
+          moment of filing — on a card whose last change was spent stopping the
+          submit bar from doing exactly that.
+
+          HIDDEN ENTIRELY WHEN NOTHING HAS MOVED, seam included, which is why the
+          condition is here rather than inside the component. An empty bordered box
+          reading "nothing yet" is worse than no box. The record keeps its tick
+          sentence, because a filed decision saying "nothing moved" is a statement
+          worth making and a live one saying it before the reviewer has started is
+          noise.
+
+          The seam is the filed record's, character for character, and the same one
+          ./SubmitBar.tsx puts above itself — so with the panel up, the rule over it
+          and the rule under it match.
+
+          IT PUSHES THE BAR DOWN WHEN IT APPEARS: 139px at two rows, measured. No
+          placement avoids that. The demo beat is safe — re-weighting a row fires
+          the panel ~700px below the pointer, off screen, so by the time the
+          reviewer reaches the resolutions it is already there. The sharp case is
+          picking a resolution FIRST, which can add two rows at once just as Submit
+          is being reached for. Not worth reserving space for; an empty box costs
+          more than the jump. */}
+      {flags.ciDiff && changes.length > 0 && (
+        <div className="border-t border-border/70 pt-3.5">
+          <ChangeManifest changes={changes} evidenceCount={state.evidence.length} />
+        </div>
+      )}
 
       {/* ── signing off ──
           LAST, and that is the change. The actions used to sit between the

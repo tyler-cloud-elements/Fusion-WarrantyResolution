@@ -18,12 +18,17 @@ import { cn } from "@/lib/utils";
  *     absorbing more than half the change, so the page alone reached only 1.027.
  *   - the fill is opaque — which is what lets the tint behind it do full work.
  *
- * Measured after: card-vs-page **1.055**, rim-vs-page 1.044. Dark mode is untouched
+ * Measured after: card-vs-page **1.102**, rim-vs-page **1.138**. Dark mode is untouched
  * and stays at 1.157: `dark:bg-white/[0.055]` still wins there, so the card is still
  * a translucent lift on a dark canvas, which is where that treatment always worked.
  *
- * `border-border/60` replaces the white rim, since a white rim on a white fill was
- * the same no-op as the fill.
+ * `border-border` — THE FULL TOKEN, not an alpha of it. It replaced the white rim
+ * (a white rim on a white fill was the same no-op as the fill) and started at `/60`,
+ * which held while the page was #f7f9fc. It does not hold at #f1f4f9: the rim is a
+ * fixed light grey, so a darkening page converges on it, and at `/60` over the
+ * deeper canvas the rim measured 1.077 — WEAKER than before the page moved. At full
+ * strength it is 1.138 and the fill is 1.102, so both went up together. index.css
+ * has the argument; the two values have to move as a pair.
  *
  * TWO CLASSES ARE NOW DECORATIVE IN LIGHT MODE and are kept deliberately:
  * `backdrop-blur-sm` (the dark fill is still translucent, so the class is not dead
@@ -32,7 +37,7 @@ import { cn } from "@/lib/utils";
  * still doing work on the dark one).
  */
 export const GLASS_CLASSES = [
-  "bg-white border border-border/60 rounded-2xl backdrop-blur-sm",
+  "bg-white border border-border rounded-2xl backdrop-blur-sm",
   "shadow-[0_2px_16px_2px_rgba(0,0,0,0.05),inset_0_1px_0_0_rgba(255,255,255,0.6)]",
   "dark:bg-white/[0.055] dark:border-white/[0.03]",
   "dark:shadow-[0_2px_24px_2px_rgba(0,0,0,0.12),inset_0_1px_0_0_color-mix(in_srgb,var(--sidebar)_5%,transparent)]",

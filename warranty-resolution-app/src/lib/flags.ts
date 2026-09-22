@@ -154,6 +154,27 @@ export interface FeatureFlags {
    * ./layout.ts holds the number and the four places it is applied.
    */
   ciNarrow: boolean;
+  /**
+   * Tell the diff before the decision is filed, not only after it.
+   *
+   * On, the `What changed` manifest the filed record ends with is drawn on the LIVE
+   * card too, in the same slot and through the same component
+   * (../components/coverage/decision/ChangeManifest.tsx). It is hidden entirely
+   * while nothing has moved — no panel, no seam, no gap — and recomputed on every
+   * render once something has, so it follows the reviewer's edits as they are made.
+   *
+   * Off by default: the app has always told the diff once, at the end.
+   *
+   * **The panel and the submit bar under it answer different questions, and will
+   * disagree.** The manifest diffs against `opening`, frozen at mount; the bar
+   * diffs against `state.agent`, which moves. Re-weighting one evidence row on this
+   * fixture makes the agent rewrite the rationale, which the manifest counts (it
+   * moved since the case opened) and the bar does not (it is still what the agent
+   * says) — two rows above "1 of 4 parts". Both readings are right, the store's
+   * `Opening` note explains why the baselines are separate, and the filed card has
+   * shipped the same disagreement all along.
+   */
+  ciDiff: boolean;
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
@@ -169,6 +190,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   useActions: false,
   ciCoverageDecision: true,
   ciNarrow: false,
+  ciDiff: false,
 };
 
 export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: string }> = {
@@ -224,6 +246,12 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
   ciNarrow: {
     label: "CI narrow",
     hint: "Hold the cards to a 960px column instead of the full window. Off by default.",
+  },
+  // Directly under CI narrow, for the same reason that one sits under the CI
+  // coverage decision: the panel renders `Object.keys(FLAG_LABELS)` order.
+  ciDiff: {
+    label: "CI diff",
+    hint: "Show What changed on the live card as well as the filed one, once something has moved. Off by default.",
   },
 };
 

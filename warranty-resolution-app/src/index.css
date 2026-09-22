@@ -130,19 +130,29 @@
      `rgba(0,0,0,0.05)` shadow. Dark mode never had the problem — there the same
      card lands on `oklch(0.21 ...)` and lifts to 1.157 — so light was the outlier.
 
-     `oklch(0.982 0.004 255)` = #f7f9fc, which puts card-vs-page at 1.055: inside
-     the 1.05-1.15 band where adjacent surfaces read as separate. It is in the same
-     cool-grey family as `--sidebar` (#f3f6fb), so the three layers stack in one
-     hue — sidebar darkest, page, card lightest.
+     `oklch(0.966 0.007 259)` = #f1f4f9, which puts card-vs-page at 1.102 with the
+     card's rim at 1.138 — both inside the 1.05-1.15 band where adjacent surfaces
+     read as separate. It is in the same cool-grey family as `--sidebar`, so the
+     layers stack in one hue rather than introducing a second.
 
-     The trade, recorded: page-vs-sidebar narrows from 1.083 to 1.027. Three layers
-     in one family is a more coherent elevation model than a white page with a
-     darker sidebar and an invisible card, but it is a trade rather than a free win.
+     THE TWO LEVERS PULL AGAINST EACH OTHER, which is why this moved with the rim
+     and not on its own. As the page darkens the FILL contrast rises but the RIM
+     contrast falls, because `--border` is a fixed light grey that a darkening page
+     converges on. At this value with a `/60` rim the rim would have dropped to
+     1.077 — weaker than the #f7f9fc it replaced. The card's rim went to the full
+     token in the same change; see `GLASS_CLASSES`.
+
+     One step further (#eef1f7) buys fill 1.131 but the rim slips to 1.109 and the
+     canvas starts reading as a different colour rather than a lighter shade of the
+     same one. This is the last step before that.
+
+     The rail is unaffected: it is a 70%-alpha near-white, so it composites against
+     whatever this is and tracks it (measured 1.017 on white, 1.020 at #f7f9fc).
 
      NOT a WCAG threshold. 1.4.11's 3:1 governs the boundary of a control, not the
      layering of panels; this figure is perceptibility.
      See docs/plans/ci-coverage-decision-surface-contrast.md. */
-  --background: oklch(0.982 0.004 255);
+  --background: oklch(0.966 0.007 259);
   --foreground: oklch(0.2394 0.0455 252.45);
   --card: oklch(1 0 89.88);
   --card-foreground: oklch(0.2394 0.0455 252.45);

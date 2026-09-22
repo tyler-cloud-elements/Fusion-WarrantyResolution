@@ -9,7 +9,33 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        /**
+         * THE FILLED PRIMARY BUTTON — `primary-800` IN LIGHT, `primary` IN DARK, and
+         * the split is the whole point.
+         *
+         * Light was `bg-primary` (#009fb0) with white ink: **3.19:1**. The labels on
+         * these buttons are 13-14px at 500-600 weight, which is NORMAL text under
+         * WCAG 1.4.3 — large text starts at 18.66px bold — so the bar is 4.5:1, and
+         * 3.19 misses it. `primary-800` (#007b92) measures **4.94:1** and is the
+         * first rung of the ramp that clears it. `primary-700` does NOT: 3.65.
+         * (A note in ../coverage/decision/SubmitBar.tsx guessed 700 would be enough;
+         * it has been corrected.)
+         *
+         * **DARK IS EXPLICITLY HELD BACK, because dark was never broken.** There
+         * `--primary` is a LIGHTER teal (`oklch(0.69 …)`) and `--primary-foreground`
+         * is dark ink — the inverse pairing — which measures **7.17:1**, comfortably
+         * past AAA. The ramp is declared identically in `.dark`, so a blanket
+         * `bg-primary-800` would have put that dark ink on a mid teal and dropped
+         * dark mode to **3.87**: a fix in one theme and a regression in the other.
+         *
+         * NOT A CHANGE TO `--primary` ITSELF. That token is also the selection ring,
+         * the authority meter, the choicebox rim and the focus outline, none of which
+         * have a text-contrast problem and all of which would have darkened with it.
+         * The variant is precisely "a filled primary button", which is the thing that
+         * failed.
+         */
+        default:
+          "bg-primary-800 text-primary-foreground hover:bg-primary-900 dark:bg-primary dark:hover:bg-primary/90",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         outline:

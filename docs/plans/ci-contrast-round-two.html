@@ -1,0 +1,216 @@
+<meta charset="utf-8">
+<title>More surface contrast, and a submit button that passes AA</title>
+<style>
+  :root{
+    --fg:oklch(0.2394 0.0455 252.45); --muted-fg:oklch(0.4594 0.028 264.25);
+    --border:oklch(0.9229 0.0065 252.13); --muted:oklch(0.963 0.0062 255.48);
+    --success:oklch(0.57 0.105 152); --destructive:oklch(0.62 0.15 18);
+    --warning:oklch(0.8 0.115 85); --warning-fg:oklch(0.166 0.0283 203.34);
+    --info:oklch(0.6 0.118 240);
+    --p600:oklch(0.64 0.115 208); --p700:oklch(0.6 0.125 210);
+    --p800:oklch(0.53 0.11 214); --p900:oklch(0.46 0.095 220);
+    --font-sans:Inter,ui-sans-serif,sans-serif,system-ui;
+    --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+
+    /* knobs */
+    --page:oklch(0.982 0.004 255);
+    --card-rim:color-mix(in oklab,var(--border) 60%,transparent);
+    --card-shadow:0 2px 16px 2px rgba(0,0,0,.05);
+    --btn:var(--p600);
+  }
+  body[data-s="S1"]{--page:oklch(0.974 0.006 258); --card-rim:var(--border)}
+  body[data-s="S2"]{--page:oklch(0.966 0.007 259); --card-rim:var(--border)}
+  body[data-s="S3"]{--page:oklch(0.958 0.008 258); --card-rim:var(--border);
+                    --card-shadow:0 2px 16px 2px rgba(0,0,0,.08)}
+  body[data-b="B700"]{--btn:var(--p700)}
+  body[data-b="B800"]{--btn:var(--p800)}
+  body[data-b="B900"]{--btn:var(--p900)}
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-sans);background:var(--page);color:var(--fg);transition:background-color .18s}
+  .bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+       padding:10px 24px;background:color-mix(in oklab,var(--page) 90%,transparent);
+       backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  .bar b{font-size:11px;font-weight:600;margin:0 4px 0 10px}
+  .bar b:first-child{margin-left:0}
+  .bar button{font-family:inherit;font-size:12px;font-weight:500;padding:5px 10px;border-radius:7px;
+              border:1px solid var(--border);background:#fff;color:var(--fg);cursor:pointer}
+  .bar button[aria-pressed="true"]{background:var(--fg);color:#fff;border-color:var(--fg)}
+  main{max-width:1060px;margin:0 auto;padding:24px 32px 56px}
+  h1{font-size:20px;font-weight:600;margin:0 0 4px;letter-spacing:-.01em}
+  .lede{font-size:13px;color:var(--muted-fg);margin:0 0 22px;max-width:76ch;line-height:1.6}
+  h2{font-size:13px;font-weight:600;margin:26px 0 2px}
+  .note{font-size:12px;color:var(--muted-fg);margin:0 0 12px;max-width:84ch;line-height:1.6}
+  code{font-family:var(--font-mono);font-size:11px;background:var(--muted);padding:1px 5px;border-radius:4px}
+  table{border-collapse:collapse;width:100%;font-size:12px;background:#fff;border-radius:10px;overflow:hidden;margin-bottom:6px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted-fg);font-weight:600}
+  td.n{font-family:var(--font-mono)}
+  .fail{color:var(--destructive);font-weight:700}
+  .pass{color:var(--success);font-weight:700}
+  .warnv{color:#8a6100;font-weight:700}
+  .sw{display:inline-block;width:13px;height:13px;border-radius:3px;border:1px solid var(--border);vertical-align:-2px;margin-right:5px}
+  .verdict{font-size:12px;color:var(--muted-fg);line-height:1.6;border-top:1px solid var(--border);
+           padding-top:12px;margin-top:12px}
+  .verdict b{color:var(--fg)}
+
+  .card{background:#fff;border:1px solid var(--card-rim);border-radius:18px;
+        box-shadow:var(--card-shadow);padding:20px;display:flex;flex-direction:column;gap:14px;
+        transition:border-color .18s,box-shadow .18s}
+  .head{font-size:16px;font-weight:600;margin:0}
+  .rule{height:1px;background:var(--border)}
+  .panel{border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .band{display:flex;justify-content:space-between;padding:7px 14px;border-bottom:1px solid var(--border);
+        font-size:14px;font-weight:600}
+  .row{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:14px}
+  .row+.row{border-top:1px solid var(--border)}
+  .row .m{margin-left:auto;font-size:12px;color:var(--muted-fg)}
+  .dot{width:6px;height:6px;border-radius:999px}.dot.ok{background:var(--success)}.dot.bad{background:var(--destructive)}
+
+  .submitbar{display:flex;align-items:center;gap:12px;border-top:1px solid color-mix(in oklab,var(--border) 70%,transparent);padding-top:14px}
+  .submitbar p{margin:0;flex:1;font-size:12px;color:var(--muted-fg)}
+  .submitbar p b{color:var(--fg);font-weight:600}
+  .more{width:36px;height:36px;display:grid;place-items:center;color:var(--muted-fg);flex:none}
+  .sub{display:flex;flex:none;align-items:center;gap:10px;border-radius:10px;border:0;padding:14px 24px;
+       font-family:inherit;text-align:left;background:var(--btn);color:#fff;cursor:pointer;transition:background-color .18s}
+  .sub .stk{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+  .sub .a{font-size:13px;font-weight:600;line-height:1.2}
+  .sub .b{font-size:12px;line-height:1.2;opacity:.85;font-variant-numeric:tabular-nums}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+  .chipdemo{border-radius:10px;padding:10px 14px;color:#fff;font-size:13px;font-weight:600;
+            display:flex;flex-direction:column;gap:2px;min-width:132px}
+  .chipdemo span{font-size:11px;font-weight:500;font-family:var(--font-mono);opacity:.9}
+</style>
+
+<div class="bar">
+  <b>Surface:</b>
+  <button data-s="now" aria-pressed="true">now 1.055</button>
+  <button data-s="S1" aria-pressed="false">S1</button>
+  <button data-s="S2" aria-pressed="false">S2</button>
+  <button data-s="S3" aria-pressed="false">S3</button>
+  <b>Submit fill:</b>
+  <button data-b="now" aria-pressed="true">now 600</button>
+  <button data-b="B700" aria-pressed="false">700</button>
+  <button data-b="B800" aria-pressed="false">800</button>
+  <button data-b="B900" aria-pressed="false">900</button>
+</div>
+
+<main>
+<h1>Round two: more surface contrast, and a submit button that passes AA</h1>
+<p class="lede">
+  Two separate problems with two different standards. The surface question is taste and
+  perceptibility; the button question is a measured <b>WCAG AA text failure</b>. Every number
+  here was computed by compositing the real token values.
+</p>
+
+<!-- ══════════ PART 1 ══════════ -->
+<h2>1 · More separation between sections and the page</h2>
+<p class="note">
+  We are at <b>card 1.055 / rim 1.106</b> today. The non-obvious part: as the page darkens the
+  fill contrast rises but <b>the rim contrast falls</b>, because <code>--border</code> is a fixed
+  light grey that converges on a darkening page. So going further means moving both — darken the
+  page <i>and</i> take the rim from <code>border-border/60</code> to the full token.
+</p>
+
+<table>
+  <tr><th>option</th><th>page</th><th>card vs page</th><th>rim /60</th><th>rim full</th><th>shadow</th></tr>
+  <tr><td><b>now</b></td><td class="n"><span class="sw" style="background:#f7f9fc"></span>#f7f9fc</td>
+      <td class="n">1.055</td><td class="n">1.106</td><td class="n">1.189</td><td class="n">.05</td></tr>
+  <tr><td><b>S1</b> one step</td><td class="n"><span class="sw" style="background:#f4f7fb"></span>#f4f7fb</td>
+      <td class="n">1.075</td><td class="n">1.095</td><td class="n pass">1.167</td><td class="n">.05</td></tr>
+  <tr><td><b>S2</b> sidebar depth</td><td class="n"><span class="sw" style="background:#f1f4f9"></span>#f1f4f9</td>
+      <td class="n pass">1.102</td><td class="n">1.077</td><td class="n pass">1.138</td><td class="n">.05</td></tr>
+  <tr><td><b>S3</b> muted depth</td><td class="n"><span class="sw" style="background:#eef1f7"></span>#eef1f7</td>
+      <td class="n pass">1.131</td><td class="n">1.066</td><td class="n">1.109</td><td class="n">.08</td></tr>
+</table>
+<p class="verdict">
+  <b>S2 is the pick.</b> With the rim at full strength it lands at <b>fill 1.102 / rim 1.138</b> —
+  both inside the 1.05–1.15 band where adjacent surfaces read as separate, and neither pushed so
+  far that the page starts to look grey. S3 buys a stronger fill but the rim slips under S2's, and
+  the canvas begins to read as a different colour rather than a lighter shade of the same one.
+  S1 is the option if this should barely change.
+</p>
+<p class="note">
+  <b>Still not a WCAG number.</b> 1.4.11's 3:1 governs the boundary of a control, not the layering
+  of panels. These are perceptibility figures.
+</p>
+
+<!-- ══════════ PART 2 ══════════ -->
+<h2>2 · The submit button — this one is a real AA failure</h2>
+<p class="note">
+  White ink on <code>--primary</code> (<code>#009fb0</code>) measures <b class="fail">3.19:1</b>.
+  The label is <b>13px / 600</b>, which is normal text under WCAG 1.4.3 — large text starts at
+  18.66px bold — so the requirement is <b>4.5:1</b>. It fails, and it fails for the one control
+  that files the decision.
+</p>
+<p class="note">
+  <code>SubmitBar.tsx</code> already records the 3.19 and guesses that
+  <code>--primary-700</code> "would clear it". <b>Measured, it does not:</b> 700 is
+  <b class="fail">3.65</b>. The first rung that clears 4.5 is <b>800</b>.
+</p>
+
+<table>
+  <tr><th>fill</th><th>hex</th><th>white ink</th><th>AA (4.5 normal)</th><th>AAA (7)</th></tr>
+  <tr><td><code>--primary-500</code></td><td class="n"><span class="sw" style="background:#22aebe"></span>#22aebe</td><td class="n fail">2.67</td><td class="fail">fail</td><td class="fail">fail</td></tr>
+  <tr><td><code>--primary-600</code> ← today</td><td class="n"><span class="sw" style="background:#009fb0"></span>#009fb0</td><td class="n fail">3.19</td><td class="fail">fail</td><td class="fail">fail</td></tr>
+  <tr><td><code>--primary-700</code></td><td class="n"><span class="sw" style="background:#0093a9"></span>#0093a9</td><td class="n fail">3.65</td><td class="fail">fail</td><td class="fail">fail</td></tr>
+  <tr><td><b><code>--primary-800</code></b></td><td class="n"><span class="sw" style="background:#007b92"></span>#007b92</td><td class="n pass">4.94</td><td class="pass">pass</td><td class="fail">fail</td></tr>
+  <tr><td><code>--primary-900</code></td><td class="n"><span class="sw" style="background:#00637c"></span>#00637c</td><td class="n pass">6.83</td><td class="pass">pass</td><td class="warnv">6.83 — just under</td></tr>
+</table>
+<p class="verdict">
+  <b>800 is the recommendation</b> — the first rung that passes, still unmistakably the brand teal,
+  and only two steps from where it is. 900 passes with more headroom but reads closer to navy than
+  to the product's accent, and it would make the primary button darker than any other filled
+  control in the app.
+</p>
+
+<h2>The same flaw is in the sibling filled variants</h2>
+<p class="note">
+  Not what was asked, but it is the same measurement and worth knowing before choosing scope —
+  white ink on each filled button/badge token:
+</p>
+<div class="chips">
+  <div class="chipdemo" style="background:oklch(0.8 0.115 85)">Warning <span>1.89 · fail</span></div>
+  <div class="chipdemo" style="background:oklch(0.64 0.115 208)">Primary <span>3.19 · fail</span></div>
+  <div class="chipdemo" style="background:oklch(0.6 0.118 240)">Info <span>3.65 · fail</span></div>
+  <div class="chipdemo" style="background:oklch(0.62 0.15 18)">Destructive <span>3.92 · fail</span></div>
+  <div class="chipdemo" style="background:oklch(0.57 0.105 152)">Success <span>4.25 · fail</span></div>
+</div>
+<p class="verdict">
+  <b>Every filled variant fails AA with white ink</b>, and <code>warning</code> is not close — 1.89
+  is barely legible. The plan proposes fixing primary now, in the <code>default</code> button
+  variant, and treats the family as a separate follow-up so this change stays reviewable.
+</p>
+
+<!-- ══════════ the fragment ══════════ -->
+<h2>3 · Both, on the real thing</h2>
+<p class="note">Toggle the two knobs in the bar; this is the page's own decision card.</p>
+<div class="card" style="margin-top:14px">
+  <h3 class="head">Coverage decision</h3>
+  <div class="rule"></div>
+  <div class="panel">
+    <div class="band"><span>Evidence</span><span style="font-weight:400;font-size:12px;color:var(--muted-fg)">3 items</span></div>
+    <div class="row"><span class="dot ok"></span>Defect in warranty<span class="m">High · ✓ Approve</span></div>
+    <div class="row"><span class="dot bad"></span>Unapproved change to controls<span class="m">High · ✗ Deny</span></div>
+    <div class="row"><span class="dot ok"></span>Renewal within 3 months<span class="m">Low · ✓ Approve</span></div>
+  </div>
+  <div class="submitbar">
+    <span class="more">···</span>
+    <p><b>No change in position.</b></p>
+    <button class="sub"><span class="stk"><span class="a">Submit</span>
+      <span class="b">Resolution, refund, rationale and 3 evidence items</span></span></button>
+  </div>
+</div>
+</main>
+
+<script>
+  const q=s=>document.querySelectorAll(s);
+  q('.bar button[data-s]').forEach(b=>b.addEventListener('click',()=>{
+    const v=b.dataset.s; if(v==='now') document.body.removeAttribute('data-s'); else document.body.dataset.s=v;
+    q('.bar button[data-s]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.s===v)));
+  }));
+  q('.bar button[data-b]').forEach(b=>b.addEventListener('click',()=>{
+    const v=b.dataset.b; if(v==='now') document.body.removeAttribute('data-b'); else document.body.dataset.b=v;
+    q('.bar button[data-b]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.b===v)));
+  }));
+</script>

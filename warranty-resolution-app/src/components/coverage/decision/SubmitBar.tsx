@@ -171,12 +171,16 @@ export function SubmitBar({
            * reason is gone: this is the one action on the page and it wears the
            * app's action colour, as every other primary button does.
            *
-           * **Its ink is white on `--primary`, which measures 3.19:1.** That is
-           * under the 4.5 an AA pass wants for 13px semibold — and it is the
-           * `default` variant's behaviour app-wide, not something this screen
-           * introduced. Fixing it belongs in `ui/button.tsx` (a darker
-           * `--primary-700` fill would clear it) rather than in one button behind a
-           * flag, so it is recorded here and left alone.
+           * **Its ink WAS white on `--primary` at 3.19:1 — under the 4.5 an AA pass
+           * wants for 13px semibold. That is fixed now, in `ui/button.tsx`**, which
+           * is where this note always said the fix belonged: the `default` variant
+           * takes `primary-800` in light mode and measures 4.94:1.
+           *
+           * The old note guessed `--primary-700` "would clear it". Measured, it does
+           * not — 700 is 3.65:1 — and 800 is the first rung of the ramp that passes.
+           * Dark mode was never in scope: there the pairing is dark ink on a lighter
+           * teal and it already measured 7.17:1, so the variant holds `--primary` in
+           * dark deliberately.
            */
           /**
            * A PRESSED STATE, because the base button has none.
@@ -189,8 +193,15 @@ export function SubmitBar({
            * button that files the decision reads as a click that missed.
            *
            * Two cues, because one was not enough on a 61px block: the fill takes a
-           * step past `hover:bg-primary/90`, and the whole button drops 1px.
-           * `transition-all` is already on the base, so both animate.
+           * step past the hover, and the whole button drops 1px. `transition-all` is
+           * already on the base, so both animate.
+           *
+           * THE PRESSED FILL IS A RAMP STEP, NOT AN ALPHA, and that is a consequence
+           * of the AA fix above. It was `active:bg-primary/80` — an 80% alpha over
+           * the card, which was DARKER than the old `--primary` fill but is LIGHTER
+           * than `primary-800`, so on the new base it would have inverted the press.
+           * `primary-900` is the next rung down and reads as pressed. Dark keeps the
+           * alpha, since the base there is still `--primary`.
            *
            * SCOPED HERE rather than added to the variant. That file is every button
            * in the app, and a press state is worth having everywhere — but not as a
@@ -199,7 +210,7 @@ export function SubmitBar({
            * `disabled:pointer-events-none` on the base means neither cue can fire
            * while the button is dim or in flight, which is what should happen.
            */
-          "active:translate-y-px active:bg-primary/80",
+          "active:translate-y-px active:bg-primary-900 dark:active:bg-primary/80",
           /**
            * THE FILED TREATMENT — `TONE.ok`'s values (../primitives.tsx), with the
            * rim as an INSET RING rather than a border.

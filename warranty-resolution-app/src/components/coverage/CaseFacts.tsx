@@ -1,6 +1,7 @@
 import { Building2, Star } from "lucide-react";
 import { INK, Label, Pill, Section, TYPE } from "@/components/coverage/primitives";
 import { Finding } from "@/components/coverage/Finding";
+import { useFlags } from "@/lib/flags";
 import { moneyExact } from "@/lib/warranty/format";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,18 @@ import { cn } from "@/lib/utils";
  * background to separate themselves.
  */
 export function CaseFacts({ action, warrantyCase }: { action: CaseAction; warrantyCase: WarrantyCase }) {
+  /**
+   * `noCi` TAKES THE FINDING OUT — see ../../lib/flags.ts.
+   *
+   * The finding is the agent's argument: two established causes, the clauses behind
+   * them and the verdict drawn from them. With the agent off the screen it is the
+   * first thing to go, and this card is the only place it appears on this page.
+   *
+   * Read here rather than passed: this component renders on the CI coverage
+   * decision and nowhere else, so it already knows what page it is on. The console
+   * and the actions pane draw their own `Finding` and are untouched.
+   */
+  const { noCi } = useFlags();
   const claim = action.claimTotal ?? warrantyCase.claimValue;
   const limit = action.authority?.limit;
 
@@ -209,7 +222,7 @@ export function CaseFacts({ action, warrantyCase }: { action: CaseAction; warran
           `col-span-2` div existed only to stop that. The card is a flex column
           now and `Finding` returns its own bordered `Rows` group, so it is just
           the next child. */}
-      <Finding action={action} />
+      {noCi ? null : <Finding action={action} />}
       </div>
     </Section>
   );

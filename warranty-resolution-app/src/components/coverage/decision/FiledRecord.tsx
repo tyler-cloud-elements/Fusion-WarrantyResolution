@@ -12,6 +12,7 @@ import { RESOLUTIONS } from "@/lib/coverage/fixture";
 import type { Change, ReasonRevision } from "@/lib/coverage/store";
 import type { EvidenceItem } from "@/lib/coverage/fixture";
 import type { CaseAction, DecisionEffect } from "@/lib/warranty/types";
+import { useFlags } from "@/lib/flags";
 import { cn } from "@/lib/utils";
 
 /**
@@ -127,6 +128,8 @@ export function FiledRecord({
   shortName: (outcome: string) => string;
   onReopen: () => void;
 }) {
+  /** The agent is off the record too — see ../../../lib/flags.ts. */
+  const { noCi } = useFlags();
   // Only the stamp still counts anything — the manifest below stopped tallying
   // itself, so the agent's half of the split has no reader left.
   const byYou = changes.filter((c) => c.by === "you").length;
@@ -149,10 +152,26 @@ export function FiledRecord({
               string on the card uses any more, and spent eight words on a number.
               The manifest below already itemises what moved. */}
           <div className={cn(TYPE.small, INK.ink2)}>
-            {deciderName} · {timeOnly(at)} ·{" "}
-            {byYou === 0
-              ? "submitted with no changes"
-              : `submitted after ${byYou} ${byYou === 1 ? "change" : "changes"}`}
+            {deciderName} · {timeOnly(at)}
+            {/* THE THIRD CHANGES INDICATOR, and the least obvious one. `noCi` takes
+                the manifest off this card and the reading off the bar below it;
+                this clause counts the same `changes` array and would have gone on
+                announcing "submitted after 3 changes" between them.
+
+                It would also have been counting against a baseline nobody saw. The
+                diff is against `opening` — the AGENT's opening position — so under
+                the flag a reviewer who types a rationale into an empty field and
+                names a figure has "changed" the rationale and the refund away from
+                values that were never on their screen. Not a smaller number: the
+                wrong question. */}
+            {noCi ? null : (
+              <>
+                {" · "}
+                {byYou === 0
+                  ? "submitted with no changes"
+                  : `submitted after ${byYou} ${byYou === 1 ? "change" : "changes"}`}
+              </>
+            )}
           </div>
         </div>
         <Button variant="outline" onClick={onReopen}>
@@ -190,7 +209,10 @@ export function FiledRecord({
         {/* 1 · THE EVIDENCE, which opens the body — the live list, frozen. The
                rows still open; the two selects are their values, in the two cells
                the selects occupied. */}
-        <EvidenceList evidence={evidence} actorName={deciderName} readOnly />
+        {/* Gone under `noCi`, exactly as on the live card — the record is the form
+            as signed, so a section the form did not have is not a section the
+            record can show. ../../../lib/flags.ts. */}
+        {noCi ? null : <EvidenceList evidence={evidence} actorName={deciderName} readOnly />}
 
         {/* 2 · AMOUNT · RATIONALE — the live flex with its 300px money column, not
                the 2-up grid this used to be. `DecisionSection`'s own note explains
@@ -204,6 +226,7 @@ export function FiledRecord({
             editedAt={reasonAt}
             edited={reasonHistory.length > 0}
             mine={reasonMine}
+            bare={noCi}
             readOnly
             /* Unreachable: `readOnly` puts the field in the same state a
                superseded revision is read in, which takes no caret. Required
@@ -239,7 +262,7 @@ export function FiledRecord({
                 selected={r.outcome === outcome}
                 title={shortName(r.outcome)}
                 description={r.note}
-                badge={r.outcome === recommended ? <RecommendedChip /> : undefined}
+                badge={!noCi && r.outcome === recommended ? <RecommendedChip /> : undefined}
               />
             ))}
           </ChoiceboxGroup>
@@ -260,6 +283,11 @@ export function FiledRecord({
           under the stamp is a different object — `h-px bg-border`, full strength,
           matching the live card's head — and it stays that way: it separates a
           heading from a body, not one block from the next. */}
+      {/* THE WHOLE BLOCK GOES UNDER `noCi`, SEAM INCLUDED. The seam's own job is to
+          say "the record stops being the form here"; with nothing after it but the
+          submit bar, which draws its own identical rule, keeping it would put two
+          rules in a row. ../../../lib/flags.ts. */}
+      {noCi ? null : (
       <div className="border-t border-border/70 pt-3.5">
         {/* ── WHAT CHANGED — LAST ON THIS CARD ──────────────────────────────
             It sat between the stamp and the form, which put an edit history in
@@ -285,6 +313,7 @@ export function FiledRecord({
             is this card's fact rather than the panel's. */}
         <ChangeManifest changes={changes} evidenceCount={evidence.length} />
       </div>
+      )}
 
       {/* HIDDEN, NOT DELETED — see `SHOW_RECORDED` at the top of this file.
 

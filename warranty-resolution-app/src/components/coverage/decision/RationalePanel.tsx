@@ -157,6 +157,7 @@ export function RationalePanel({
   edited,
   mine,
   readOnly = false,
+  bare = false,
   onChange,
 }: {
   /**
@@ -187,6 +188,26 @@ export function RationalePanel({
    * see `Field`'s `readOnly` below.
    */
   readOnly?: boolean;
+  /**
+   * DROP THE HEADER'S RIGHT-HAND CLUSTER — the stamp, the marks toggle and the
+   * revision picker. Set under `noCi` (../../../lib/flags.ts).
+   *
+   * All three are revision machinery, and under that flag there are no revisions:
+   * `reassess` returns early, so `history` is empty for the life of the card. What
+   * is left without this prop is a stamp that never prints (it is gated on `edited`
+   * anyway), plus two controls permanently disabled with nothing behind them.
+   *
+   * ALL THREE, not the two the brief names. The brief asks for the stamp and the
+   * picker; the marks toggle diffs the current text against the last revision, so
+   * with no revisions it is the same dead affordance for the same reason. Leaving
+   * one of the three would be a control the reviewer can press that can never do
+   * anything.
+   *
+   * A PROP RATHER THAN A `useFlags()` CALL. This panel is a presentational leaf
+   * rendered by both the live card and the filed record, and wiring a demo switch
+   * into it would make it unusable on any screen the switch does not describe.
+   */
+  bare?: boolean;
   onChange: (value: string) => void;
 }) {
   /** A superseded revision being read, or `null` for the live field. */
@@ -281,6 +302,8 @@ export function RationalePanel({
             change the field beside it was already showing. The writing is the
             notification; a caption saying the same thing is the third time the
             card says it. */}
+        {/* THE WHOLE CLUSTER, OR NONE OF IT — see `bare` above. */}
+        {bare ? null : (
         <span className={cn(TYPE.small, "flex items-center gap-2 text-muted-foreground")}>
           {/* The timestamp only once something has superseded the opening
               draft — it is a fact, not a control, and there is nothing true to
@@ -405,6 +428,7 @@ export function RationalePanel({
             </DropdownMenuContent>
           </DropdownMenu>
         </span>
+        )}
       </div>
 
       {/* ONE HEIGHT ACROSS EVERY VIEW.

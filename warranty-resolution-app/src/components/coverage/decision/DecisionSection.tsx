@@ -275,6 +275,7 @@ function DecisionHead({
   overridden,
   confidence,
   stamp,
+  noCi,
 }: {
   /**
    * The resolution the card stands at, or NULL before anybody has picked one.
@@ -307,6 +308,13 @@ function DecisionHead({
   confidence: number | null;
   /** The eyebrow's suffix, or null for none. */
   stamp: string | null;
+  /**
+   * The agent is off the screen — see `noCi` in ../../../lib/flags.ts. Drops the
+   * position tag and, in the unselected state, the recommendation beside it.
+   * `confidence` is passed `null` by the caller rather than gated here, since the
+   * head already draws nothing for a null score.
+   */
+  noCi: boolean;
 }) {
   return (
     <div className="flex items-center gap-5">
@@ -373,18 +381,34 @@ function DecisionHead({
            * the only position on screen.
            */
           <>
+            {/* THE ABSENCE LINE SURVIVES `noCi`, THE RECOMMENDATION DOES NOT.
+                Two things on this card read "no resolution selected": this, and the
+                submit bar's own sentence. The flag's brief removes one of them and
+                files it under "the footer", so it is the bar's that goes — this is
+                the head's SUBJECT, and dropping it leaves the largest row on the
+                card blank until something is picked. What comes out here is the tag
+                and the agent's proposal beside it, which is the "no more
+                suggestion" half of the same brief. */}
             <span className="min-w-0 truncate text-lg leading-tight font-semibold tracking-tight text-muted-foreground">
               No resolution selected
             </span>
-            <PositionTag override={false} />
-            <span className="min-w-0 truncate text-[13px] font-semibold">{recommendation}</span>
-            <span
-              aria-hidden
-              className={cn("size-1.5 shrink-0 rounded-full transition-colors duration-200", direction)}
-            />
+            {noCi ? null : (
+              <>
+                <PositionTag override={false} />
+                <span className="min-w-0 truncate text-[13px] font-semibold">{recommendation}</span>
+                <span
+                  aria-hidden
+                  className={cn("size-1.5 shrink-0 rounded-full transition-colors duration-200", direction)}
+                />
+              </>
+            )}
           </>
         ) : (
           <>
+            {/* JUST THE SELECTED RESOLUTION under `noCi`. The direction dot stays —
+                it reads the position itself, not the agent — and the tag goes,
+                since "Recommended" and "Override" are both statements about a
+                recommendation that is not on the screen. */}
             <span className="min-w-0 truncate text-lg leading-tight font-semibold tracking-tight">
               {position}
             </span>
@@ -392,7 +416,7 @@ function DecisionHead({
               aria-hidden
               className={cn("size-1.5 shrink-0 rounded-full transition-colors duration-200", direction)}
             />
-            <PositionTag override={overridden} />
+            {noCi ? null : <PositionTag override={overridden} />}
           </>
         )}
         {/* The agent's stamp sits with the position rather than with the title:
@@ -502,6 +526,8 @@ export function DecisionSection({
    * record that re-derives itself is not a record.
    */
   const flags = useFlags();
+  /** Pulled out because nine places below read it. See ../../../lib/flags.ts. */
+  const noCi = flags.noCi;
   const changes = changesSince(opening, state, limit, moneyExact, fullName);
 
   const [busy, setBusy] = useState(false);
@@ -650,6 +676,9 @@ export function DecisionSection({
           evidenceCount={decided.evidence.length}
           /* A resolution was picked — that is what filing means. */
           unselected={false}
+          // Under `noCi` the filed bar reads `Filed` and stops, rather than
+          // "Filed · change in position, 2 of 4 parts: …". ./SubmitBar.tsx.
+          showReading={!noCi}
           disabled
           busy={false}
           filed
@@ -689,8 +718,15 @@ export function DecisionSection({
            read the whole card to find out whether it is holding the agent's answer
            or their own. "Recommended" → "Override" answers it in place. */
         overridden={overridden}
-        confidence={confidence}
-        stamp={agentUpdatedAt ? `updated ${timeOnly(agentUpdatedAt)}` : null}
+        // NULL UNDER THE FLAG, not hidden inside the head: a score of "none" is
+        // already a state the head draws nothing for, so the flag makes the value
+        // absent rather than adding a second way to hide it.
+        confidence={noCi ? null : confidence}
+        // The "updated …" stamp reports a reassessment. There are none under the
+        // flag — `reassess` returns early — so `agentUpdatedAt` stays null anyway;
+        // this is belt and braces on a value that cannot arrive.
+        stamp={!noCi && agentUpdatedAt ? `updated ${timeOnly(agentUpdatedAt)}` : null}
+        noCi={noCi}
       />
 
       {/* The seam the panel's rim used to provide. The head is two ranks of type
@@ -725,7 +761,13 @@ export function DecisionSection({
           the reducer feeds the recommendation strip from the same list — so this
           needs no new plumbing and the composer, the row actions and the
           `addedByReviewer` chip behave exactly as they did. */}
-      <EvidenceList evidence={state.evidence} dispatch={dispatch} actorName={deciderName} />
+      {/* THE EVIDENCE IS THE AGENT'S CASE, so `noCi` takes it out — see
+          ../../../lib/flags.ts. The rows are what it weighed and what a reviewer
+          re-weights to move it; with nothing to move they are a read-only list of
+          somebody else's reasoning on a form that no longer has an author. */}
+      {noCi ? null : (
+        <EvidenceList evidence={state.evidence} dispatch={dispatch} actorName={deciderName} />
+      )}
 
       {/* ── amount · rationale ──
           FLEX WITH A FIXED MONEY COLUMN, NOT A RATIO — and the ratio was the first
@@ -758,6 +800,7 @@ export function DecisionSection({
           // superseded, which makes it useless as a has-anything-changed test.
           edited={state.reasonHistory.length > 0}
           mine={state.touched.reason}
+          bare={noCi}
           onChange={(value) => dispatch({ type: "reason.set", value })}
         />
       </div>
@@ -787,8 +830,9 @@ export function DecisionSection({
               description={r.note}
               /* The agent's pick, marked where the choice is made. `RecommendedChip`
                  above carries the argument, including why this reverses the note
-                 that used to stand here. */
-              badge={r.outcome === recommended ? <RecommendedChip /> : undefined}
+                 that used to stand here. Nothing is marked under `noCi`: the point
+                 of the flag is that the reviewer arrives at three equal options. */
+              badge={!noCi && r.outcome === recommended ? <RecommendedChip /> : undefined}
             />
           ))}
         </ChoiceboxGroup>
@@ -820,7 +864,12 @@ export function DecisionSection({
           picking a resolution FIRST, which can add two rows at once just as Submit
           is being reached for. Not worth reserving space for; an empty box costs
           more than the jump. */}
-      {flags.ciDiff && changes.length > 0 && (
+      {/* `noCi` OUTRANKS `ciDiff`. The flag's brief removes the manifest from the
+          filed record; leaving it on the LIVE card would be the same panel, on the
+          same screen, a press earlier. The rail says so out loud too — see the
+          `suppressedFlags` entry in ../../../lib/flags.ts — so a presenter who
+          flips CI diff under No CI is told why nothing happened. */}
+      {!noCi && flags.ciDiff && changes.length > 0 && (
         <div className="border-t border-border/70 pt-3.5">
           <ChangeManifest changes={changes} evidenceCount={state.evidence.length} />
         </div>
@@ -839,6 +888,12 @@ export function DecisionSection({
         // Nothing to file until somebody has made the call. The bar says so in
         // words rather than leaving a dead button unexplained — ./SubmitBar.tsx.
         unselected={!state.resolution}
+        showReading={!noCi}
+        // UNCHANGED, AND THAT IS THE POINT. The brief asks that a rationale and a
+        // resolution both be required under `noCi`; this line already required
+        // both. What the flag changes is that the second clause starts MATTERING —
+        // with the agent's draft in the field `reasonMissing` was false from mount,
+        // so the resolution was the only real gate. Empty, it is a real one.
         disabled={!state.resolution || reasonMissing || busy}
         busy={busy}
         onSubmit={submit}

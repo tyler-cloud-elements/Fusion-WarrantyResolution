@@ -175,6 +175,25 @@ export interface FeatureFlags {
    * shipped the same disagreement all along.
    */
   ciDiff: boolean;
+  /**
+   * Take the agent off the coverage decision entirely.
+   *
+   * On, /cases/WR-2026-0417/tasks/coverage-decision becomes a blank decision form:
+   * no recommendation, no confidence score, no evidence list, no derived money, no
+   * drafted rationale, no revision history and no diff of what moved. The reviewer
+   * picks a resolution, types an amount, writes a rationale and files.
+   *
+   * Off by default — the app's whole subject is an agent proposing and a person
+   * disposing, and this is the control condition for it.
+   *
+   * **It is a store change as much as a rendering one.** Three of the behaviours it
+   * removes are reducer-owned: the opening refund, the opening rationale, and the
+   * two-way coupling between the amount and the resolution. `useCoverageDecision`
+   * takes this as an argument and the page keys the card on it, so flipping it
+   * mid-case remounts to a genuinely blank form rather than leaving the agent's
+   * figures sitting in one.
+   */
+  noCi: boolean;
 }
 
 export const DEFAULT_FLAGS: FeatureFlags = {
@@ -191,6 +210,7 @@ export const DEFAULT_FLAGS: FeatureFlags = {
   ciCoverageDecision: true,
   ciNarrow: false,
   ciDiff: false,
+  noCi: false,
 };
 
 export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: string }> = {
@@ -253,6 +273,12 @@ export const FLAG_LABELS: Record<keyof FeatureFlags, { label: string; hint: stri
     label: "CI diff",
     hint: "Show What changed on the live card as well as the filed one, once something has moved. Off by default.",
   },
+  // Last in the list, which is where the panel puts it: it renders
+  // `Object.keys(FLAG_LABELS)` order.
+  noCi: {
+    label: "No CI",
+    hint: "No diff collection for continuous improvement.",
+  },
 };
 
 /**
@@ -270,6 +296,13 @@ export function suppressedFlags(
   const suppressed: Partial<Record<keyof FeatureFlags, string>> = {};
   if (flags.useMocks) {
     suppressed.overlayMocks = "Overridden by Use demo data. Nothing live to overlay.";
+  }
+  // `ciDiff`'s only job is to put the manifest on the LIVE card; `noCi` takes the
+  // manifest off both cards. So with No CI on, CI diff has nothing left to add, and
+  // a switch that looks live and does nothing is the failure this function exists
+  // to prevent.
+  if (flags.noCi) {
+    suppressed.ciDiff = "Overridden by No CI. The diff is not collected.";
   }
   return suppressed;
 }

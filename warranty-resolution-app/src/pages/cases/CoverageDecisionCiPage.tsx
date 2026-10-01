@@ -17,6 +17,7 @@ import { recordDecision, reopenDecision } from "@/lib/warranty/useCases";
 import { formatRemaining, formatSlaBudget, slaStatusFor } from "@/lib/warranty/sla";
 import type { CaseAction, WarrantyCase } from "@/lib/warranty/types";
 import { usePageWidthClass } from "@/lib/layout";
+import { useFlags } from "@/lib/flags";
 import { cn } from "@/lib/utils";
 // The selection-driven capture bar, lifted out of the host that the fork of this
 // screen was embedded in. Its own notes explain the gesture.
@@ -55,6 +56,7 @@ export function CoverageDecisionCiPage({
   action: CaseAction;
   warrantyCase: WarrantyCase;
 }) {
+  const { noCi } = useFlags();
   /**
    * THE FORK'S FIGURES, and this is the only place they are applied.
    *
@@ -87,21 +89,49 @@ export function CoverageDecisionCiPage({
     );
   }
 
-  return <Decision action={overlaid} warrantyCase={overlaidCase} fixture={fixture} />;
+  /**
+   * KEYED ON `noCi`, so the toggle remounts the card.
+   *
+   * `useReducer`'s initialiser runs ONCE. Flipping the flag on a card that is
+   * already mounted rebuilds `ctx` but leaves `state` holding the agent's refund and
+   * the agent's paragraph — a "blank" form with $4,940 and three sentences in it.
+   * Remounting is the only honest answer, because this flag changes what the form IS.
+   *
+   * It discards work in progress on a toggle, which is the OPPOSITE call from
+   * `usePageWidthClass` in ../../components/PageContainer.tsx, where the wrapper is
+   * always rendered precisely to avoid a remount. Different flags: that one owns a
+   * class, this one owns state.
+   */
+  return (
+    <Decision
+      key={noCi ? "no-ci" : "ci"}
+      action={overlaid}
+      warrantyCase={overlaidCase}
+      fixture={fixture}
+      noCi={noCi}
+    />
+  );
 }
 
 function Decision({
   action,
   warrantyCase,
   fixture,
+  noCi,
 }: {
   action: CaseAction;
   warrantyCase: WarrantyCase;
   fixture: CoverageFixture;
+  /** Passed rather than re-read: the parent keys this component on it. */
+  noCi: boolean;
 }) {
   const { profile } = useRole();
   const width = usePageWidthClass();
-  const { state, dispatch, limit, claim, recommended, opening } = useCoverageDecision(action, fixture);
+  const { state, dispatch, limit, claim, recommended, opening } = useCoverageDecision(
+    action,
+    fixture,
+    noCi,
+  );
   const [notice, setNotice] = useState<string | null>(null);
 
   /**

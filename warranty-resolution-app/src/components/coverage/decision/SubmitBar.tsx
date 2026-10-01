@@ -54,6 +54,7 @@ export function SubmitBar({
   disabled,
   busy,
   filed = false,
+  showReading = true,
   onSubmit,
 }: {
   /** The `···` menu. A slot, so this file needs to know nothing about its actions. */
@@ -90,6 +91,24 @@ export function SubmitBar({
    * that has, so nothing can be true of both.
    */
   filed?: boolean;
+  /**
+   * DRAW THE READING AT ALL. False under `noCi` (../../../lib/flags.ts).
+   *
+   * The sentence left of the button is entirely about the agent: how far the
+   * decision has departed from a recommendation, or that nothing has departed from
+   * one yet. With no recommendation on screen all four of its branches describe
+   * something the reviewer cannot see — the filed one included, which reads
+   * "Filed · change in position, 2 of 4 parts: …".
+   *
+   * So under the flag the row is the `···` menu and the button, and the filed state
+   * says `Filed` and stops. THE `<p>` STILL RENDERS, empty: it is the flex spacer
+   * the two controls are laid out around, and dropping the element would pull the
+   * button left and change the bar's geometry, which is not what was asked for.
+   *
+   * A prop rather than a `useFlags()` call, for the reason ./RationalePanel.tsx
+   * gives at its own `bare`.
+   */
+  showReading?: boolean;
   onSubmit: () => void;
 }) {
   const departed = departures.parts > 0;
@@ -98,7 +117,12 @@ export function SubmitBar({
     <div className="flex items-center gap-3 border-t border-border/70 pt-3.5">
       {more}
       <p className={cn(TYPE.small, "m-0 min-w-0 flex-1 leading-relaxed text-muted-foreground")}>
-        {filed ? (
+        {!showReading ? (
+          // `Filed` survives on this path and nothing else does — it is the act,
+          // not a reading of the diff, and the button beside it has gone quiet at
+          // the same moment.
+          filed ? <b className="font-semibold text-foreground">Filed</b> : null
+        ) : filed ? (
           // PAST TENSE, NOT A NEW FACT. `Filed` takes the bold lead the other three
           // readings give their first clause, and the count follows it lowercased —
           // so the row still answers "what went, and did anybody move it" without
@@ -314,8 +338,18 @@ export function SubmitBar({
               10 items, which is the same reflow the spinner slot above exists to
               stop. */}
           <span className="text-xs leading-tight font-normal tabular-nums opacity-85">
-            Resolution, refund, rationale and {evidenceCount}{" "}
-            {evidenceCount === 1 ? "evidence item" : "evidence items"}
+            {/* THE PAYLOAD NAMES WHAT THE FORM HAS. Under `noCi` the evidence
+                section is not on the card, so the button cannot promise to file
+                three of its rows — it was still counting a list the reviewer
+                could not see. Three parts go instead of four. */}
+            {showReading ? (
+              <>
+                Resolution, refund, rationale and {evidenceCount}{" "}
+                {evidenceCount === 1 ? "evidence item" : "evidence items"}
+              </>
+            ) : (
+              <>Resolution, refund and rationale</>
+            )}
           </span>
         </span>
 

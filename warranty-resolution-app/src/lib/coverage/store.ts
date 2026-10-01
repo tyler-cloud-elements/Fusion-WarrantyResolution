@@ -275,6 +275,21 @@ export type CoverageEvent =
  * to bring the dot back on the chip.
  */
 function reassess(s: CoverageState, ctx: Ctx): CoverageState {
+  /**
+   * UNDER `noCi` THE AGENT NEVER HAS ANYTHING TO SAY — one guard, here, rather
+   * than eight at the call sites.
+   *
+   * Eight events funnel through this: the four `evidence.*` cases, `resolution.pick`,
+   * `refund.set`, `mode.edit` and `mode.rest`. Guarding each is eight places to
+   * forget on the next event added; guarding the function is one, and this is
+   * already the function whose entire subject is "the agent has redrafted".
+   *
+   * Returning `s` untouched also leaves `reasonHistory` empty forever, which is what
+   * makes the rationale panel's `bare` header honest rather than merely hidden: there
+   * is no revision behind the control that is not being drawn.
+   */
+  if (ctx.noCi) return s;
+
   const agent = assess(s.evidence, s.resolution, ctx.base, ctx.slots);
   if (agent.reason === s.agent.reason) return s;
 
@@ -296,6 +311,13 @@ function reassess(s: CoverageState, ctx: Ctx): CoverageState {
 }
 
 interface Ctx {
+  /**
+   * THE AGENT IS OFF — see `noCi` in ../flags.ts.
+   *
+   * Handed in rather than read from a hook in here, so the store stays a pure
+   * function of its arguments and can be exercised without a flag provider.
+   */
+  noCi: boolean;
   /** The agent's OPENING position — what it said before any evidence moved. */
   base: AgentPosition;
   limit: number;
@@ -402,6 +424,23 @@ function reduce(ctx: Ctx) {
         return reassess({ ...s, evidence: s.evidence.filter((x) => x.id !== e.id) }, ctx);
       case "refund.set": {
         const refund = Math.min(Math.max(0, e.value), ctx.limit);
+        /**
+         * THE COUPLING IS TWO-WAY, AND `noCi` CUTS BOTH SIDES.
+         *
+         * The flag's brief names one direction — picking a resolution must stop
+         * moving the money. This is the other one, and leaving it in would have
+         * broken the same brief from behind: `derivedOutcome` reads 0 as Denied, the
+         * ceiling as Approved and anything between as PartialPlusGoodwill, so typing
+         * $1.00 into a "manual" amount would silently select *Approve partial +
+         * goodwill* for a reviewer who is supposed to be choosing it themselves.
+         *
+         * So under the flag the amount is only an amount. The resolution holds
+         * whatever was picked, `mode` does not move (nothing is a departure from a
+         * recommendation that is not on screen), and only `refund` is marked.
+         */
+        if (ctx.noCi) {
+          return { ...s, refund, touched: { ...s.touched, refund: true } };
+        }
         const resolution = derivedOutcome(refund, Math.min(ctx.claim, ctx.limit));
         const leavesRecommendation = s.mode === "rest" && resolution !== s.agent.outcome;
         // Typing a refund sets the resolution too — the reducer's own coupling —
@@ -420,6 +459,13 @@ function reduce(ctx: Ctx) {
         );
       }
       case "resolution.pick":
+        // Under `noCi` the position moves and the money does not — the reviewer
+        // types that themselves, and a figure appearing under a card they just
+        // clicked is the agent acting. `refund` is left where it is, and untouched:
+        // marking it would claim the reviewer set an amount they have not yet set.
+        if (ctx.noCi) {
+          return { ...s, resolution: e.outcome, touched: { ...s.touched, resolution: true } };
+        }
         // The one event that moves the money, together with the typed figure above
         // it. The amount follows the position; the position follows nobody.
         return reassess(
@@ -687,7 +733,7 @@ export function changeValueLabel(v: string | null): string {
 
 const label = changeValueLabel;
 
-export function useCoverageDecision(action: CaseAction, fixture: CoverageFixture) {
+export function useCoverageDecision(action: CaseAction, fixture: CoverageFixture, noCi = false) {
   const ctx = useMemo<Ctx>(() => {
     const limit = action.authority?.limit ?? Number.POSITIVE_INFINITY;
     const claim = action.claimTotal ?? action.costLines?.reduce((n, l) => n + l.amount, 0) ?? 0;
@@ -713,6 +759,7 @@ export function useCoverageDecision(action: CaseAction, fixture: CoverageFixture
       trigger: null,
     };
     return {
+      noCi,
       base,
       limit,
       claim,
@@ -720,7 +767,7 @@ export function useCoverageDecision(action: CaseAction, fixture: CoverageFixture
       slots: fixture.rationale,
       now: () => new Date().toISOString(),
     };
-  }, [action, fixture]);
+  }, [action, fixture, noCi]);
 
   const [state, dispatch] = useReducer(reduce(ctx), undefined, (): CoverageState => {
     // Seeded through the same assembler the reducer uses, so a fixture whose
@@ -730,7 +777,16 @@ export function useCoverageDecision(action: CaseAction, fixture: CoverageFixture
     return {
       evidence: fixture.evidence,
       nextEvidenceNo: 1,
-      refund: Math.min(agent.refund, ctx.limit),
+      /**
+       * ZERO UNDER `noCi`, and the note below is why that needs saying.
+       *
+       * The argument for opening at the agent's figure is that the money on screen
+       * is what the recommendation COSTS, and blanking it would hide half of what
+       * the reviewer is being asked to judge. With the agent gone there is no
+       * recommendation and nothing to cost, so the field opens empty and the
+       * reviewer puts a number in it.
+       */
+      refund: ctx.noCi ? 0 : Math.min(agent.refund, ctx.limit),
       /**
        * NOTHING IS SELECTED AT MOUNT, and that is the point of the screen.
        *
@@ -760,7 +816,16 @@ export function useCoverageDecision(action: CaseAction, fixture: CoverageFixture
        */
       resolution: "",
       mode: "rest",
-      reason: agent.reason,
+      /**
+       * EMPTY UNDER `noCi` — the reviewer writes the reason, and nothing writes over
+       * it afterwards (`reassess` returns early).
+       *
+       * This is what makes `reasonMissing` in the decision section load-bearing for
+       * the first time: with a drafted paragraph it was false from mount and the
+       * resolution was the only real gate on Submit. Empty, it is the second gate
+       * the brief asks for, out of the line that was already there.
+       */
+      reason: ctx.noCi ? "" : agent.reason,
       reasonReviewed: false,
       agent,
       touched: { resolution: false, refund: false, reason: false },
